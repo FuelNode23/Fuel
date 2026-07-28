@@ -1,0 +1,217 @@
+.ob-page {
+  min-height: 100vh;
+  background: #15151a;
+  color: #f4f7fb;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.5rem 2.5rem;
+}
+
+.ob-page * {
+  box-sizing: border-box;
+}
+
+.ob-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 60rem;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.ob-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #f4f7fb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.ob-back:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ob-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 247, 251, 0.16);
+  background: rgba(244, 247, 251, 0.04);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ob-progress-wrap {
+  max-width: 60rem;
+  width: 100%;
+  margin: 1.75rem auto 0;
+}
+
+.ob-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(244, 247, 251, 0.6);
+}
+
+.ob-progress-track {
+  height: 5px;
+  width: 100%;
+  border-radius: 9999px;
+  background: rgba(244, 247, 251, 0.1);
+  overflow: hidden;
+}
+
+.ob-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: #c9ff4d;
+  transition: width 0.35s ease;
+}
+
+.ob-content {
+  flex: 1;
+  max-width: 42rem;
+  width: 100%;
+  margin: 4rem auto 0;
+}
+
+.ob-brand {
+  display: inline-flex;
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 247, 251, 0.16);
+  background: rgba(244, 247, 251, 0.04);
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(244, 247, 251, 0.75);
+  margin-bottom: 2rem;
+}
+
+.ob-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .ob-title {
+    font-size: 2.4rem;
+  }
+}
+
+.ob-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.ob-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ob-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(244, 247, 251, 0.9);
+}
+
+.ob-input {
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(244, 247, 251, 0.14);
+  background: #141a29;
+  color: #f4f7fb;
+  padding-inline: 1.1rem;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.ob-input::placeholder {
+  color: rgba(244, 247, 251, 0.35);
+}
+
+.ob-input:focus {
+  border-color: #c9ff4d;
+}
+
+.ob-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.ob-option {
+  flex: 1 1 auto;
+  min-width: 7.5rem;
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(244, 247, 251, 0.14);
+  background: #141a29;
+  color: #f4f7fb;
+  font-size: 1rem;
+  font-weight: 600;
+  padding-inline: 1.25rem;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.ob-option:hover {
+  border-color: rgba(244, 247, 251, 0.3);
+}
+
+.ob-option-active {
+  border-color: #c9ff4d;
+  color: #c9ff4d;
+  background: rgba(201, 255, 77, 0.08);
+}
+
+.ob-footer {
+  max-width: 42rem;
+  width: 100%;
+  margin: 3rem auto 0;
+}
+
+.ob-continue {
+  width: 100%;
+  height: 3.5rem;
+  border-radius: 0.9rem;
+  background: #c9ff4d;
+  color: #0a0e1a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.ob-continue:hover:not(:disabled) {
+  background: #d7ff6d;
+}
+
+.ob-continue:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-page * {
+    transition: none !important;
+  }
+}    
+

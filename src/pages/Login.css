@@ -1,0 +1,133 @@
+/* src/pages/Login/Login.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.login-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #0a0a0e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.form-card {
+  width: 100%;
+  max-width: 430px;
+  background: #15151c;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+.form-card h1 {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.form-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-card label {
+  display: flex;
+  flex-direction: column;
+  color: #d1d5db;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-card input {
+  margin-top: 8px;
+  width: 100%;
+  padding: 14px 16px;
+  background: #0f0f14;
+  border: 1px solid #2d2d36;
+  border-radius: 10px;
+  color: white;
+  font-size: 15px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.form-card input:focus {
+  border-color:#3ab3ff;
+  box-shadow: 0 0 0 3px rgba(198, 255, 58, 0.2);
+}
+
+.form-card button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  background: #3ab3ff;
+  color: #0a0a0e;
+  border: none;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.form-card button:hover {
+  background:#3ab3ff;
+  transform: translateY(-2px);
+}
+
+.form-card button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.form-card p {
+  margin-top: 24px;
+  text-align: center;
+  color: #bdbdbd;
+}
+
+.form-card a {
+  color:#3ab3ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.form-card a:hover {
+  text-decoration: underline;
+}
+
+.alert-error {
+  margin-bottom: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 0, 0, 0.15);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #ff6b6b;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .form-card {
+    padding: 30px 20px;
+  }
+
+  .form-card h1 {
+    font-size: 28px;
+  }
+}
