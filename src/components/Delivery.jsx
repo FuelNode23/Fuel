@@ -1,4 +1,4 @@
-import { deliveryPoints } from "./data.js";
+import { deliveryPoints } from "./Data.js";
 
 export default function Delivery() {
   return (
