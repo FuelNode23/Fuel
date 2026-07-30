@@ -1,16 +1,30 @@
 .ob-page {
+  position: relative;
   min-height: 100vh;
-  background: #15151a;
   color: #f4f7fb;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   display: flex;
   flex-direction: column;
   padding: 2rem 1.5rem 2.5rem;
+  background: transparent; /* remove any background-image set directly here */
+}
+
+.ob-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url("/src/assets/main-img.png"); /* your existing image path */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #15151a; /* fallback fill if image doesn't cover edges */
 }
 
 .ob-page * {
   box-sizing: border-box;
 }
+
 
 .ob-topbar {
   display: flex;
@@ -79,7 +93,7 @@
 .ob-progress-fill {
   height: 100%;
   border-radius: 9999px;
-  background: #c9ff4d;
+  background:  #22C55E;
   transition: width 0.35s ease;
 }
 
@@ -178,8 +192,8 @@
 }
 
 .ob-option-active {
-  border-color: #c9ff4d;
-  color: #c9ff4d;
+  border-color:  #22C55E;;
+  color:  #22C55E;;
   background: rgba(201, 255, 77, 0.08);
 }
 
@@ -193,7 +207,7 @@
   width: 100%;
   height: 3.5rem;
   border-radius: 0.9rem;
-  background: #c9ff4d;
+  background:  #22C55E;;
   color: #0a0e1a;
   font-size: 1.05rem;
   font-weight: 700;
@@ -213,5 +227,320 @@
   .ob-page * {
     transition: none !important;
   }
-}    
+}
 
+/* --- Added for Q3 (sport cards, objective grid, per-sport panel) --- */
+
+.ob-subtitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.ob-helper-text {
+  font-size: 0.9rem;
+  color: rgba(244, 247, 251, 0.55);
+  margin: 0 0 1rem;
+}
+
+.ob-options-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.9rem;
+}
+
+.ob-option-card {
+  height: auto;
+  min-height: 6.5rem;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: left;
+  padding: 1rem 1.1rem;
+}
+
+.ob-option-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.ob-option-description {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(244, 247, 251, 0.5);
+}
+
+.ob-option-card.ob-option-active .ob-option-description {
+  color: rgba(201, 255, 77, 0.7);
+}
+
+.ob-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+.ob-sport-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(244, 247, 251, 0.1);
+  background: rgba(244, 247, 251, 0.02);
+}
+
+.ob-note {
+  font-size: 0.8rem;
+  color: rgba(244, 247, 251, 0.45);
+  margin-top: 1.5rem;
+}
+
+/* --- Added for Q4 (connect / icon + primary + secondary action) --- */
+
+.ob-connect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.ob-connect-icon {
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  border: 1px solid rgba(201, 255, 77, 0.4);
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ob-connect-subtitle {
+  color: rgba(244, 247, 251, 0.6);
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem;
+}
+
+.ob-connect-primary,
+.ob-connect-secondary {
+  width: 100%;
+  max-width: 24rem;
+  height: 3.5rem;
+  border-radius: 0.9rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.ob-connect-primary {
+  background: #22C55E;
+  color: #0a0e1a;
+  border: none;
+}
+
+.ob-connect-secondary {
+  background: transparent;
+  color:#22C55E;
+  border: 1px solid  #22C55E;
+}
+
+/* --- Added for Q5 (card wrapper + decorative session-time dial) --- */
+
+.ob-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.75rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(244, 247, 251, 0.1);
+  background: rgba(244, 247, 251, 0.02);
+}
+
+.ob-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ob-dial {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0 1rem;
+}
+
+.ob-dial-ring {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  background:
+    conic-gradient(#2bb918 0deg 140deg, rgba(244, 247, 251, 0.12) 140deg 360deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
+}
+
+.ob-dial-ring::before {
+  content: "";
+  position: absolute;
+}
+
+.ob-dial-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0a0e1a;
+  color:#22C55E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* --- Added for Q6 conditional dropdown + inline field notes --- */
+
+.ob-select {
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(244, 247, 251, 0.14);
+  background: #141a29;
+  color: rgba(244, 247, 251, 0.6);
+  padding-inline: 1.1rem;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  appearance: none;
+}
+
+.ob-select:focus {
+  border-color: #c9ff4d;
+}
+
+.ob-select option {
+  color: #f4f7fb;
+  background: #141a29;
+}
+
+.ob-field-note {
+  font-size: 0.78rem;
+  color: rgba(244, 247, 251, 0.45);
+  margin: 0.1rem 0 0;
+}
+
+/* --- Added for Q9 (format icon cards with Tap/Chosen badge) --- */
+
+.ob-option-card {
+  position: relative;
+  padding-top: 0;
+  overflow: hidden;
+}
+
+.ob-option-icon-wrap {
+  width: 100%;
+  height: 5.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -1rem -1.1rem 0.75rem;
+  background: rgba(244, 247, 251, 0.06);
+}
+
+.ob-option-icon {
+  font-size: 1.75rem;
+}
+
+.ob-option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.ob-option-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  background: rgba(244, 247, 251, 0.1);
+  color: rgba(244, 247, 251, 0.6);
+  white-space: nowrap;
+}
+
+.ob-option-badge-active {
+  background: #22C55E;
+  color: #0a0e1a;
+}
+
+/* --- Added for Q10 (info banner + full-width day buttons) --- */
+
+.ob-title-subtitle {
+  margin-top: -1.5rem;
+  margin-bottom: 2rem;
+}
+
+.ob-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(244, 247, 251, 0.1);
+  background: rgba(244, 247, 251, 0.03);
+}
+
+.ob-info-banner-icon {
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.ob-info-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ob-info-banner-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.ob-info-banner-body {
+  font-size: 0.85rem;
+  color: rgba(244, 247, 251, 0.55);
+}
+
+.ob-options-stacked {
+  flex-direction: column;
+}
+
+.ob-option-full {
+  width: 100%;
+  height: 4rem;
+}
+
+/* --- Added for Q11 (bordered note box) --- */
+
+.ob-note-box {
+  padding: 1.25rem 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(244, 247, 251, 0.1);
+  background: rgba(244, 247, 251, 0.03);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(244, 247, 251, 0.65);
+}
+.ob-error {
+  color: #d33;
+  font-size: 0.9rem;
+  margin-top: 12px;
+  text-align: center;
+}

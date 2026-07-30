@@ -1,7 +1,6 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  //baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://16.16.77.123/api'
 })
 
@@ -16,8 +15,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Token missing/expired/invalid — clear local session so the UI reflects logged-out state.
+    if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
     }
