@@ -1,4 +1,4 @@
-import { Icon } from "./icons.jsx";
+import { Icon } from "./Icons.jsx";
 
 export const heroBadges = [
   { icon: Icon.Zap, label: "Fuel adapté à votre effort" },

@@ -1,4 +1,4 @@
-import { steps } from "./data.js";
+import { steps } from "./Data.js";
 
 export default function HowItWorks() {
   return (

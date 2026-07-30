@@ -1,5 +1,5 @@
-import { Icon } from "./icons.jsx";
-import { heroBadges, boxItems, heroPanel } from "./data.js";
+import { Icon } from "./Icons.jsx";
+import { heroBadges, boxItems, heroPanel } from "./Data.js";
 import image from "../assets/image.png";
 
 export default function Hero() {
