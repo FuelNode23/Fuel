@@ -121,7 +121,8 @@ export default function OnboardingFlow() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-     const response = await apiClient.post("/onboarding", userData);
+      const response = await apiClient.post("/onboarding", userData);
+      console.log("response", response)
       navigate("/landing", { state: { onboardingResult: response.data } });
     } catch (err) {
       if (err.response?.status === 401) {
@@ -588,8 +589,8 @@ export default function OnboardingFlow() {
             {submitting
               ? "Submitting..."
               : stepIndex === totalSteps - 1
-              ? "Finish"
-              : "Continue"}
+                ? "Finish"
+                : "Continue"}
           </button>
         </div>
       )}
