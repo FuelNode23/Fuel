@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './WeeklyBox.css';
+import './Weeklybox.css';
 
 // ---- Static data, modeled after the three box options shown in the product ----
 
