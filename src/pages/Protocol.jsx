@@ -20,7 +20,7 @@ import {
   adaptSpecialistProtocols,
   adaptWeeklyBoxItems,
   adaptAssemblyNotes,
-} from "../api/protocoladapters";
+} from "../api/Protocoladapters";
 
 import "./Protocol.css";
 
