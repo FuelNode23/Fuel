@@ -20,7 +20,7 @@ import {
   adaptSpecialistProtocols,
   adaptWeeklyBoxItems,
   adaptAssemblyNotes,
-} from "../api/protocolAdapters";
+} from "../api/protocoladapters";
 
 import "./Protocol.css";
 
@@ -48,7 +48,7 @@ import "./Protocol.css";
  * }
  *
  * All nine child component shapes are now confirmed (see
- * protocolAdapters.js for the full list of field-name/structure
+ * protocoladapters.js for the full list of field-name/structure
  * mismatches between this JSON and what each component expects).
  * AthleteSummary, Assumptions, MissingData, and ErrorState/LoadingState
  * matched already and are passed straight through. Everything else goes
