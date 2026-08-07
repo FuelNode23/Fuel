@@ -412,10 +412,14 @@ export default function OnboardingFlow() {
       if (err.response?.status === 401) {
         // apiClient's response interceptor already cleared localStorage
         // (token/user) on 401 — we just need to redirect here.
-        // Reset the lock so the user can actually retry after logging
-        // back in, since nothing was submitted.
+        // Onboarding never required login up front, so the person has
+        // already filled out all 11 steps by this point - stash their
+        // answers so register/login can resume the submission instead of
+        // losing everything and sending them back to a blank form.
+        // Reset the lock so a resumed submission isn't blocked by it.
         hasSubmittedRef.current = false;
-        navigate("/login", { replace: false });
+        sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
+        navigate("/register", { replace: false });
         return;
       }
       // The backend couldn't save the profile (500, network error, etc.).

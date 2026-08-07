@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { completePendingOnboarding } from "../api/client.js";
 import "./Login.css";
 
 export default function Login() {
@@ -19,7 +20,8 @@ export default function Login() {
 
     try {
       await login(email, password);
-      navigate("/landing");
+      const resumed = await completePendingOnboarding(navigate);
+      if (!resumed) navigate("/landing");
     } catch (err) {
       setError(
         err.response?.data?.message ||

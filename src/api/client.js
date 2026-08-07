@@ -51,4 +51,38 @@ export async function submitOnboarding(userData) {
   return response.data
 }
 
+/**
+ * Onboarding doesn't require login first - a visitor can fill out all 11
+ * steps anonymously. If "Finish" hits a 401, OnboardingFlow stashes the
+ * collected answers under this sessionStorage key and sends the user to
+ * register/login instead of submitting. Call this right after a
+ * successful login/register so that submission actually happens once
+ * there's a real session, instead of stranding the user on a blank
+ * dashboard after they already did all the work.
+ *
+ * @param {(path: string, options?: object) => void} navigate - react-router navigate
+ * @returns {Promise<boolean>} true if a pending submission was found and handled
+ */
+export async function completePendingOnboarding(navigate) {
+  const pending = sessionStorage.getItem('pendingOnboarding')
+  if (!pending) return false
+
+  sessionStorage.removeItem('pendingOnboarding')
+  const userData = JSON.parse(pending)
+
+  try {
+    const onboardingResult = await submitOnboarding(userData)
+    sessionStorage.setItem('protocolHandoff', JSON.stringify({ onboardingResult, userData }))
+    navigate('/protocol', { state: { onboardingResult, userData } })
+  } catch {
+    // Now authenticated, but generation itself failed (500, network, etc.) -
+    // same fallback OnboardingFlow uses: preserve answers, let Protocol's
+    // retry flow handle it, instead of losing everything a second time.
+    sessionStorage.setItem('protocolHandoff', JSON.stringify({ userData, saveFailed: true }))
+    navigate('/protocol', { state: { userData, saveFailed: true } })
+  }
+
+  return true
+}
+
 export default apiClient
