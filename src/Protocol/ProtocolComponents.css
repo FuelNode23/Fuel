@@ -1,0 +1,499 @@
+/* ==========================================================================
+   Protocol Components — shared utility classes & component styles
+   Uses the design tokens defined in src/pages/Protocol/Protocol.css
+   ========================================================================== */
+
+.protocol-section {
+  margin-bottom: var(--protocol-space-xl, 2.5rem);
+}
+
+.protocol-section__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-header .protocol-section__title {
+  margin-bottom: 0;
+}
+
+.section-header__stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.protocol-empty {
+  color: var(--protocol-text-muted, #6b7280);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.protocol-note {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--protocol-text-muted, #6b7280);
+  background: var(--protocol-surface-alt, #f6f5f2);
+  border-radius: var(--protocol-radius, 12px);
+  padding: 0.875rem 1rem;
+}
+
+/* ---- Card grids -------------------------------------------------------- */
+
+.card-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.card-grid--metrics {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.card-grid--meals,
+.card-grid--fueling,
+.card-grid--science {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.card-grid--specialist,
+.card-grid--box {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* ---- Base card ----------------------------------------------------------- */
+
+.card {
+  background: var(--protocol-surface, #ffffff);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: var(--protocol-radius, 12px);
+  padding: 1.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* ---- Metric cards (Macro Targets) ---------------------------------------- */
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.metric-card__label {
+  font-size: 0.8rem;
+  color: var(--protocol-text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metric-card__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--protocol-accent, #b5562f);
+}
+
+.metric-card__unit {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+/* ---- Meal / fueling stage cards ------------------------------------------ */
+
+.meal-card__header,
+.fueling-stage-card__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.meal-card__title,
+.fueling-stage-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+
+.meal-card__timing {
+  font-size: 0.8rem;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.meal-card__targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.pill {
+  background: var(--protocol-surface-alt, #f6f5f2);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.meal-card__details {
+  margin: 0;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--protocol-border, #e5e2da);
+}
+
+.detail-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.detail-row dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.detail-row dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.detail-row__capitalize {
+  text-transform: capitalize;
+}
+
+.meal-card__rationale,
+.specialist-card__rationale,
+.specialist-card__instructions {
+  font-size: 0.85rem;
+  color: var(--protocol-text-muted, #6b7280);
+  margin: 0.85rem 0 0;
+}
+
+.fueling-stage__sublist {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.fueling-stage-card--empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100px;
+}
+
+/* ---- Specialist protocols -------------------------------------------------- */
+
+.specialist-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.specialist-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ---- Badges ------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badge--active {
+  background: #e4f4e8;
+  color: #1e7d3c;
+}
+
+.badge--muted {
+  background: var(--protocol-surface-alt, #f6f5f2);
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+/* ---- Athlete summary ------------------------------------------------------ */
+
+.athlete-summary__meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.athlete-summary__text {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--protocol-text, #1a1a1a);
+  margin: 0;
+}
+
+/* ---- Weekly box / product cards ------------------------------------------- */
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.product-card__image-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  background: var(--protocol-surface-alt, #f6f5f2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.product-card__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.product-card__brand {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+/* ---- Science cards --------------------------------------------------------- */
+
+.science-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.science-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.science-card__headline {
+  margin: 0;
+  font-weight: 500;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.science-card__expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.science-card__layer {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--protocol-text-muted, #6b7280);
+  line-height: 1.55;
+}
+
+.science-card__layer--deep {
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--protocol-border, #e5e2da);
+}
+
+.science-card__toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--protocol-accent, #b5562f);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.science-card__toggle:hover {
+  text-decoration: underline;
+}
+
+/* ---- Checklist (assumptions) ----------------------------------------------- */
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.checklist__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.checklist__icon {
+  color: #1e7d3c;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ---- Warning cards (missing data) ------------------------------------------ */
+
+.warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.warning-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #fdf3e7;
+  border: 1px solid #f1d9b5;
+  border-radius: var(--protocol-radius, 12px);
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  color: #8a5a12;
+}
+
+.warning-card__icon {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ---- Loading / error status ------------------------------------------------ */
+
+.protocol-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 4rem 1.5rem;
+}
+
+.protocol-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--protocol-border, #e5e2da);
+  border-top-color: var(--protocol-accent, #b5562f);
+  border-radius: 50%;
+  animation: protocol-spin 0.8s linear infinite;
+}
+
+@keyframes protocol-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.protocol-status__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fdeceb;
+  color: #c0392b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.protocol-status__title {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.protocol-status__text {
+  color: var(--protocol-text-muted, #6b7280);
+  max-width: 420px;
+  margin: 0;
+}
+
+.protocol-status__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* ---- Buttons ------------------------------------------------------------- */
+
+.btn {
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--primary {
+  background: var(--protocol-accent, #b5562f);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: var(--protocol-accent-hover, #9c4726);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--protocol-border, #e5e2da);
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.btn--ghost:hover {
+  background: var(--protocol-surface-alt, #f6f5f2);
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 640px) {
+  .protocol-section__title {
+    font-size: 1.1rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .protocol-status {
+    padding: 2.5rem 1rem;
+  }
+}

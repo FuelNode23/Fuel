@@ -33,10 +33,10 @@ export const questions = [
     type: "text",
     title: "Tell us about yourself",
     fields: [
-      { name: "prenom", label: "First name", placeholder: "e.g. ganesh" },
-      { name: "age", label: "Age", inputType: "number", placeholder: "e.g. 22" },
+      { name: "name", label: "First name", placeholder: "Enter your name" },
+      { name: "age", label: "Age", inputType: "number", placeholder: "Enter your age" },
       {
-        name: "sexe",
+        name: "gender",
         label: "Gender",
         type: "select",
         options: ["Male", "Female", "Other"],
@@ -48,8 +48,8 @@ export const questions = [
     type: "text",
     title: "Your measurements",
     fields: [
-      { name: "poids", label: "Weight (kg)", inputType: "number", placeholder: "e.g. 70" },
-      { name: "taille", label: "Height (cm)", inputType: "number", placeholder: "e.g. 170" },
+      { name: "weight", label: "Weight (kg)", inputType: "number", placeholder: "e.g. 70" },
+      { name: "height", label: "Height (cm)", inputType: "number", placeholder: "e.g. 170" },
     ],
   },
   {
@@ -60,13 +60,13 @@ export const questions = [
     helperText: "Tap the cards to build your sports profile.",
     name: "sports",
     options: [
-      { value: "Running", description: "Route, trail, piste" },
-      { value: "Cycling", description: "Route, gravel, VTT" },
-      { value: "Triathlon", description: "Enchaînement natation, vélo, course" },
+      { value: "Running", description: "Road, trail, track" },
+      { value: "Cycling", description: "Road, gravel, MTB" },
+      { value: "Triathlon", description: "Swim, bike, run combined" },
     ],
     groups: [
       {
-        name: "objectifs",
+        name: "goals",
         type: "multi-select",
         label: "What is your objective?",
         options: [
@@ -97,7 +97,7 @@ export const questions = [
           },
         },
         {
-          name: "niveau",
+          name: "level",
           label: "Experience level",
           type: "select",
           options: ["Beginner", "Intermediate", "Advanced", "Elite"],
@@ -127,15 +127,15 @@ export const questions = [
         title: "Your training profile",
         subtitle: "Data extracted from Apple Health. Edit if needed.",
         fields: [
-          { name: "seances_semaine", label: "Sessions / week (count)", inputType: "number", placeholder: "e.g. 4" },
-          { name: "distance_semaine", label: "Distance / week (km)", inputType: "number", placeholder: "e.g. 35" },
+          { name: "sessions_per_week", label: "Sessions / week (count)", inputType: "number", placeholder: "e.g. 4" },
+          { name: "distance_per_week", label: "Distance / week (km)", inputType: "number", placeholder: "e.g. 35" },
         ],
         groups: [
           {
             name: "training_days",
             type: "multi-select",
             label: "Training days",
-            options: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
+            options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
           },
           {
             name: "session_time",
@@ -162,10 +162,10 @@ export const questions = [
           note: "Accepted format: 5:30, 5m30, or 5:30 min/km.",
         },
         fields: [
-          { name: "seances_semaine", label: "Sessions per week (count)", inputType: "number", placeholder: "e.g. 4" },
-          { name: "distance_typique", label: "Typical distance per session (km)", inputType: "number", placeholder: "e.g. 6" },
-          { name: "allure", label: "Pace (min/km)", placeholder: "e.g. 4:00" },
-          { name: "denivele_moyen", label: "Average elevation (m)", inputType: "number", placeholder: "e.g. 21" },
+          { name: "sessions_per_week", label: "Sessions per week (count)", inputType: "number", placeholder: "e.g. 4" },
+          { name: "typical_distance", label: "Typical distance per session (km)", inputType: "number", placeholder: "e.g. 6" },
+          { name: "pace", label: "Pace (min/km)", placeholder: "e.g. 4:00" },
+          { name: "avg_elevation", label: "Average elevation (m)", inputType: "number", placeholder: "e.g. 21" },
         ],
         groups: [
           {
@@ -183,35 +183,35 @@ export const questions = [
     id: 6,
     type: "select",
     title: "Do you have a target event planned?",
-    name: "course_prevue",
+    name: "target_event",
     options: ["Yes", "No"],
     conditionalFields: {
       when: "Yes",
       fields: [
-        { name: "course_nom", label: "Event name", placeholder: "E.g. Paris Marathon" },
+        { name: "event_name", label: "Event name", placeholder: "E.g. Paris Marathon" },
         {
-          name: "course_sport",
+          name: "event_sport",
           label: "Sport",
           type: "dropdown",
           placeholder: "— Choose —",
           options: ["Running", "Cycling", "Triathlon"],
         },
         {
-          name: "course_type",
+          name: "event_format",
           label: "Format",
           type: "dropdown",
           placeholder: "— Choose —",
-          dependsOn: "course_sport",
+          dependsOn: "event_sport",
           optionsBySport: {
-            Running: ["5 km", "10 km", "Semi-marathon", "Marathon", "Ultra Running", "Trail (préciser la distance)"],
-            Cycling: ["Route (préciser la distance)", "Gravel", "VTC (préciser la distance)", "VTT (préciser la distance)"],
+            Running: ["5 km", "10 km", "Half marathon", "Marathon", "Ultra Running", "Trail (specify distance)"],
+            Cycling: ["Road (specify distance)", "Gravel", "Hybrid bike (specify distance)", "MTB (specify distance)"],
             Triathlon: ["Sprint", "Olympic", "Half (70.3)", "Full (Ironman)"],
           },
         },
       ],
       groups: [
         {
-          name: "objectif_temps",
+          name: "expected_event_time",
           type: "select",
           label: "Expected event time",
           options: ["Early morning", "Morning", "Afternoon", "Evening", "Night"],
@@ -219,16 +219,16 @@ export const questions = [
         },
       ],
       moreFields: [
-        { name: "course_semaines", label: "In how many weeks? (wk)", placeholder: "E.g. 10" },
+        { name: "weeks_until_event", label: "In how many weeks? (wk)", placeholder: "E.g. 10" },
         {
-          name: "course_temps_cible",
+          name: "target_time",
           label: "Goal time (h:mm)",
           placeholder: "E.g. 3:30",
           note: "Example: 3:30 means 3h 30m. Accepted: 3:30, 3h30, or 210 min.",
         },
-        { name: "course_lieu", label: "Event location", placeholder: "E.g. Paris" },
+        { name: "event_location", label: "Event location", placeholder: "E.g. Paris" },
         {
-          name: "course_denivele",
+          name: "elevation_gain",
           label: "Elevation gain (m) *",
           inputType: "number",
           placeholder: "e.g. 499",
@@ -242,12 +242,12 @@ export const questions = [
     id: 7,
     type: "select",
     title: "Sensitivities",
-    name: "sensibilite_estomac",
+    name: "stomach_sensitivity",
     label: "Stomach sensitivity",
     options: ["None", "Mild", "Moderate", "High"],
     groups: [
       {
-        name: "cafeine",
+        name: "caffeine_intake",
         type: "select",
         label: "Caffeine intake",
         options: ["Never", "Occasional", "Regular", "Heavy user"],
@@ -258,7 +258,7 @@ export const questions = [
     id: 8,
     type: "select",
     title: "Diet",
-    name: "regime",
+    name: "diet_pattern",
     label: "Diet pattern",
     options: ["Omnivore", "Vegetarian", "Vegan", "Pescatarian"],
     groups: [
@@ -276,7 +276,7 @@ export const questions = [
     title: "Your preferences",
     subtitle: "Preferred formats",
     helperText: "Choose the formats you actually want to open and use on the move.",
-    name: "formats_preferes",
+    name: "preferred_formats",
     options: [
       { value: "Fluid gel", icon: "💧", description: "Compact, fast to open, easy to take when the pace rises." },
       { value: "Chewable bar", icon: "📦", description: "Chewy texture for longer or more progressive sessions." },
@@ -287,13 +287,13 @@ export const questions = [
     ],
     groups: [
       {
-        name: "complements",
+        name: "supplement_type",
         type: "multi-select",
         label: "Preferred mental supplement type",
         options: ["Focus", "Relaxation", "Sleep", "Energy", "None"],
       },
     ],
-    note: "cuisine_inspiration is also collected here for UI personalization only — stripped before the AI call.",
+    note: "cooking_inspiration is also collected here for UI personalization only — stripped before the AI call.",
   },
  {
     id: 10,
@@ -309,7 +309,7 @@ export const questions = [
     options: ["Monday", "Wednesday", "Friday"],
     fullWidthOptions: true,
     notes: [
-      "You can cancel or change your protocol until mardi at noon.",
+      "You can cancel or change your protocol until Tuesday at noon.",
       "You can collect your box upto 7 days after delivery",
     ],
   },

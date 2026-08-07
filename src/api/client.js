@@ -1,7 +1,10 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://16.16.77.123/api'
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://16.16.77.123/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
 
 apiClient.interceptors.request.use((config) => {
@@ -22,5 +25,27 @@ apiClient.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+/**
+ * Single call: submit onboarding answers, backend calls Claude, and the
+ * AI-generated protocol comes back as JSON in this same response.
+ * This is the ONLY place protocol generation happens — OnboardingFlow
+ * calls this once on "Finish", and the result is carried forward via
+ * navigate() state + sessionStorage. Nothing else should call the
+ * generation endpoint again for the same submission.
+ *
+ * Response shape (camelCase): { title, generated, language,
+ * athleteSummary, macroTargets, dietProtocol, fuelingProtocol,
+ * activeSpecialistProtocols, weeklyBox: { totalProducts,
+ * frenchBrandsPercent, products }, assemblyNotes, scienceCards,
+ * protocolChangelog, assumptionsMade, missingData }.
+ *
+ * @param {object} userData - collected onboarding answers
+ * @returns {Promise<object>} protocol JSON, shape above
+ */
+export async function submitOnboarding(userData) {
+  const response = await apiClient.post('/protocol/generate-with-profile', userData)
+  return response.data
+}
 
 export default apiClient
