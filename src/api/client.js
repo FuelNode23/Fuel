@@ -34,11 +34,14 @@ apiClient.interceptors.response.use(
  * navigate() state + sessionStorage. Nothing else should call the
  * generation endpoint again for the same submission.
  *
- * Response shape (camelCase): { title, generated, language,
- * athleteSummary, macroTargets, dietProtocol, fuelingProtocol,
- * activeSpecialistProtocols, weeklyBox: { totalProducts,
- * frenchBrandsPercent, products }, assemblyNotes, scienceCards,
- * protocolChangelog, assumptionsMade, missingData }.
+ * Response shape (snake_case, straight from Claude — see
+ * Protocoladapters.js for the full confirmed field list): {
+ * protocol_version, generated_date, language, athlete_summary,
+ * macro_targets, diet_protocol, fueling_protocol,
+ * active_specialist_protocols, weekly_box_contents,
+ * box_total_products, box_french_brand_percentage, assembly_notes,
+ * science_cards, protocol_changelog, assumptions_made,
+ * missing_data_flags }.
  *
  * @param {object} userData - collected onboarding answers
  * @returns {Promise<object>} protocol JSON, shape above

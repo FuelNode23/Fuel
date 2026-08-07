@@ -25,41 +25,18 @@ import {
 import "./Protocol.css";
 
 /**
- * The backend's /onboarding response is real JSON (camelCase), shaped
- * like this (see the sample response you shared):
+ * OnboardingFlow's single POST /protocol/generate-with-profile call
+ * returns Claude's generated protocol JSON directly (snake_case, see
+ * Protocoladapters.js for the full confirmed shape and backend
+ * main/resources/prompts/protocol-system.txt for the source schema).
+ * That shape already matches what every Protocol child component
+ * expects, so most props are passed straight through; the adapters in
+ * Protocoladapters.js only cover genuine gaps (e.g.
+ * active_specialist_protocols being plain strings instead of objects)
+ * and defend against a field being missing or null, which the prompt
+ * itself allows for.
  *
- * {
- *   title, generated, language,
- *   athleteSummary: string,
- *   macroTargets: { bmrKcal, tdeeKcal, proteinPerDayG, fatPerDayG,
- *                   restDayCarbsG, easyDayCarbsG, hardDayCarbsG,
- *                   longEffortCarbsG },
- *   dietProtocol: [ { meal, timing, targets, base, protein, fibre,
- *                      constraints, productPairing } ],
- *   fuelingProtocol: [ { phase, timing, recommendation, product, ... } ],
- *   activeSpecialistProtocols: [ string ],
- *   weeklyBox: { totalProducts, frenchBrandsPercent, products: [ {...} ] },
- *   assemblyNotes: [ string ],
- *   scienceCards: [ { product, quickExplanation, howItWorks,
- *                      researchBrandContext } ],
- *   protocolChangelog: [ string ],
- *   assumptionsMade: [ string ],
- *   missingData: [ string ]
- * }
- *
- * All nine child component shapes are now confirmed (see
- * protocoladapters.js for the full list of field-name/structure
- * mismatches between this JSON and what each component expects).
- * AthleteSummary, Assumptions, MissingData, and ErrorState/LoadingState
- * matched already and are passed straight through. Everything else goes
- * through an adapter before being passed down.
- *
- * There's also no `protocolVersion`-equivalent field in this response
- * (there's `protocolChangelog` instead) — `version` below is left
- * unset; wire it up if AthleteSummary needs something there.
- *
- * Data handoff unchanged: OnboardingFlow's single POST /onboarding call
- * gets this JSON back and passes it via navigate() state (fresh) or
+ * Data handoff: the result is passed via navigate() state (fresh) or
  * sessionStorage "protocolHandoff" (survives a hard refresh, since
  * location.state does not).
  */
@@ -168,32 +145,32 @@ export default function Protocol() {
         </header>
 
         <AthleteSummary
-          summary={protocol.athleteSummary}
-          generatedDate={protocol.generated}
+          summary={protocol.athlete_summary}
+          generatedDate={protocol.generated_date}
           language={protocol.language}
-          version={undefined}
+          version={protocol.protocol_version}
         />
 
-        <MacroTargets macroTargets={adaptMacroTargets(protocol.macroTargets)} />
+        <MacroTargets macroTargets={adaptMacroTargets(protocol.macro_targets)} />
 
-        <DietProtocol dietProtocol={adaptDietProtocol(protocol.dietProtocol)} />
+        <DietProtocol dietProtocol={adaptDietProtocol(protocol.diet_protocol)} />
 
-        <FuelingProtocol fuelingProtocol={adaptFuelingProtocol(protocol.fuelingProtocol)} />
+        <FuelingProtocol fuelingProtocol={adaptFuelingProtocol(protocol.fueling_protocol)} />
 
-        <SpecialistProtocols protocols={adaptSpecialistProtocols(protocol.activeSpecialistProtocols)} />
+        <SpecialistProtocols protocols={adaptSpecialistProtocols(protocol.active_specialist_protocols)} />
 
         <WeeklyBox
-          items={adaptWeeklyBoxItems(protocol.weeklyBox?.products)}
-          totalProducts={protocol.weeklyBox?.totalProducts}
-          frenchBrandPercentage={protocol.weeklyBox?.frenchBrandsPercent}
-          assemblyNotes={adaptAssemblyNotes(protocol.assemblyNotes)}
+          items={adaptWeeklyBoxItems(protocol.weekly_box_contents)}
+          totalProducts={protocol.box_total_products}
+          frenchBrandPercentage={protocol.box_french_brand_percentage}
+          assemblyNotes={adaptAssemblyNotes(protocol.assembly_notes)}
         />
 
-        <ScienceCards cards={adaptScienceCards(protocol.scienceCards)} />
+        <ScienceCards cards={adaptScienceCards(protocol.science_cards)} />
 
-        <Assumptions assumptions={protocol.assumptionsMade} />
+        <Assumptions assumptions={protocol.assumptions_made} />
 
-        <MissingData flags={protocol.missingData} />
+        <MissingData flags={protocol.missing_data_flags} />
       </div>
     </div>
   );

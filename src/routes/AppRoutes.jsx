@@ -6,6 +6,8 @@ import Register from "../pages/Register";
 import OnboardingFlow from "../pages/OnboardingFlow";
 import Protocol from "../pages/Protocol" ;
 import WeeklyBox from "../pages/Weeklybox";
+import Profile from "../pages/Profile";
+import Dashboard from "../pages/Dashboard";
 
 const AppRoutes = () => {
   return (
@@ -21,6 +23,10 @@ const AppRoutes = () => {
        <Route path="/protocol" element={<Protocol />} />
 
         <Route path="/weeklybox" element={<WeeklyBox />} />
+
+        <Route path="/profile" element={<Profile />} />
+
+        <Route path="/dashboard" element={<Dashboard />} />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
