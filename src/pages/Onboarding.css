@@ -561,3 +561,97 @@
 .ob-auth-switch:hover {
   color: #f4f7fb;
 }
+
+/* --- Added for the "no changes" confirm dialog + generating overlay --- */
+
+.ob-blocking-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(4px);
+}
+
+.ob-blocking-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(244, 247, 251, 0.15);
+  border-top-color: #22c55e;
+  border-radius: 50%;
+  animation: ob-spin 0.8s linear infinite;
+}
+
+@keyframes ob-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ob-blocking-text {
+  max-width: 26rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #f4f7fb;
+}
+
+.ob-confirm-card {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.75rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(244, 247, 251, 0.14);
+  background: #141a29;
+  text-align: left;
+}
+
+.ob-confirm-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ob-confirm-text {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(244, 247, 251, 0.65);
+  margin: 0;
+}
+
+.ob-confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.ob-confirm-cancel {
+  height: 3rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(244, 247, 251, 0.14);
+  background: transparent;
+  color: #f4f7fb;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ob-confirm-cancel:hover {
+  border-color: rgba(244, 247, 251, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-blocking-spinner {
+    animation: none;
+    border-top-color: rgba(244, 247, 251, 0.15);
+  }
+}
