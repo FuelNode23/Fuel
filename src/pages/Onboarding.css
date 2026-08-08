@@ -544,3 +544,20 @@
   margin-top: 12px;
   text-align: center;
 }
+
+/* --- Added for the onboarding auth gate (register/login as Step 1) --- */
+
+.ob-auth-switch {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  color: rgba(244, 247, 251, 0.6);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ob-auth-switch:hover {
+  color: #f4f7fb;
+}

@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
 import { questions } from "../api/Questions.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import "../pages/Onboarding.css";
 
 /**
@@ -25,6 +26,26 @@ const translations = {
   Chosen: "Choisi",
   Tap: "Toucher",
   "Select sport first": "Choisir un sport d'abord",
+
+  // Auth gate (Step 1: create account / sign in)
+  "Create your account": "Créez votre compte",
+  "Log in": "Se connecter",
+  "Create an account to save your answers and get your personalized nutrition protocol.":
+    "Créez un compte pour enregistrer vos réponses et obtenir votre protocole nutritionnel personnalisé.",
+  "Full name": "Nom complet",
+  "Enter your full name": "Entrez votre nom complet",
+  Email: "E-mail",
+  "Enter your email": "Entrez votre e-mail",
+  Password: "Mot de passe",
+  "Enter your password": "Entrez votre mot de passe",
+  "Already have an account? Log in": "Vous avez déjà un compte ? Connectez-vous",
+  "Need an account? Sign up": "Besoin d'un compte ? Inscrivez-vous",
+  "Sign Up": "S'inscrire",
+  "Creating account...": "Création du compte...",
+  "Logging in...": "Connexion en cours...",
+  "Password must be at least 8 characters long.": "Le mot de passe doit contenir au moins 8 caractères.",
+  "Registration failed. Please try again.": "Échec de l'inscription. Veuillez réessayer.",
+  "Login failed. Please check your credentials.": "Échec de la connexion. Veuillez vérifier vos identifiants.",
 
   // Step 1
   "Tell us about yourself": "Parlez-nous de vous",
@@ -244,11 +265,23 @@ const translations = {
  */
 export default function OnboardingFlow() {
   const navigate = useNavigate();
+  const { user, loading: authLoading, login, register } = useAuth();
+
   const [stepIndex, setStepIndex] = useState(0);
   const [userData, setUserData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [language, setLanguage] = useState("en");
+
+  // Auth gate (Step 1 of the flow): create an account or sign in before
+  // any question is shown. Once `user` is set, this component re-renders
+  // straight into the question wizard below - nothing else has to change.
+  const [authMode, setAuthMode] = useState("register");
+  const [authFullName, setAuthFullName] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
   // Ref-based lock: blocks a second submitOnboarding() call from firing
   // (rapid double-click, StrictMode double-invoke, going back a step and
@@ -275,6 +308,35 @@ export default function OnboardingFlow() {
 
   const toggleLanguage = () => {
     setLanguage((prev) => (prev === "en" ? "fr" : "en"));
+  };
+
+  const handleAuthSubmit = async () => {
+    setAuthError("");
+    if (authMode === "register" && authPassword.length < 8) {
+      setAuthError(t("Password must be at least 8 characters long."));
+      return;
+    }
+    setAuthSubmitting(true);
+    try {
+      if (authMode === "register") {
+        await register(authEmail, authPassword, authFullName);
+      } else {
+        await login(authEmail, authPassword);
+      }
+      // `user` is now set by AuthContext, so this component re-renders
+      // straight into the question wizard - no navigation needed.
+    } catch (err) {
+      setAuthError(
+        err.response?.data?.message ||
+          t(
+            authMode === "register"
+              ? "Registration failed. Please try again."
+              : "Login failed. Please check your credentials."
+          )
+      );
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
   // Coerces raw <input> values before they land in state. Any field
@@ -411,15 +473,16 @@ export default function OnboardingFlow() {
     } catch (err) {
       if (err.response?.status === 401) {
         // apiClient's response interceptor already cleared localStorage
-        // (token/user) on 401 — we just need to redirect here.
-        // Onboarding never required login up front, so the person has
-        // already filled out all 11 steps by this point - stash their
-        // answers so register/login can resume the submission instead of
-        // losing everything and sending them back to a blank form.
+        // (token/user) on 401 — we just need to redirect here. Onboarding
+        // now requires signing in at Step 1, so reaching Finish without a
+        // valid session means the token expired or was cleared mid-flow -
+        // the person already has an account, so send them to log back in
+        // rather than register again. Stash their answers so login can
+        // resume the submission instead of losing everything.
         // Reset the lock so a resumed submission isn't blocked by it.
         hasSubmittedRef.current = false;
         sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
-        navigate("/register", { replace: false });
+        navigate("/login", { replace: false });
         return;
       }
       // The backend couldn't save the profile (500, network error, etc.).
@@ -573,6 +636,126 @@ export default function OnboardingFlow() {
       </div>
     );
   };
+
+  // Still checking localStorage for an existing session - render nothing
+  // rather than flashing the auth gate for a visitor who's already logged in.
+  if (authLoading) {
+    return <div className="ob-page" />;
+  }
+
+  // Step 1 of the flow: no question is shown until there's an account.
+  if (!user) {
+    return (
+      <div className="ob-page">
+        <div className="ob-bg-glow">
+          <div className="ob-bg-glow-top" />
+        </div>
+
+        <div className="ob-topbar">
+          <span />
+          <button
+            type="button"
+            className="ob-lang"
+            onClick={toggleLanguage}
+            aria-label={language === "en" ? "Switch to French" : "Passer en anglais"}
+          >
+            {language === "en" ? "FR" : "EN"}
+          </button>
+        </div>
+
+        <div className="ob-content">
+          <div className="ob-brand">FuelNode</div>
+          <h1 className="ob-title">
+            {t(authMode === "register" ? "Create your account" : "Log in")}
+          </h1>
+          <p className="ob-helper-text">
+            {t(
+              "Create an account to save your answers and get your personalized nutrition protocol."
+            )}
+          </p>
+
+          <div className="ob-fields">
+            {authMode === "register" && (
+              <div className="ob-field">
+                <label className="ob-label" htmlFor="auth-fullname">
+                  {t("Full name")}
+                </label>
+                <input
+                  id="auth-fullname"
+                  className="ob-input"
+                  type="text"
+                  value={authFullName}
+                  placeholder={t("Enter your full name")}
+                  onChange={(e) => setAuthFullName(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="ob-field">
+              <label className="ob-label" htmlFor="auth-email">
+                {t("Email")}
+              </label>
+              <input
+                id="auth-email"
+                className="ob-input"
+                type="email"
+                value={authEmail}
+                placeholder={t("Enter your email")}
+                onChange={(e) => setAuthEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="ob-field">
+              <label className="ob-label" htmlFor="auth-password">
+                {t("Password")}
+              </label>
+              <input
+                id="auth-password"
+                className="ob-input"
+                type="password"
+                value={authPassword}
+                placeholder={t("Enter your password")}
+                onChange={(e) => setAuthPassword(e.target.value)}
+              />
+            </div>
+
+            {authError && <p className="ob-error">{authError}</p>}
+
+            <button
+              type="button"
+              className="ob-auth-switch"
+              onClick={() => {
+                setAuthMode((prev) => (prev === "register" ? "login" : "register"));
+                setAuthError("");
+              }}
+            >
+              {authMode === "register"
+                ? t("Already have an account? Log in")
+                : t("Need an account? Sign up")}
+            </button>
+          </div>
+        </div>
+
+        <div className="ob-footer">
+          <button
+            type="button"
+            className="ob-continue"
+            onClick={handleAuthSubmit}
+            disabled={
+              authSubmitting ||
+              !authEmail ||
+              !authPassword ||
+              (authMode === "register" && !authFullName)
+            }
+          >
+            {authSubmitting
+              ? t(authMode === "register" ? "Creating account..." : "Logging in...")
+              : t(authMode === "register" ? "Sign Up" : "Log in")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ob-page">
