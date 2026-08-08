@@ -83,7 +83,8 @@
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: rgba(244, 247, 251, 0.28);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 /* ---- Metric cards (Macro Targets) ---------------------------------------- */
@@ -233,8 +234,8 @@
 }
 
 .badge--active {
-  background: #e4f4e8;
-  color: #1e7d3c;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
 }
 
 .badge--muted {
@@ -381,12 +382,12 @@
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
-  background: #fdf3e7;
-  border: 1px solid #f1d9b5;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: var(--protocol-radius, 12px);
   padding: 0.85rem 1rem;
   font-size: 0.88rem;
-  color: #8a5a12;
+  color: #fbbf24;
 }
 
 .warning-card__icon {
@@ -425,8 +426,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #fdeceb;
-  color: #c0392b;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
   display: flex;
   align-items: center;
   justify-content: center;
