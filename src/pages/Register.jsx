@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { completePendingOnboarding } from "../api/client.js";
 import "./Login.css";
 
 export default function Register() {
@@ -27,8 +28,11 @@ export default function Register() {
     try {
       await register(email, password, fullName);
 
-      // Redirect to login after successful registration
-      navigate("/login");
+      // register() already persists a session, so if the person came from
+      // onboarding, finish that submission now instead of making them log
+      // in again just to redo the same request.
+      const resumed = await completePendingOnboarding(navigate);
+      if (!resumed) navigate("/login");
     } catch (err) {
       setError(
         err.response?.data?.message ||

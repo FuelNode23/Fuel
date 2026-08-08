@@ -1,0 +1,54 @@
+.account-bar {
+  position: fixed;
+  top: 1rem;
+  right: 1.25rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(10, 14, 26, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(244, 247, 251, 0.14);
+}
+
+.account-bar__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f4f7fb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
+.account-bar__logout {
+  background: none;
+  border: 1px solid rgba(244, 247, 251, 0.2);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(244, 247, 251, 0.7);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.account-bar__logout:hover {
+  border-color: rgba(244, 247, 251, 0.4);
+  color: #f4f7fb;
+}
+
+@media (max-width: 480px) {
+  .account-bar {
+    top: 0.6rem;
+    right: 0.75rem;
+    padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+  }
+
+  .account-bar__name {
+    max-width: 6rem;
+  }
+}

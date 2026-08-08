@@ -1,34 +1,62 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import apiClient from '../api/client.js'
+import AccountBar from '../components/AccountBar.jsx'
 
-const ACTIVITY_LEVELS = [
-  { value: 'SEDENTARY', label: 'Sedentary (little or no exercise)' },
-  { value: 'LIGHTLY_ACTIVE', label: 'Lightly active (1-3 days/week)' },
-  { value: 'MODERATELY_ACTIVE', label: 'Moderately active (3-5 days/week)' },
-  { value: 'VERY_ACTIVE', label: 'Very active (6-7 days/week)' },
-  { value: 'EXTRA_ACTIVE', label: 'Extra active (2x/day or physical job)' }
-]
-
-const GOALS = [
-  { value: 'CUTTING', label: 'Cutting (fat loss, preserve muscle)' },
-  { value: 'MAINTENANCE', label: 'Maintenance' },
-  { value: 'BULKING', label: 'Bulking (lean mass gain)' }
-]
+const GENDERS = ['Male', 'Female', 'Other']
 
 const emptyForm = {
+  name: '',
   age: '',
-  gender: 'MALE',
-  heightCm: '',
-  weightKg: '',
-  activityLevel: 'MODERATELY_ACTIVE',
-  goal: 'MAINTENANCE',
-  sport: ''
+  gender: 'Male',
+  weight: '',
+  height: '',
+}
+
+// This page only edits the basics (name/age/gender/weight/height).
+// Everything else on the athlete's profile (sports, goals, race plan,
+// diet preferences, delivery day, ...) was collected during onboarding
+// and must be sent back unchanged on save — PUT /athletes/profile
+// overwrites every field it's given, so omitting them would wipe them.
+function buildCarryForward(profile) {
+  if (!profile) return {}
+  return {
+    sports: (profile.sports || []).map((s) => s.sport),
+    sport_profiles: Object.fromEntries(
+      (profile.sports || []).map((s) => [
+        s.sport,
+        { discipline: s.discipline, level: s.experienceLevel },
+      ])
+    ),
+    goals: profile.objectives || [],
+    connectChoice: profile.connectChoice,
+    sessions_per_week: profile.sessionsPerWeek,
+    typical_distance: profile.weeklyDistanceKm,
+    pace: profile.averagePace,
+    avg_elevation: profile.averageElevation,
+    session_time: profile.trainingTime,
+    target_event: profile.racePlanned ? 'Yes' : 'No',
+    goal_event: profile.goalEvent,
+    race_distance: profile.raceDistance,
+    weeks_to_event: profile.weeksToEvent,
+    race_date: profile.raceDate,
+    event_location: profile.eventLocation,
+    stomach_sensitivity: profile.stomachSensitivity,
+    caffeine_intake: profile.caffeinePreference,
+    diet_pattern: profile.regime,
+    restrictions: profile.restrictions || [],
+    preferred_formats: profile.preferredFormats || [],
+    supplement_type: profile.supplements || [],
+    delivery_day: profile.deliveryDay,
+    nutrition_issue_history: profile.nutritionIssueHistory,
+  }
 }
 
 export default function Profile() {
   const navigate = useNavigate()
   const [form, setForm] = useState(emptyForm)
+  const [existingProfile, setExistingProfile] = useState(null)
+  const [hasProfile, setHasProfile] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -40,20 +68,19 @@ export default function Profile() {
     apiClient
       .get('/athletes/profile')
       .then(({ data }) => {
-        if (!cancelled) {
-          setForm({
-            age: data.age ?? '',
-            gender: data.gender ?? 'MALE',
-            heightCm: data.heightCm ?? '',
-            weightKg: data.weightKg ?? '',
-            activityLevel: data.activityLevel ?? 'MODERATELY_ACTIVE',
-            goal: data.goal ?? 'MAINTENANCE',
-            sport: data.sport ?? ''
-          })
-        }
+        if (cancelled) return
+        setExistingProfile(data)
+        setHasProfile(true)
+        setForm({
+          name: data.firstName ?? '',
+          age: data.age ?? '',
+          gender: data.gender ?? 'Male',
+          weight: data.weightKg ?? '',
+          height: data.heightCm ?? '',
+        })
       })
       .catch((err) => {
-        // 404 just means the athlete hasn't created a profile yet — keep the blank form.
+        // 404 just means the athlete hasn't completed onboarding yet.
         if (err.response?.status !== 404 && !cancelled) {
           setError('Could not load your profile.')
         }
@@ -78,10 +105,12 @@ export default function Profile() {
     setSubmitting(true)
     try {
       await apiClient.put('/athletes/profile', {
-        ...form,
+        name: form.name,
         age: Number(form.age),
-        heightCm: Number(form.heightCm),
-        weightKg: Number(form.weightKg)
+        gender: form.gender,
+        weight: Number(form.weight),
+        height: Number(form.height),
+        ...buildCarryForward(existingProfile),
       })
       setSuccess('Profile saved.')
     } catch (err) {
@@ -95,12 +124,32 @@ export default function Profile() {
     return <div className="page-center">Loading profile...</div>
   }
 
+  if (!hasProfile) {
+    return (
+      <div className="card form-card">
+        <AccountBar />
+        <h1>Athlete profile</h1>
+        {error && <div className="alert-error">{error}</div>}
+        <p>You haven&apos;t completed onboarding yet, so there&apos;s no profile to edit.</p>
+        <button type="button" onClick={() => navigate('/onboarding')}>
+          Start onboarding
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="card form-card">
+      <AccountBar />
       <h1>Athlete profile</h1>
       {error && <div className="alert-error">{error}</div>}
       {success && <div className="alert-success">{success}</div>}
       <form onSubmit={handleSubmit}>
+        <label>
+          First name
+          <input type="text" value={form.name} onChange={handleChange('name')} required />
+        </label>
+
         <label>
           Age
           <input type="number" min="10" max="100" value={form.age} onChange={handleChange('age')} required />
@@ -109,8 +158,9 @@ export default function Profile() {
         <label>
           Gender
           <select value={form.gender} onChange={handleChange('gender')}>
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
+            {GENDERS.map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))}
           </select>
         </label>
 
@@ -121,8 +171,8 @@ export default function Profile() {
             step="0.1"
             min="50"
             max="260"
-            value={form.heightCm}
-            onChange={handleChange('heightCm')}
+            value={form.height}
+            onChange={handleChange('height')}
             required
           />
         </label>
@@ -134,34 +184,26 @@ export default function Profile() {
             step="0.1"
             min="20"
             max="400"
-            value={form.weightKg}
-            onChange={handleChange('weightKg')}
+            value={form.weight}
+            onChange={handleChange('weight')}
             required
           />
         </label>
 
-        <label>
-          Activity level
-          <select value={form.activityLevel} onChange={handleChange('activityLevel')}>
-            {ACTIVITY_LEVELS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Goal
-          <select value={form.goal} onChange={handleChange('goal')}>
-            {GOALS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Primary sport (optional)
-          <input type="text" value={form.sport} onChange={handleChange('sport')} placeholder="e.g. Marathon running" />
-        </label>
+        {existingProfile?.sports?.length > 0 && (
+          <div className="profile-sports-readonly">
+            <span>Sports</span>
+            <ul>
+              {existingProfile.sports.map((s) => (
+                <li key={s.id ?? s.sport}>
+                  {s.sport}
+                  {s.discipline ? ` · ${s.discipline}` : ''}
+                  {s.experienceLevel ? ` · ${s.experienceLevel}` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <button type="submit" disabled={submitting}>
           {submitting ? 'Saving...' : 'Save profile'}

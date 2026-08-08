@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import apiClient from '../api/client.js'
+import AccountBar from '../components/AccountBar.jsx'
 
 export default function Dashboard() {
   const [plan, setPlan] = useState(null)
@@ -54,6 +55,7 @@ export default function Dashboard() {
 
   return (
     <div className="card">
+      <AccountBar />
       <h1>Your nutrition dashboard</h1>
       {error && <div className="alert-error">{error}</div>}
       {needsProfile && (

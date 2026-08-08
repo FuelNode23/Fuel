@@ -1,4 +1,4 @@
-import { Icon } from "./icons.jsx";
+import { Icon } from "./Icons.jsx";
 import OnboardingFlow from "../pages/OnboardingFlow.jsx";
 
 export default function Cta() {
