@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
 import { questions } from "../api/Questions.js";
@@ -362,6 +362,34 @@ export default function OnboardingFlow() {
   const initialUserDataRef = useRef(null);
   const [showNoChangeConfirm, setShowNoChangeConfirm] = useState(false);
 
+  // Pre-fill from an existing saved profile whenever there's an active
+  // session - not just right after logging in through the auth gate above.
+  // A session can just as easily already be active on mount (e.g. logged
+  // in via the standalone /login page, then clicked "Try FuelNode" from
+  // /landing), which skips the auth gate entirely and would otherwise
+  // leave the form blank despite the profile existing.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    apiClient
+      .get("/athletes/profile")
+      .then(({ data }) => {
+        if (cancelled) return;
+        const mapped = mapProfileToUserData(data);
+        initialUserDataRef.current = mapped;
+        setUserData((prev) => (Object.keys(prev).length === 0 ? mapped : prev));
+      })
+      .catch(() => {
+        // No saved profile yet (404) - proceed with a blank form, same
+        // as any first-time visitor.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   // Ref-based lock: blocks a second submitOnboarding() call from firing
   // (rapid double-click, StrictMode double-invoke, going back a step and
   // hitting Finish again) even before `submitting` state has re-rendered.
@@ -401,18 +429,10 @@ export default function OnboardingFlow() {
         await register(authEmail, authPassword, authFullName);
       } else {
         await login(authEmail, authPassword);
-        try {
-          const { data: existingProfile } = await apiClient.get("/athletes/profile");
-          const mapped = mapProfileToUserData(existingProfile);
-          initialUserDataRef.current = mapped;
-          setUserData(mapped);
-        } catch {
-          // No saved profile yet (404) - proceed with a blank form, same
-          // as any first-time visitor.
-        }
       }
       // `user` is now set by AuthContext, so this component re-renders
-      // straight into the question wizard - no navigation needed.
+      // straight into the question wizard, and the useEffect above picks
+      // up the profile fetch/pre-fill - no navigation needed here.
     } catch (err) {
       setAuthError(
         err.response?.data?.message ||
