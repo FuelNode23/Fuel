@@ -259,6 +259,52 @@ const translations = {
 };
 
 /**
+ * Maps a saved AthleteProfile (GET /athletes/profile response shape) back
+ * into the userData shape this wizard's fields expect, so a returning user
+ * who logs in sees their existing answers instead of a blank form. Only
+ * covers fields that round-trip cleanly - the detailed race-day fields
+ * (event_sport, event_format, target_time, elevation_gain, ...) have no
+ * direct equivalent on the saved profile, so they're left for the user to
+ * fill in again if they still want a target event configured.
+ */
+function mapProfileToUserData(profile) {
+  const sportProfiles = {};
+  const sports = (profile.sports || []).map((s) => {
+    sportProfiles[s.sport] = { discipline: s.discipline, level: s.experienceLevel };
+    return s.sport;
+  });
+
+  return {
+    name: profile.firstName,
+    age: profile.age,
+    gender: profile.gender,
+    weight: profile.weightKg,
+    height: profile.heightCm,
+    sports,
+    sport_profiles: sportProfiles,
+    goals: profile.objectives || [],
+    connectChoice: profile.connectChoice,
+    sessions_per_week: profile.sessionsPerWeek,
+    typical_distance: profile.weeklyDistanceKm,
+    pace: profile.averagePace,
+    avg_elevation: profile.averageElevation,
+    session_time: profile.trainingTime,
+    target_event: profile.racePlanned ? "Yes" : "No",
+    event_name: profile.goalEvent,
+    weeks_until_event: profile.weeksToEvent,
+    event_location: profile.eventLocation,
+    stomach_sensitivity: profile.stomachSensitivity,
+    caffeine_intake: profile.caffeinePreference,
+    diet_pattern: profile.regime,
+    restrictions: profile.restrictions || [],
+    preferred_formats: profile.preferredFormats || [],
+    supplement_type: profile.supplements || [],
+    delivery_day: profile.deliveryDay,
+    nutrition_issue_history: profile.nutritionIssueHistory,
+  };
+}
+
+/**
  * Drives the entire onboarding experience from the `questions` array.
  * Renders exactly one question per screen, tracks answers in state,
  * and submits the full userData object to the backend after the
@@ -323,6 +369,13 @@ export default function OnboardingFlow() {
         await register(authEmail, authPassword, authFullName);
       } else {
         await login(authEmail, authPassword);
+        try {
+          const { data: existingProfile } = await apiClient.get("/athletes/profile");
+          setUserData(mapProfileToUserData(existingProfile));
+        } catch {
+          // No saved profile yet (404) - proceed with a blank form, same
+          // as any first-time visitor.
+        }
       }
       // `user` is now set by AuthContext, so this component re-renders
       // straight into the question wizard - no navigation needed.
