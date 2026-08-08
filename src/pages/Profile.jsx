@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import apiClient from '../api/client.js'
+import AccountBar from '../components/AccountBar.jsx'
 
 const GENDERS = ['Male', 'Female', 'Other']
 
@@ -126,6 +127,7 @@ export default function Profile() {
   if (!hasProfile) {
     return (
       <div className="card form-card">
+        <AccountBar />
         <h1>Athlete profile</h1>
         {error && <div className="alert-error">{error}</div>}
         <p>You haven&apos;t completed onboarding yet, so there&apos;s no profile to edit.</p>
@@ -138,6 +140,7 @@ export default function Profile() {
 
   return (
     <div className="card form-card">
+      <AccountBar />
       <h1>Athlete profile</h1>
       {error && <div className="alert-error">{error}</div>}
       {success && <div className="alert-success">{success}</div>}

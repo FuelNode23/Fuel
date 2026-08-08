@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
 import { questions } from "../api/Questions.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import AccountBar from "../components/AccountBar.jsx";
 import "../pages/Onboarding.css";
 
 /**
@@ -762,6 +763,8 @@ export default function OnboardingFlow() {
       <div className="ob-bg-glow">
         <div className="ob-bg-glow-top" />
       </div>
+
+      <AccountBar />
 
       <div className="ob-topbar">
         <button

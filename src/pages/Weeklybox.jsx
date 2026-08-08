@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AccountBar from '../components/AccountBar.jsx';
 import './Weeklybox.css';
 
 // ---- Static data, modeled after the three box options shown in the product ----
@@ -313,6 +314,7 @@ export default function WeeklyBox() {
 
   return (
     <div className="weekly-box">
+      <AccountBar />
       <div className="weekly-box__container">
         <a className="back-link" href="#protocol">
           <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">

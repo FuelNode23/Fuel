@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import AccountBar from "../components/AccountBar.jsx";
 
 import LoadingState from "../Protocol/LoadingState";
 import ErrorState from "../Protocol/ErrorState";
@@ -44,7 +44,6 @@ import "./Protocol.css";
 export default function Protocol() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
 
   const [protocol, setProtocol] = useState(null);
   const [status, setStatus] = useState("loading"); // "loading" | "success" | "error" | "empty"
@@ -52,11 +51,6 @@ export default function Protocol() {
   const [saveFailed, setSaveFailed] = useState(false);
 
   const handleBack = () => navigate(-1);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   const loadHandoff = () => {
     setStatus("loading");
@@ -114,6 +108,7 @@ export default function Protocol() {
   if (status === "loading") {
     return (
       <div className="protocol-page">
+        <AccountBar />
         <LoadingState />
       </div>
     );
@@ -122,6 +117,7 @@ export default function Protocol() {
   if (status === "error") {
     return (
       <div className="protocol-page">
+        <AccountBar />
         <ErrorState
           message={errorMessage}
           onRetry={saveFailed ? () => navigate("/onboarding") : loadHandoff}
@@ -134,6 +130,7 @@ export default function Protocol() {
   if (status === "empty" || !protocol) {
     return (
       <div className="protocol-page">
+        <AccountBar />
         <div className="protocol-page__empty">
           No protocol available. Please complete onboarding first.
         </div>
@@ -143,23 +140,13 @@ export default function Protocol() {
 
   return (
     <div className="protocol-page">
+      <AccountBar />
       <div className="protocol-page__inner">
         <header className="protocol-page__header">
-          <div>
-            <h1 className="protocol-page__title">{protocol.title || "Your Nutrition Protocol"}</h1>
-            <p className="protocol-page__subtitle">
-              Personalized fueling, recovery, and product guidance based on your onboarding profile.
-            </p>
-          </div>
-
-          {user && (
-            <div className="protocol-page__account">
-              <span className="protocol-page__account-name">{user.fullName}</span>
-              <button type="button" className="protocol-page__logout" onClick={handleLogout}>
-                Log out
-              </button>
-            </div>
-          )}
+          <h1 className="protocol-page__title">{protocol.title || "Your Nutrition Protocol"}</h1>
+          <p className="protocol-page__subtitle">
+            Personalized fueling, recovery, and product guidance based on your onboarding profile.
+          </p>
         </header>
 
         <AthleteSummary
