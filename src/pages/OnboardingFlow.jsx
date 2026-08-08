@@ -256,7 +256,33 @@ const translations = {
     "La nutrition vous a-t-elle déjà coûté une course ou gâché une séance ?",
   "Your profile is ready. Fuelnode will now generate your personalized nutrition protocol from your answers, your training level, and your preferences.":
     "Votre profil est prêt. Fuelnode va maintenant générer votre protocole nutritionnel personnalisé à partir de vos réponses, de votre niveau d'entraînement et de vos préférences.",
+
+  // No-change confirmation + generating overlay
+  "No changes detected": "Aucun changement détecté",
+  "Your answers are the same as your last submission. Do you want to continue and generate a new protocol anyway?":
+    "Vos réponses sont identiques à votre dernière soumission. Voulez-vous quand même continuer et générer un nouveau protocole ?",
+  "Go back and review": "Revenir en arrière",
+  "Continue anyway": "Continuer quand même",
+  "Generating your personalized nutrition protocol. This can take up to a minute — please wait...":
+    "Génération de votre protocole nutritionnel personnalisé. Cela peut prendre jusqu'à une minute — veuillez patienter...",
 };
+
+/**
+ * JSON.stringify with object keys sorted, so two objects containing the
+ * same data compare equal regardless of the order their keys were set in -
+ * userData is built up incrementally as fields are touched, so its key
+ * order won't generally match mapProfileToUserData's fixed return shape.
+ */
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((k) => JSON.stringify(k) + ":" + stableStringify(value[k])).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 
 /**
  * Maps a saved AthleteProfile (GET /athletes/profile response shape) back
@@ -330,6 +356,12 @@ export default function OnboardingFlow() {
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
 
+  // Set when login pre-fills userData from an existing profile, so Finish
+  // can detect "nothing changed since last time" and confirm before
+  // spending an AI generation call on an identical protocol.
+  const initialUserDataRef = useRef(null);
+  const [showNoChangeConfirm, setShowNoChangeConfirm] = useState(false);
+
   // Ref-based lock: blocks a second submitOnboarding() call from firing
   // (rapid double-click, StrictMode double-invoke, going back a step and
   // hitting Finish again) even before `submitting` state has re-rendered.
@@ -371,7 +403,9 @@ export default function OnboardingFlow() {
         await login(authEmail, authPassword);
         try {
           const { data: existingProfile } = await apiClient.get("/athletes/profile");
-          setUserData(mapProfileToUserData(existingProfile));
+          const mapped = mapProfileToUserData(existingProfile);
+          initialUserDataRef.current = mapped;
+          setUserData(mapped);
         } catch {
           // No saved profile yet (404) - proceed with a blank form, same
           // as any first-time visitor.
@@ -559,10 +593,22 @@ export default function OnboardingFlow() {
 
   const goNext = () => {
     if (stepIndex === totalSteps - 1) {
+      const unchanged =
+        initialUserDataRef.current &&
+        stableStringify(userData) === stableStringify(initialUserDataRef.current);
+      if (unchanged) {
+        setShowNoChangeConfirm(true);
+        return;
+      }
       submitOnboarding();
       return;
     }
     setStepIndex((prev) => prev + 1);
+  };
+
+  const handleConfirmedSubmit = () => {
+    setShowNoChangeConfirm(false);
+    submitOnboarding();
   };
 
   const handleContinue = () => {
@@ -818,6 +864,42 @@ export default function OnboardingFlow() {
       </div>
 
       <AccountBar />
+
+      {showNoChangeConfirm && (
+        <div className="ob-blocking-overlay" role="dialog" aria-modal="true">
+          <div className="ob-confirm-card">
+            <h2 className="ob-confirm-title">{t("No changes detected")}</h2>
+            <p className="ob-confirm-text">
+              {t(
+                "Your answers are the same as your last submission. Do you want to continue and generate a new protocol anyway?"
+              )}
+            </p>
+            <div className="ob-confirm-actions">
+              <button
+                type="button"
+                className="ob-confirm-cancel"
+                onClick={() => setShowNoChangeConfirm(false)}
+              >
+                {t("Go back and review")}
+              </button>
+              <button type="button" className="ob-continue" onClick={handleConfirmedSubmit}>
+                {t("Continue anyway")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {submitting && (
+        <div className="ob-blocking-overlay" role="status" aria-live="polite">
+          <div className="ob-blocking-spinner" aria-hidden="true" />
+          <p className="ob-blocking-text">
+            {t(
+              "Generating your personalized nutrition protocol. This can take up to a minute — please wait..."
+            )}
+          </p>
+        </div>
+      )}
 
       <div className="ob-topbar">
         <button
