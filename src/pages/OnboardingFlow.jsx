@@ -287,11 +287,7 @@ function stableStringify(value) {
 /**
  * Maps a saved AthleteProfile (GET /athletes/profile response shape) back
  * into the userData shape this wizard's fields expect, so a returning user
- * who logs in sees their existing answers instead of a blank form. Only
- * covers fields that round-trip cleanly - the detailed race-day fields
- * (event_sport, event_format, target_time, elevation_gain, ...) have no
- * direct equivalent on the saved profile, so they're left for the user to
- * fill in again if they still want a target event configured.
+ * who logs in sees their existing answers instead of a blank form.
  */
 function mapProfileToUserData(profile) {
   const sportProfiles = {};
@@ -317,8 +313,13 @@ function mapProfileToUserData(profile) {
     session_time: profile.trainingTime,
     target_event: profile.racePlanned ? "Yes" : "No",
     event_name: profile.goalEvent,
+    event_sport: profile.eventSport,
+    event_format: profile.raceDistance,
+    expected_event_time: profile.expectedEventTime,
     weeks_until_event: profile.weeksToEvent,
+    target_time: profile.targetTime,
     event_location: profile.eventLocation,
+    elevation_gain: profile.elevationGain,
     stomach_sensitivity: profile.stomachSensitivity,
     caffeine_intake: profile.caffeinePreference,
     diet_pattern: profile.regime,
