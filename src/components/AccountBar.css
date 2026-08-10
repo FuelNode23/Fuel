@@ -5,22 +5,37 @@
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.6rem 0.45rem 0.9rem;
-  border-radius: 999px;
-  background: rgba(10, 14, 26, 0.75);
+  gap: 0.9rem;
+  padding: 0.6rem 0.7rem 0.6rem 1rem;
+  border-radius: 1rem;
+  background: rgba(10, 14, 26, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(244, 247, 251, 0.14);
 }
 
-.account-bar__name {
+.account-bar__greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-width: 14rem;
+}
+
+.account-bar__welcome {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #f4f7fb;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 12rem;
+}
+
+.account-bar__last-login {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(244, 247, 251, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-bar__logout {
@@ -45,10 +60,10 @@
   .account-bar {
     top: 0.6rem;
     right: 0.75rem;
-    padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+    padding: 0.4rem 0.5rem 0.4rem 0.75rem;
   }
 
-  .account-bar__name {
-    max-width: 6rem;
+  .account-bar__greeting {
+    max-width: 7rem;
   }
 }
