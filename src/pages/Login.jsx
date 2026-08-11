@@ -5,6 +5,7 @@ import { completePendingOnboarding } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
+import logo from "../assets/image.png";
 import "./Login.css";
 
 export default function Login() {
@@ -38,47 +39,77 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <div className="form-card">
-        <div className="form-card__topbar">
-          <LanguageToggle />
+      <div className="login-lang-toggle">
+        <LanguageToggle />
+      </div>
+
+      {/* Left pane: full-height hero photo, same art direction as the landing page */}
+      <div className="login-image-pane">
+        <div className="login-image-pane__image" />
+        <div className="login-image-pane__overlay" />
+        <div className="login-image-pane__brand">
+          <img src={logo} alt="FuelNode" className="login-image-pane__logo" />
+          <h1 className="login-image-pane__title">
+            {t("The right fuel,")}
+            <br />
+            <span className="login-accent">{t("at the right time")}</span>
+          </h1>
+          <p className="login-image-pane__sub">
+            {t(
+              "Precise nutrition protocols and weekly boxes, built around your training."
+            )}
+          </p>
         </div>
-        <h1>{t("Log in")}</h1>
+      </div>
 
-        {error && <div className="alert-error">{error}</div>}
+      {/* Right pane: login details */}
+      <div className="login-form-pane">
+        <div className="login-glow login-glow-a" aria-hidden="true" />
+        <div className="login-glow login-glow-b" aria-hidden="true" />
 
-        <form onSubmit={handleSubmit}>
-          <label>
-            {t("Email")}
-            <input
-              type="email"
-              placeholder={t("Enter your email")}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
+        <div className="form-card">
+          <h1>{t("Log in")}</h1>
+          <p className="form-card__subtitle">
+            {t("Welcome back. Enter your details to continue.")}
+          </p>
 
-          <label>
-            {t("Password")}
-            <input
-              type="password"
-              placeholder={t("Enter your password")}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
+          {error && <div className="alert-error">{error}</div>}
 
-          <button type="submit" disabled={submitting}>
-            {submitting ? t("Logging in...") : t("Log in")}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit}>
+            <label>
+              {t("Email")}
+              <input
+                type="email"
+                placeholder={t("Enter your email")}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
 
-        <p>
-          {t("Don't have an account?")} <Link to="/register">{t("Sign up")}</Link>
-        </p>
+            <label>
+              {t("Password")}
+              <input
+                type="password"
+                placeholder={t("Enter your password")}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </label>
 
-        <CopyrightFooter />
+            <button type="submit" disabled={submitting}>
+              {submitting ? t("Logging in...") : t("Log in")}
+            </button>
+          </form>
+
+          <p className="form-card__footer-link">
+            {t("Don't have an account?")}{" "}
+            <Link to="/register">{t("Sign up")}</Link>
+          </p>
+
+          <CopyrightFooter />
+        </div>
       </div>
     </div>
   );

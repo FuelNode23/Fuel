@@ -122,6 +122,11 @@ const fr = {
   "Already have an account?": "Vous avez déjà un compte ?",
   "Password must be at least 8 characters long.": "Le mot de passe doit contenir au moins 8 caractères.",
   "Registration failed. Please try again.": "Échec de l'inscription. Veuillez réessayer.",
+  "Welcome back. Enter your details to continue.": "Bon retour. Entrez vos identifiants pour continuer.",
+  "Join FuelNode and get your first weekly box built around you.": "Rejoignez FuelNode et recevez votre première boîte hebdomadaire conçue pour vous.",
+  "The right fuel,": "Le bon carburant,",
+  "at the right time": "au bon moment",
+  "Precise nutrition protocols and weekly boxes, built around your training.": "Des protocoles nutritionnels précis et des boîtes hebdomadaires, conçus autour de votre entraînement.",
   "Login failed. Please check your credentials.": "Échec de la connexion. Veuillez vérifier vos identifiants.",
 
   // ---------------------------------------------------------------------
