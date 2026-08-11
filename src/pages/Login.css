@@ -32,6 +32,12 @@ body,
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
 }
 
+.form-card__topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .form-card h1 {
   color: #ffffff;
   text-align: center;

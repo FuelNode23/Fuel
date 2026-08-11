@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import WeeklyBox from "../Protocol/WeeklyBox.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 import "./Weeklybox.css";
 
 /**
@@ -16,6 +17,7 @@ import "./Weeklybox.css";
 export default function WeeklyBoxPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [box, setBox] = useState(null);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function WeeklyBoxPage() {
               strokeLinejoin="round"
             />
           </svg>
-          Back to the protocol
+          {t("Back to the protocol")}
         </button>
 
         <div className="eyebrow">
@@ -59,12 +61,12 @@ export default function WeeklyBoxPage() {
             <rect x="3" y="7" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
             <path d="M3 7l7-4 7 4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
           </svg>
-          Box of the week
+          {t("Box of the week")}
         </div>
 
-        <h1 className="page-title">Your FuelNode box</h1>
+        <h1 className="page-title">{t("Your FuelNode box")}</h1>
         <p className="page-subtitle">
-          The products assembled for your protocol, based on your profile and preferences.
+          {t("The products assembled for your protocol, based on your profile and preferences.")}
         </p>
 
         {box ? (
@@ -76,7 +78,7 @@ export default function WeeklyBoxPage() {
           />
         ) : (
           <p className="page-subtitle">
-            No box to show yet — generate a protocol first to see your weekly box.
+            {t("No box to show yet — generate a protocol first to see your weekly box.")}
           </p>
         )}
 

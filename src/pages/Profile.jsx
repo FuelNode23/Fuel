@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import apiClient from '../api/client.js'
 import AccountBar from '../components/AccountBar.jsx'
 import CopyrightFooter from '../components/CopyrightFooter.jsx'
+import { useLanguage } from '../i18n/LanguageContext.jsx'
 
 const GENDERS = ['Male', 'Female', 'Other']
 
@@ -55,6 +56,7 @@ function buildCarryForward(profile) {
 
 export default function Profile() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [form, setForm] = useState(emptyForm)
   const [existingProfile, setExistingProfile] = useState(null)
   const [hasProfile, setHasProfile] = useState(false)
@@ -83,7 +85,7 @@ export default function Profile() {
       .catch((err) => {
         // 404 just means the athlete hasn't completed onboarding yet.
         if (err.response?.status !== 404 && !cancelled) {
-          setError('Could not load your profile.')
+          setError(t('Could not load your profile.'))
         }
       })
       .finally(() => {
@@ -113,27 +115,27 @@ export default function Profile() {
         height: Number(form.height),
         ...buildCarryForward(existingProfile),
       })
-      setSuccess('Profile saved.')
+      setSuccess(t('Profile saved.'))
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not save your profile.')
+      setError(err.response?.data?.message || t('Could not save your profile.'))
     } finally {
       setSubmitting(false)
     }
   }
 
   if (loading) {
-    return <div className="page-center">Loading profile...</div>
+    return <div className="page-center">{t('Loading profile...')}</div>
   }
 
   if (!hasProfile) {
     return (
       <div className="card form-card">
         <AccountBar />
-        <h1>Athlete profile</h1>
+        <h1>{t('Athlete profile')}</h1>
         {error && <div className="alert-error">{error}</div>}
-        <p>You haven&apos;t completed onboarding yet, so there&apos;s no profile to edit.</p>
+        <p>{t("You haven't completed onboarding yet, so there's no profile to edit.")}</p>
         <button type="button" onClick={() => navigate('/onboarding')}>
-          Start onboarding
+          {t('Start onboarding')}
         </button>
 
         <CopyrightFooter />
@@ -144,31 +146,31 @@ export default function Profile() {
   return (
     <div className="card form-card">
       <AccountBar />
-      <h1>Athlete profile</h1>
+      <h1>{t('Athlete profile')}</h1>
       {error && <div className="alert-error">{error}</div>}
       {success && <div className="alert-success">{success}</div>}
       <form onSubmit={handleSubmit}>
         <label>
-          First name
+          {t('First name')}
           <input type="text" value={form.name} onChange={handleChange('name')} required />
         </label>
 
         <label>
-          Age
+          {t('Age')}
           <input type="number" min="10" max="100" value={form.age} onChange={handleChange('age')} required />
         </label>
 
         <label>
-          Gender
+          {t('Gender')}
           <select value={form.gender} onChange={handleChange('gender')}>
             {GENDERS.map((g) => (
-              <option key={g} value={g}>{g}</option>
+              <option key={g} value={g}>{t(g)}</option>
             ))}
           </select>
         </label>
 
         <label>
-          Height (cm)
+          {t('Height (cm)')}
           <input
             type="number"
             step="0.1"
@@ -181,7 +183,7 @@ export default function Profile() {
         </label>
 
         <label>
-          Weight (kg)
+          {t('Weight (kg)')}
           <input
             type="number"
             step="0.1"
@@ -195,13 +197,13 @@ export default function Profile() {
 
         {existingProfile?.sports?.length > 0 && (
           <div className="profile-sports-readonly">
-            <span>Sports</span>
+            <span>{t('Sports')}</span>
             <ul>
               {existingProfile.sports.map((s) => (
                 <li key={s.id ?? s.sport}>
-                  {s.sport}
-                  {s.discipline ? ` · ${s.discipline}` : ''}
-                  {s.experienceLevel ? ` · ${s.experienceLevel}` : ''}
+                  {t(s.sport)}
+                  {s.discipline ? ` · ${t(s.discipline)}` : ''}
+                  {s.experienceLevel ? ` · ${t(s.experienceLevel)}` : ''}
                 </li>
               ))}
             </ul>
@@ -209,11 +211,11 @@ export default function Profile() {
         )}
 
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Saving...' : 'Save profile'}
+          {submitting ? t('Saving...') : t('Save profile')}
         </button>
       </form>
       <button className="link-button" onClick={() => navigate('/dashboard')}>
-        Go to dashboard →
+        {t('Go to dashboard →')}
       </button>
 
       <CopyrightFooter />

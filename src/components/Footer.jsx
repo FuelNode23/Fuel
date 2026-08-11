@@ -1,7 +1,10 @@
 
 import image from "../assets/image.png";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className="fn-footer">
       <div className="fn-footer-inner">
@@ -14,8 +17,8 @@ export default function Footer() {
         </div>
 
         <div className="fn-footer-links">
-          <a href="/terms">Terms & Conditions</a>
-          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">{t("Terms & Conditions")}</a>
+          <a href="/privacy">{t("Privacy Policy")}</a>
           <a href="mailto:customer@fuelnode.fr">
             customer@fuelnode.fr
           </a>
@@ -23,7 +26,7 @@ export default function Footer() {
       </div>
 
       <p className="fn-footer-copyright">
-        &copy; {new Date().getFullYear()} FuelNode. All rights reserved.
+        &copy; {new Date().getFullYear()} FuelNode. {t("All rights reserved.")}
       </p>
     </footer>
   );

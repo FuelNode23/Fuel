@@ -1,4 +1,5 @@
 import "./ProtocolComponents.css";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const STAGE_LABELS = {
   pre_training: "Pre-Training",
@@ -29,15 +30,15 @@ function renderValue(key, value) {
   return String(value);
 }
 
-function HydrationBlock({ hydration }) {
+function HydrationBlock({ hydration, t }) {
   if (!hydration || Object.keys(hydration).length === 0) return null;
   return (
     <div className="detail-row">
-      <dt>Hydration</dt>
+      <dt>{t("Hydration")}</dt>
       <dd>
         <ul className="fueling-stage__sublist">
           {hydration.per_hour_ml != null && (
-            <li>{hydration.per_hour_ml}ml per hour</li>
+            <li>{t("{value}ml per hour", { value: hydration.per_hour_ml })}</li>
           )}
           {hydration.electrolyte_trigger && <li>{hydration.electrolyte_trigger}</li>}
           {hydration.notes && <li>{hydration.notes}</li>}
@@ -47,14 +48,14 @@ function HydrationBlock({ hydration }) {
   );
 }
 
-function FuelingStageCard({ stageKey, stage }) {
-  const label = STAGE_LABELS[stageKey] || prettifyKey(stageKey);
+function FuelingStageCard({ stageKey, stage, t }) {
+  const label = t(STAGE_LABELS[stageKey]) || prettifyKey(stageKey);
 
   if (!stage) {
     return (
       <div className="card fueling-stage-card fueling-stage-card--empty">
         <h3 className="fueling-stage-card__title">{label}</h3>
-        <p className="protocol-empty">Not applicable for this protocol.</p>
+        <p className="protocol-empty">{t("Not applicable for this protocol.")}</p>
       </div>
     );
   }
@@ -67,21 +68,21 @@ function FuelingStageCard({ stageKey, stage }) {
       <dl className="meal-card__details">
         {Object.entries(rest).map(([key, value]) => (
           <div className="detail-row" key={key}>
-            <dt>{FIELD_LABELS[key] || prettifyKey(key)}</dt>
+            <dt>{t(FIELD_LABELS[key]) || prettifyKey(key)}</dt>
             <dd>{renderValue(key, value)}</dd>
           </div>
         ))}
-        <HydrationBlock hydration={hydration} />
+        <HydrationBlock hydration={hydration} t={t} />
         {instructions && (
           <div className="detail-row">
-            <dt>Instructions</dt>
+            <dt>{t("Instructions")}</dt>
             <dd>{instructions}</dd>
           </div>
         )}
       </dl>
       {rationale && (
         <p className="meal-card__rationale">
-          <strong>Why:</strong> {rationale}
+          <strong>{t("Why:")}</strong> {rationale}
         </p>
       )}
     </div>
@@ -89,21 +90,23 @@ function FuelingStageCard({ stageKey, stage }) {
 }
 
 export default function FuelingProtocol({ fuelingProtocol }) {
+  const { t } = useLanguage();
+
   if (!fuelingProtocol || Object.keys(fuelingProtocol).length === 0) {
     return (
       <section className="protocol-section">
-        <h2 className="protocol-section__title">Fueling Protocol</h2>
-        <p className="protocol-empty">No fueling protocol available.</p>
+        <h2 className="protocol-section__title">{t("Fueling Protocol")}</h2>
+        <p className="protocol-empty">{t("No fueling protocol available.")}</p>
       </section>
     );
   }
 
   return (
     <section className="protocol-section">
-      <h2 className="protocol-section__title">Fueling Protocol</h2>
+      <h2 className="protocol-section__title">{t("Fueling Protocol")}</h2>
       <div className="card-grid card-grid--fueling">
         {Object.entries(fuelingProtocol).map(([stageKey, stage]) => (
-          <FuelingStageCard key={stageKey} stageKey={stageKey} stage={stage} />
+          <FuelingStageCard key={stageKey} stageKey={stageKey} stage={stage} t={t} />
         ))}
       </div>
     </section>

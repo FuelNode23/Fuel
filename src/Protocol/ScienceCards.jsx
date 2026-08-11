@@ -1,7 +1,8 @@
 import { useState } from "react";
 import "./ProtocolComponents.css";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-function ScienceCard({ card }) {
+function ScienceCard({ card, t }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!card) return null;
@@ -9,7 +10,7 @@ function ScienceCard({ card }) {
 
   return (
     <div className="card science-card">
-      <h3 className="science-card__title">{product_name || "Product"}</h3>
+      <h3 className="science-card__title">{product_name || t("Product")}</h3>
       {layer_0 && <p className="science-card__headline">{layer_0}</p>}
 
       {expanded && (
@@ -26,7 +27,7 @@ function ScienceCard({ card }) {
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
         >
-          {expanded ? "Show less" : "Learn more"}
+          {expanded ? t("Show less") : t("Learn more")}
         </button>
       )}
     </div>
@@ -34,21 +35,23 @@ function ScienceCard({ card }) {
 }
 
 export default function ScienceCards({ cards }) {
+  const { t } = useLanguage();
+
   if (!cards || cards.length === 0) {
     return (
       <section className="protocol-section">
-        <h2 className="protocol-section__title">The Science</h2>
-        <p className="protocol-empty">No science cards available.</p>
+        <h2 className="protocol-section__title">{t("The Science")}</h2>
+        <p className="protocol-empty">{t("No science cards available.")}</p>
       </section>
     );
   }
 
   return (
     <section className="protocol-section">
-      <h2 className="protocol-section__title">The Science</h2>
+      <h2 className="protocol-section__title">{t("The Science")}</h2>
       <div className="card-grid card-grid--science">
         {cards.map((card, index) => (
-          <ScienceCard card={card} key={card?.product_name || index} />
+          <ScienceCard card={card} key={card?.product_name || index} t={t} />
         ))}
       </div>
     </section>

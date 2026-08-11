@@ -1,11 +1,13 @@
 import "./ProtocolComponents.css";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function MissingData({ flags }) {
+  const { t } = useLanguage();
   if (!flags || flags.length === 0) return null;
 
   return (
     <section className="protocol-section">
-      <h2 className="protocol-section__title">Missing Data</h2>
+      <h2 className="protocol-section__title">{t("Missing Data")}</h2>
       <div className="warning-list">
         {flags.map((flag, index) => (
           <div className="warning-card" key={index}>

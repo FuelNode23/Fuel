@@ -1,4 +1,5 @@
 import "./ProtocolComponents.css";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const MEAL_LABELS = {
   pre_training_meal: "Pre-Training Meal",
@@ -11,7 +12,7 @@ function prettifyKey(key) {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function MealCard({ mealKey, meal }) {
+function MealCard({ mealKey, meal, t }) {
   if (!meal) return null;
   const {
     timing,
@@ -27,7 +28,7 @@ function MealCard({ mealKey, meal }) {
   return (
     <div className="card meal-card">
       <div className="meal-card__header">
-        <h3 className="meal-card__title">{MEAL_LABELS[mealKey] || prettifyKey(mealKey)}</h3>
+        <h3 className="meal-card__title">{t(MEAL_LABELS[mealKey]) || prettifyKey(mealKey)}</h3>
         {timing && <span className="meal-card__timing">{timing}</span>}
       </div>
 
@@ -45,37 +46,37 @@ function MealCard({ mealKey, meal }) {
       <dl className="meal-card__details">
         {base_type && (
           <div className="detail-row">
-            <dt>Base</dt>
+            <dt>{t("Base")}</dt>
             <dd>{base_type}</dd>
           </div>
         )}
         {protein_source && (
           <div className="detail-row">
-            <dt>Protein source</dt>
+            <dt>{t("Protein source")}</dt>
             <dd>{protein_source}</dd>
           </div>
         )}
         {fibre && (
           <div className="detail-row">
-            <dt>Fibre</dt>
+            <dt>{t("Fibre")}</dt>
             <dd className="detail-row__capitalize">{fibre}</dd>
           </div>
         )}
         {constraints && (
           <div className="detail-row">
-            <dt>Constraints</dt>
+            <dt>{t("Constraints")}</dt>
             <dd>{constraints}</dd>
           </div>
         )}
         <div className="detail-row">
-          <dt>Product pairing</dt>
-          <dd>{protocol_product_pairing || "No product pairing for this slot."}</dd>
+          <dt>{t("Product pairing")}</dt>
+          <dd>{protocol_product_pairing || t("No product pairing for this slot.")}</dd>
         </div>
       </dl>
 
       {rationale && (
         <p className="meal-card__rationale">
-          <strong>Why:</strong> {rationale}
+          <strong>{t("Why:")}</strong> {rationale}
         </p>
       )}
     </div>
@@ -83,21 +84,23 @@ function MealCard({ mealKey, meal }) {
 }
 
 export default function DietProtocol({ dietProtocol }) {
+  const { t } = useLanguage();
+
   if (!dietProtocol || Object.keys(dietProtocol).length === 0) {
     return (
       <section className="protocol-section">
-        <h2 className="protocol-section__title">Diet Protocol</h2>
-        <p className="protocol-empty">No diet protocol available.</p>
+        <h2 className="protocol-section__title">{t("Diet Protocol")}</h2>
+        <p className="protocol-empty">{t("No diet protocol available.")}</p>
       </section>
     );
   }
 
   return (
     <section className="protocol-section">
-      <h2 className="protocol-section__title">Diet Protocol</h2>
+      <h2 className="protocol-section__title">{t("Diet Protocol")}</h2>
       <div className="card-grid card-grid--meals">
         {Object.entries(dietProtocol).map(([mealKey, meal]) => (
-          <MealCard key={mealKey} mealKey={mealKey} meal={meal} />
+          <MealCard key={mealKey} mealKey={mealKey} meal={meal} t={t} />
         ))}
       </div>
     </section>
