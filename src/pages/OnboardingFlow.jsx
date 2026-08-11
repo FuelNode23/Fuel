@@ -4,6 +4,7 @@ import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js"
 import { questions } from "../api/Questions.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import AccountBar from "../components/AccountBar.jsx";
+import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import "../pages/Onboarding.css";
 
 /**
@@ -874,6 +875,8 @@ export default function OnboardingFlow() {
               : t(authMode === "register" ? "Sign Up" : "Log in")}
           </button>
         </div>
+
+        <CopyrightFooter />
       </div>
     );
   }
@@ -1246,6 +1249,8 @@ export default function OnboardingFlow() {
           </button>
         </div>
       )}
+
+      <CopyrightFooter />
     </div>
   );
 }

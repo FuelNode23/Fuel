@@ -1,0 +1,10 @@
+.copyright-footer {
+  padding: 1.25rem 1rem 0.25rem;
+  text-align: center;
+}
+
+.copyright-footer p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(244, 247, 251, 0.45);
+}

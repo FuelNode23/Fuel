@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { completePendingOnboarding } from "../api/client.js";
+import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import "./Login.css";
 
 export default function Register() {
@@ -93,6 +94,8 @@ export default function Register() {
         <p>
           Already have an account? <Link to="/login">Log in</Link>
         </p>
+
+        <CopyrightFooter />
       </div>
     </div>
   );

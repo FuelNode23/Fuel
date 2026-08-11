@@ -21,6 +21,10 @@ export default function Footer() {
           </a>
         </div>
       </div>
+
+      <p className="fn-footer-copyright">
+        &copy; {new Date().getFullYear()} FuelNode. All rights reserved.
+      </p>
     </footer>
   );
 }

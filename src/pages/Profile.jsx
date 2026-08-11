@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import apiClient from '../api/client.js'
 import AccountBar from '../components/AccountBar.jsx'
+import CopyrightFooter from '../components/CopyrightFooter.jsx'
 
 const GENDERS = ['Male', 'Female', 'Other']
 
@@ -134,6 +135,8 @@ export default function Profile() {
         <button type="button" onClick={() => navigate('/onboarding')}>
           Start onboarding
         </button>
+
+        <CopyrightFooter />
       </div>
     )
   }
@@ -212,6 +215,8 @@ export default function Profile() {
       <button className="link-button" onClick={() => navigate('/dashboard')}>
         Go to dashboard →
       </button>
+
+      <CopyrightFooter />
     </div>
   )
 }

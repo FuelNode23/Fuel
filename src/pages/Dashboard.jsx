@@ -108,6 +108,8 @@ export default function Dashboard() {
       {!plan && !needsProfile && (
         <p>You don't have a nutrition plan yet. Generate one to get your personalized macro targets.</p>
       )}
+
+      <CopyrightFooter />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
+import CopyrightFooter from "../components/CopyrightFooter.jsx";
 
 import LoadingState from "../Protocol/LoadingState";
 import ErrorState from "../Protocol/ErrorState";
@@ -8,11 +9,9 @@ import AthleteSummary from "../Protocol/AthleteSummary";
 import MacroTargets from "../Protocol/MacroTargets";
 import DietProtocol from "../Protocol/DietProtocol";
 import FuelingProtocol from "../Protocol/FuelingProtocol";
-import SpecialistProtocols from "../Protocol/SpecialistProtocols";
+
 import WeeklyBox from "../Protocol/WeeklyBox";
-import ScienceCards from "../Protocol/ScienceCards";
-import Assumptions from "../Protocol/Assumptions";
-import MissingData from "../Protocol/MissingData";
+
 import {
   adaptDietProtocol,
   adaptFuelingProtocol,
@@ -123,6 +122,7 @@ export default function Protocol() {
           onRetry={saveFailed ? () => navigate("/onboarding") : loadHandoff}
           onBack={handleBack}
         />
+        <CopyrightFooter />
       </div>
     );
   }
@@ -134,6 +134,7 @@ export default function Protocol() {
         <div className="protocol-page__empty">
           No protocol available. Please complete onboarding first.
         </div>
+        <CopyrightFooter />
       </div>
     );
   }
@@ -170,9 +171,9 @@ export default function Protocol() {
           frenchBrandPercentage={protocol.box_french_brand_percentage}
           assemblyNotes={adaptAssemblyNotes(protocol.assembly_notes)}
         />
-
-       
       </div>
+
+      <CopyrightFooter />
     </div>
   );
 }

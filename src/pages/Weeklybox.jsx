@@ -390,6 +390,8 @@ export default function WeeklyBox() {
             />
           ))}
         </div>
+
+        <CopyrightFooter />
       </div>
     </div>
   );

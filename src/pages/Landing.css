@@ -820,6 +820,16 @@
   color: #22c55e;
 }
 
+.fn-footer-copyright {
+  max-width: 1280px;
+  margin: 1.5rem auto 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .fn-page * {
