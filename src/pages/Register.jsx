@@ -5,6 +5,7 @@ import { completePendingOnboarding } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
+import GeneratingOverlay from "../components/GeneratingOverlay.jsx";
 import logo from "../assets/image.png";
 import "./Login.css";
 
@@ -18,6 +19,9 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // See Login.jsx — same "resume a pending onboarding submission" wait,
+  // same fancy overlay instead of a plain disabled button for up to a minute.
+  const [resumingOnboarding, setResumingOnboarding] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +40,9 @@ export default function Register() {
       // register() already persists a session, so if the person came from
       // onboarding, finish that submission now instead of making them log
       // in again just to redo the same request.
+      if (sessionStorage.getItem("pendingOnboarding")) {
+        setResumingOnboarding(true);
+      }
       const resumed = await completePendingOnboarding(navigate);
       if (!resumed) navigate("/login");
     } catch (err) {
@@ -45,11 +52,14 @@ export default function Register() {
       );
     } finally {
       setSubmitting(false);
+      setResumingOnboarding(false);
     }
   };
 
   return (
     <div className="login-page">
+      {resumingOnboarding && <GeneratingOverlay />}
+
       <div className="login-lang-toggle">
         <LanguageToggle />
       </div>

@@ -516,8 +516,37 @@ const fr = {
     "Vos réponses sont identiques à votre dernière soumission. Voulez-vous quand même continuer et générer un nouveau protocole ?",
   "Go back and review": "Revenir en arrière",
   "Continue anyway": "Continuer quand même",
-  "Generating your personalized nutrition protocol. This can take up to a minute — please wait...":
-    "Génération de votre protocole nutritionnel personnalisé. Cela peut prendre jusqu'à une minute — veuillez patienter...",
+
+  // ---------------------------------------------------------------------
+  // GeneratingOverlay — Finish / resumed-onboarding wait screen
+  // ---------------------------------------------------------------------
+  "Analyzing your body metrics and goals...": "Analyse de vos données corporelles et de vos objectifs...",
+  "Calculating your optimal macro split...": "Calcul de votre répartition optimale de macronutriments...",
+  "Cross-referencing 500+ food combinations for your preferences...":
+    "Comparaison de plus de 500 combinaisons alimentaires selon vos préférences...",
+  "Balancing protein, carbs, and fats for your activity level...":
+    "Équilibrage des protéines, glucides et lipides selon votre niveau d'activité...",
+  "Fine-tuning meal timing around your schedule...": "Ajustement du timing des repas selon votre emploi du temps...",
+  "Almost there — packaging your personalized protocol...": "Presque terminé — préparation de votre protocole personnalisé...",
+  "Nutrition fact": "Le saviez-vous",
+  "Did you know? Your muscles keep using protein for up to 24 hours after a workout to repair and grow.":
+    "Le saviez-vous ? Vos muscles continuent d'utiliser des protéines jusqu'à 24 heures après l'entraînement pour se réparer et se développer.",
+  "Fun fact: Spreading protein evenly across meals builds more muscle than eating it all at dinner.":
+    "Anecdote : répartir les protéines uniformément sur les repas construit plus de muscle que de tout consommer au dîner.",
+  "Tip: Drinking water before meals can improve digestion and help you feel fuller.":
+    "Astuce : boire de l'eau avant les repas peut améliorer la digestion et procurer une sensation de satiété.",
+  "Did you know? Carbs restock the glycogen your muscles burn through during endurance training.":
+    "Le saviez-vous ? Les glucides reconstituent le glycogène que vos muscles consomment pendant l'entraînement d'endurance.",
+  "Fun fact: Bananas are rich in potassium, which helps prevent exercise-induced muscle cramps.":
+    "Anecdote : les bananes sont riches en potassium, ce qui aide à prévenir les crampes musculaires liées à l'effort.",
+  "Tip: Eating within 30-60 minutes after training speeds up glycogen recovery.":
+    "Astuce : manger dans les 30 à 60 minutes après l'entraînement accélère la récupération du glycogène.",
+  "Did you know? Caffeine 30-60 minutes before a session can measurably boost endurance performance.":
+    "Le saviez-vous ? La caféine prise 30 à 60 minutes avant une séance peut nettement améliorer la performance d'endurance.",
+  "Fun fact: Beetroot juice is a natural source of nitrates that can improve running economy.":
+    "Anecdote : le jus de betterave est une source naturelle de nitrates qui peut améliorer l'économie de course.",
+  "This can take up to a minute — please don't close this page.":
+    "Cela peut prendre jusqu'à une minute — veuillez ne pas fermer cette page.",
 };
 
 export default fr;

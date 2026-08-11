@@ -579,28 +579,6 @@
   backdrop-filter: blur(4px);
 }
 
-.ob-blocking-spinner {
-  width: 48px;
-  height: 48px;
-  border: 3px solid rgba(244, 247, 251, 0.15);
-  border-top-color: #22c55e;
-  border-radius: 50%;
-  animation: ob-spin 0.8s linear infinite;
-}
-
-@keyframes ob-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.ob-blocking-text {
-  max-width: 26rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #f4f7fb;
-}
-
 .ob-confirm-card {
   width: 100%;
   max-width: 26rem;
@@ -649,9 +627,3 @@
   border-color: rgba(244, 247, 251, 0.3);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ob-blocking-spinner {
-    animation: none;
-    border-top-color: rgba(244, 247, 251, 0.15);
-  }
-}

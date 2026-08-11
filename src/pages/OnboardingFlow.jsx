@@ -7,6 +7,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import AccountBar from "../components/AccountBar.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
+import GeneratingOverlay from "../components/GeneratingOverlay.jsx";
 import "../pages/Onboarding.css";
 
 /**
@@ -635,16 +636,7 @@ export default function OnboardingFlow() {
         </div>
       )}
 
-      {submitting && (
-        <div className="ob-blocking-overlay" role="status" aria-live="polite">
-          <div className="ob-blocking-spinner" aria-hidden="true" />
-          <p className="ob-blocking-text">
-            {t(
-              "Generating your personalized nutrition protocol. This can take up to a minute — please wait..."
-            )}
-          </p>
-        </div>
-      )}
+      {submitting && <GeneratingOverlay />}
 
       <div className="ob-topbar">
         <button

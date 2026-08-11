@@ -5,6 +5,7 @@ import { completePendingOnboarding } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
+import GeneratingOverlay from "../components/GeneratingOverlay.jsx";
 import logo from "../assets/image.png";
 import "./Login.css";
 
@@ -17,6 +18,12 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // Whether a pending onboarding submission (stashed under sessionStorage's
+  // "pendingOnboarding" key) will be resumed after this login succeeds —
+  // that resume call can take up to a minute (it's the same protocol
+  // generation call Finish makes), so it gets the same fancy wait screen
+  // instead of just sitting on a disabled button.
+  const [resumingOnboarding, setResumingOnboarding] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +32,9 @@ export default function Login() {
 
     try {
       await login(email, password);
+      if (sessionStorage.getItem("pendingOnboarding")) {
+        setResumingOnboarding(true);
+      }
       const resumed = await completePendingOnboarding(navigate);
       if (!resumed) navigate("/landing");
     } catch (err) {
@@ -34,11 +44,14 @@ export default function Login() {
       );
     } finally {
       setSubmitting(false);
+      setResumingOnboarding(false);
     }
   };
 
   return (
     <div className="login-page">
+      {resumingOnboarding && <GeneratingOverlay />}
+
       <div className="login-lang-toggle">
         <LanguageToggle />
       </div>
