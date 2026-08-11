@@ -10,8 +10,6 @@ import MacroTargets from "../Protocol/MacroTargets";
 import DietProtocol from "../Protocol/DietProtocol";
 import FuelingProtocol from "../Protocol/FuelingProtocol";
 
-import WeeklyBox from "../Protocol/WeeklyBox";
-
 import {
   adaptDietProtocol,
   adaptFuelingProtocol,
@@ -50,6 +48,17 @@ export default function Protocol() {
   const [saveFailed, setSaveFailed] = useState(false);
 
   const handleBack = () => navigate(-1);
+
+  const handleViewWeeklyBox = () => {
+    const weeklyBoxHandoff = {
+      items: adaptWeeklyBoxItems(protocol.weekly_box_contents),
+      totalProducts: protocol.box_total_products,
+      frenchBrandPercentage: protocol.box_french_brand_percentage,
+      assemblyNotes: adaptAssemblyNotes(protocol.assembly_notes),
+    };
+    sessionStorage.setItem("weeklyBoxHandoff", JSON.stringify(weeklyBoxHandoff));
+    navigate("/weeklybox", { state: weeklyBoxHandoff });
+  };
 
   const loadHandoff = () => {
     setStatus("loading");
@@ -165,12 +174,17 @@ export default function Protocol() {
 
         
 
-        <WeeklyBox
-          items={adaptWeeklyBoxItems(protocol.weekly_box_contents)}
-          totalProducts={protocol.box_total_products}
-          frenchBrandPercentage={protocol.box_french_brand_percentage}
-          assemblyNotes={adaptAssemblyNotes(protocol.assembly_notes)}
-        />
+        <section className="protocol-section">
+          <h2 className="protocol-section__title">Weekly Box</h2>
+          <p className="protocol-empty">
+            {protocol.box_total_products
+              ? `Your ${protocol.box_total_products}-product box is ready, assembled around this protocol.`
+              : "Your personalized product box is ready."}
+          </p>
+          <button type="button" className="btn btn--primary" onClick={handleViewWeeklyBox}>
+            View your weekly box →
+          </button>
+        </section>
       </div>
 
       <CopyrightFooter />
