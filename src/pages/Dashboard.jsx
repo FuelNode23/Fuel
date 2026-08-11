@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import apiClient from '../api/client.js'
 import AccountBar from '../components/AccountBar.jsx'
+import CopyrightFooter from '../components/CopyrightFooter.jsx'
+import { useLanguage } from '../i18n/LanguageContext.jsx'
 
 export default function Dashboard() {
+  const { t } = useLanguage()
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -21,7 +24,7 @@ export default function Dashboard() {
           // No plan yet — not an error state, just prompts the user to generate one.
           setPlan(null)
         } else {
-          setError('Could not load your nutrition plan.')
+          setError(t('Could not load your nutrition plan.'))
         }
       })
       .finally(() => setLoading(false))
@@ -42,7 +45,7 @@ export default function Dashboard() {
       if (err.response?.status === 404) {
         setNeedsProfile(true)
       } else {
-        setError(err.response?.data?.message || 'Could not generate a plan.')
+        setError(err.response?.data?.message || t('Could not generate a plan.'))
       }
     } finally {
       setGenerating(false)
@@ -50,64 +53,75 @@ export default function Dashboard() {
   }
 
   if (loading) {
-    return <div className="page-center">Loading...</div>
+    return <div className="page-center">{t('Loading...')}</div>
   }
 
   return (
     <div className="card">
       <AccountBar />
-      <h1>Your nutrition dashboard</h1>
+      <h1>{t('Your nutrition dashboard')}</h1>
       {error && <div className="alert-error">{error}</div>}
-      {needsProfile && (
-        <div className="alert-error">
-          Please <Link to="/profile">complete your athlete profile</Link> first.
-        </div>
-      )}
+      {needsProfile && (() => {
+        // The link's position in the sentence differs by language ("Please
+        // <link> first" vs "Veuillez d'abord <link>"), so split the
+        // translated template on the {link} placeholder instead of
+        // hardcoding word order.
+        const [before, after] = t('Please {link} first.').split('{link}')
+        return (
+          <div className="alert-error">
+            {before}
+            <Link to="/profile">{t('complete your athlete profile')}</Link>
+            {after}
+          </div>
+        )
+      })()}
 
       <button onClick={handleGenerate} disabled={generating}>
-        {generating ? 'Generating...' : plan ? 'Regenerate plan' : 'Generate my plan'}
+        {generating ? t('Generating...') : plan ? t('Regenerate plan') : t('Generate my plan')}
       </button>
 
       {plan && (
         <div className="plan-grid">
           <div className="stat-box">
-            <span className="stat-label">BMR</span>
+            <span className="stat-label">{t('BMR')}</span>
             <span className="stat-value">{plan.bmr} kcal</span>
           </div>
           <div className="stat-box">
-            <span className="stat-label">TDEE</span>
+            <span className="stat-label">{t('TDEE')}</span>
             <span className="stat-value">{plan.tdee} kcal</span>
           </div>
           <div className="stat-box highlight">
-            <span className="stat-label">Target calories</span>
+            <span className="stat-label">{t('Target calories')}</span>
             <span className="stat-value">{plan.targetCalories} kcal</span>
           </div>
           <div className="stat-box">
-            <span className="stat-label">Protein</span>
+            <span className="stat-label">{t('Protein')}</span>
             <span className="stat-value">{plan.proteinGrams} g</span>
           </div>
           <div className="stat-box">
-            <span className="stat-label">Carbs</span>
+            <span className="stat-label">{t('Carbs')}</span>
             <span className="stat-value">{plan.carbsGrams} g</span>
           </div>
           <div className="stat-box">
-            <span className="stat-label">Fat</span>
+            <span className="stat-label">{t('Fat')}</span>
             <span className="stat-value">{plan.fatGrams} g</span>
           </div>
           <div className="stat-box">
-            <span className="stat-label">Goal</span>
+            <span className="stat-label">{t('Goal')}</span>
             <span className="stat-value">{plan.goal}</span>
           </div>
           <div className="stat-box">
-            <span className="stat-label">Activity level</span>
+            <span className="stat-label">{t('Activity level')}</span>
             <span className="stat-value">{plan.activityLevel}</span>
           </div>
         </div>
       )}
 
       {!plan && !needsProfile && (
-        <p>You don't have a nutrition plan yet. Generate one to get your personalized macro targets.</p>
+        <p>{t("You don't have a nutrition plan yet. Generate one to get your personalized macro targets.")}</p>
       )}
+
+      <CopyrightFooter />
     </div>
   )
 }

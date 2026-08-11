@@ -1,14 +1,16 @@
 import { deliveryPoints } from "./Data.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function Delivery() {
+  const { t } = useLanguage();
+
   return (
     <section id="delivery" className="fn-section">
       <div className="fn-delivery-card">
         <div className="fn-section-header">
-          <h2 className="fn-section-title">Livraison pensée pour la performance</h2>
+          <h2 className="fn-section-title">{t("Delivery built for performance")}</h2>
           <p className="fn-section-subtitle">
-            Une exécution physique fiable, structurée et compatible avec
-            votre semaine d'entraînement.
+            {t("Reliable, structured physical execution that fits your training week.")}
           </p>
         </div>
 
@@ -18,7 +20,7 @@ export default function Delivery() {
               <div className="fn-delivery-icon-wrap">
                 <PointIcon className="fn-icon-sm fn-icon-cyan" />
               </div>
-              <p className="fn-delivery-label">{label}</p>
+              <p className="fn-delivery-label">{t(label)}</p>
             </div>
           ))}
         </div>

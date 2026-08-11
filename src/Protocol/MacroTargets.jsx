@@ -1,4 +1,5 @@
 import "./ProtocolComponents.css";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // Presentation-only labels/units for known macro_targets keys.
 // Any field not listed here still renders, using a prettified version of its key.
@@ -21,11 +22,13 @@ function prettifyKey(key) {
 }
 
 export default function MacroTargets({ macroTargets }) {
+  const { t } = useLanguage();
+
   if (!macroTargets || Object.keys(macroTargets).length === 0) {
     return (
       <section className="protocol-section">
-        <h2 className="protocol-section__title">Macro Targets</h2>
-        <p className="protocol-empty">No macro targets available.</p>
+        <h2 className="protocol-section__title">{t("Macro Targets")}</h2>
+        <p className="protocol-empty">{t("No macro targets available.")}</p>
       </section>
     );
   }
@@ -34,13 +37,13 @@ export default function MacroTargets({ macroTargets }) {
 
   return (
     <section className="protocol-section">
-      <h2 className="protocol-section__title">Macro Targets</h2>
+      <h2 className="protocol-section__title">{t("Macro Targets")}</h2>
       <div className="card-grid card-grid--metrics">
         {entries.map(([key, value]) => {
           const meta = FIELD_META[key] || { label: prettifyKey(key), unit: "" };
           return (
             <div className="card metric-card" key={key}>
-              <span className="metric-card__label">{meta.label}</span>
+              <span className="metric-card__label">{t(meta.label) || meta.label}</span>
               <span className="metric-card__value">
                 {value ?? "—"}
                 {value != null && meta.unit ? (

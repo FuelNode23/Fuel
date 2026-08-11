@@ -1,14 +1,18 @@
 import { steps } from "./Data.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function HowItWorks() {
+  const { t } = useLanguage();
+
   return (
     <section id="how" className="fn-section">
       <div className="fn-container">
         <div className="fn-section-header">
-          <h2 className="fn-section-title">Comment fonctionne FuelNode</h2>
+          <h2 className="fn-section-title">{t("How FuelNode works")}</h2>
           <p className="fn-section-subtitle">
-            Un moteur de nutrition de précision adapté à votre profil, à
-            votre effort et à vos conditions.
+            {t(
+              "A precision nutrition engine adapted to your profile, your effort, and your conditions."
+            )}
           </p>
         </div>
 
@@ -19,8 +23,8 @@ export default function HowItWorks() {
                 <StepIcon className="fn-icon-md fn-icon-lime" />
               </div>
               <span className="fn-step-number">{n}</span>
-              <h3 className="fn-step-title">{title}</h3>
-              <p className="fn-step-body">{body}</p>
+              <h3 className="fn-step-title">{t(title)}</h3>
+              <p className="fn-step-body">{t(body)}</p>
             </div>
           ))}
         </div>

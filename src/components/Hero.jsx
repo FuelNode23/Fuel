@@ -1,8 +1,11 @@
 import { Icon } from "./Icons.jsx";
 import { heroBadges, boxItems, heroPanel } from "./Data.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 import image from "../assets/image.png";
 
 export default function Hero() {
+  const { t } = useLanguage();
+
   return (
     <section className="fn-hero">
       <div className="fn-container">
@@ -13,29 +16,30 @@ export default function Hero() {
             </div>
             <div className="fn-hero-heading-group">
               <h1 className="fn-hero-title">
-                Le bon carburant, au bon moment,
+                {t("The right fuel, at the right time,")}
                 <br />
-                <span className="fn-accent">chaque semaine</span>
+                <span className="fn-accent">{t("every week")}</span>
               </h1>
               <p className="fn-hero-subtitle">
-                FuelNode transforme vos données en protocoles nutritionnels
-                précis et en box hebdomadaires assemblées avec précision.
+                {t(
+                  "FuelNode turns your data into precise nutrition protocols and weekly boxes assembled with precision."
+                )}
               </p>
             </div>
             <div className="fn-hero-actions">
               <a className="fn-btn fn-btn-primary" href="/onboarding">
-                Tester FuelNode
+                {t("Try FuelNode")}
                 <Icon.ArrowRight className="fn-icon-sm" />
               </a>
               <a className="fn-btn fn-btn-secondary" href="#how">
-                Voir comment ça marche
+                {t("See how it works")}
               </a>
             </div>
             <div className="fn-badges">
               {heroBadges.map(({ icon: BadgeIcon, label }) => (
                 <div className="fn-badge" key={label}>
                   <BadgeIcon className="fn-icon-sm fn-icon-cyan" />
-                  <span>{label}</span>
+                  <span>{t(label)}</span>
                 </div>
               ))}
             </div>
@@ -49,6 +53,8 @@ export default function Hero() {
 }
 
 function HeroPanel() {
+  const { t } = useLanguage();
+
   return (
     <div className="fn-hero-panel-wrap">
       <div className="fn-panel-glow" aria-hidden="true" />
@@ -56,16 +62,16 @@ function HeroPanel() {
         <div className="fn-panel-header">
           <div className="fn-panel-header-left">
             <Icon.Activity className="fn-icon-sm fn-icon-lime" />
-            <span className="fn-panel-title">{heroPanel.session}</span>
+            <span className="fn-panel-title">{t(heroPanel.session)}</span>
           </div>
-          <span className="fn-panel-tag">{heroPanel.weekTag}</span>
+          <span className="fn-panel-tag">{t(heroPanel.weekTag)}</span>
         </div>
 
         <div className="fn-panel-stats">
           {heroPanel.stats.map(({ icon: StatIcon, label, value }) => (
             <div className="fn-stat-card" key={label}>
               <StatIcon className="fn-icon-sm fn-icon-cyan fn-icon-center" />
-              <p className="fn-stat-label">{label}</p>
+              <p className="fn-stat-label">{t(label)}</p>
               <p className="fn-stat-value">{value}</p>
             </div>
           ))}
@@ -74,7 +80,7 @@ function HeroPanel() {
         <div className="fn-panel-macros">
           {heroPanel.macros.map(({ label, value, tone }) => (
             <div className="fn-macro-card" key={label}>
-              <p className="fn-stat-label">{label}</p>
+              <p className="fn-stat-label">{t(label)}</p>
               <p className={`fn-macro-value ${tone}`}>{value}</p>
             </div>
           ))}
@@ -84,14 +90,14 @@ function HeroPanel() {
           <div className="fn-box-card-header">
             <div className="fn-box-card-header-left">
               <Icon.Box className="fn-icon-sm fn-icon-lime" />
-              <span className="fn-panel-title">Box hebdomadaire</span>
+              <span className="fn-panel-title">{t("Weekly box")}</span>
             </div>
-            <span className="fn-box-count">{boxItems.length} articles</span>
+            <span className="fn-box-count">{t("{count} items", { count: boxItems.length })}</span>
           </div>
           <div className="fn-box-items">
             {boxItems.map((item) => (
               <div className="fn-box-item" key={item}>
-                {item}
+                {t(item)}
               </div>
             ))}
           </div>

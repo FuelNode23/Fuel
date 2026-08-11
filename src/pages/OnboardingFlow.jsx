@@ -1,262 +1,77 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
 import { questions } from "../api/Questions.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 import AccountBar from "../components/AccountBar.jsx";
+import LanguageToggle from "../components/LanguageToggle.jsx";
+import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import "../pages/Onboarding.css";
 
 /**
- * English -> French dictionary for every user-facing string that comes
- * out of `questions.js`, plus the static UI chrome in this component
- * (Back / Continue / Finish / Step X of Y / etc).
- *
- * IMPORTANT: this only translates what's *displayed*. The values stored
- * in `userData` (and sent to the backend) always stay the original
- * English strings from questions.js — translation is purely a render-time
- * lookup, so the API payload never changes shape based on language.
+ * JSON.stringify with object keys sorted, so two objects containing the
+ * same data compare equal regardless of the order their keys were set in -
+ * userData is built up incrementally as fields are touched, so its key
+ * order won't generally match mapProfileToUserData's fixed return shape.
  */
-const translations = {
-  // Chrome
-  Back: "Retour",
-  Continue: "Continuer",
-  Finish: "Terminer",
-  "Submitting...": "Envoi en cours...",
-  Step: "Étape",
-  of: "sur",
-  Chosen: "Choisi",
-  Tap: "Toucher",
-  "Select sport first": "Choisir un sport d'abord",
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    const keys = Object.keys(value).sort();
+    return `{${keys.map((k) => JSON.stringify(k) + ":" + stableStringify(value[k])).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 
-  // Auth gate (Step 1: create account / sign in)
-  "Create your account": "Créez votre compte",
-  "Log in": "Se connecter",
-  "Create an account to save your answers and get your personalized nutrition protocol.":
-    "Créez un compte pour enregistrer vos réponses et obtenir votre protocole nutritionnel personnalisé.",
-  "Full name": "Nom complet",
-  "Enter your full name": "Entrez votre nom complet",
-  Email: "E-mail",
-  "Enter your email": "Entrez votre e-mail",
-  Password: "Mot de passe",
-  "Enter your password": "Entrez votre mot de passe",
-  "Already have an account? Log in": "Vous avez déjà un compte ? Connectez-vous",
-  "Need an account? Sign up": "Besoin d'un compte ? Inscrivez-vous",
-  "Sign Up": "S'inscrire",
-  "Creating account...": "Création du compte...",
-  "Logging in...": "Connexion en cours...",
-  "Password must be at least 8 characters long.": "Le mot de passe doit contenir au moins 8 caractères.",
-  "Registration failed. Please try again.": "Échec de l'inscription. Veuillez réessayer.",
-  "Login failed. Please check your credentials.": "Échec de la connexion. Veuillez vérifier vos identifiants.",
+/**
+ * Maps a saved AthleteProfile (GET /athletes/profile response shape) back
+ * into the userData shape this wizard's fields expect, so a returning user
+ * who logs in sees their existing answers instead of a blank form.
+ */
+function mapProfileToUserData(profile) {
+  const sportProfiles = {};
+  const sports = (profile.sports || []).map((s) => {
+    sportProfiles[s.sport] = { discipline: s.discipline, level: s.experienceLevel };
+    return s.sport;
+  });
 
-  // Step 1
-  "Tell us about yourself": "Parlez-nous de vous",
-  "First name": "Prénom",
-  "Enter your name": "Entrez votre nom",
-  Age: "Âge",
-  "Enter your age": "Entrez votre âge",
-  Gender: "Genre",
-  Male: "Homme",
-  Female: "Femme",
-  Other: "Autre",
-
-  // Step 2
-  "Your measurements": "Vos mesures",
-  "Weight (kg)": "Poids (kg)",
-  "e.g. 70": "ex. 70",
-  "Height (cm)": "Taille (cm)",
-  "e.g. 170": "ex. 170",
-
-  // Step 3
-  "Your sports practice": "Votre pratique sportive",
-  "Which sports do you practice?": "Quels sports pratiquez-vous ?",
-  "Tap the cards to build your sports profile.": "Touchez les cartes pour construire votre profil sportif.",
-  Running: "Course à pied",
-  Cycling: "Cyclisme",
-  Triathlon: "Triathlon",
-  "Road, trail, track": "Route, trail, piste",
-  "Road, gravel, MTB": "Route, gravel, VTT",
-  "Swim, bike, run combined": "Natation, vélo, course combinés",
-  "What is your objective?": "Quel est votre objectif ?",
-  "Improve my performance": "Améliorer ma performance",
-  "Build my endurance": "Développer mon endurance",
-  "Have more energy in training": "Avoir plus d'énergie à l'entraînement",
-  "Recover better": "Mieux récupérer",
-  "Prepare for a race": "Préparer une course",
-  "Optimize my body composition": "Optimiser ma composition corporelle",
-  "Improve my hydration": "Améliorer mon hydratation",
-  "Tolerate fueling better during effort": "Mieux tolérer l'alimentation pendant l'effort",
-  "Simplify my nutrition routine": "Simplifier ma routine nutritionnelle",
-  "Choose the discipline and experience level for this sport.":
-    "Choisissez la discipline et le niveau d'expérience pour ce sport.",
-  Discipline: "Discipline",
-  Road: "Route",
-  Trail: "Trail",
-  Gravel: "Gravel",
-  Sprint: "Sprint",
-  Olympic: "Olympique",
-  Half: "Half",
-  Full: "Full",
-  "Experience level": "Niveau d'expérience",
-  Beginner: "Débutant",
-  Intermediate: "Intermédiaire",
-  Advanced: "Avancé",
-  Elite: "Élite",
-  "Sport-specific carb rules: max 60g/h running, max 90g/h cycling.":
-    "Règles glucidiques par sport : max 60g/h en course, max 90g/h en vélo.",
-
-  // Step 4
-  "Connect Apple Health": "Connecter Apple Health",
-  "for an ultra-personalised protocol — we read your last 90 days.":
-    "pour un protocole ultra-personnalisé — nous lisons vos 90 derniers jours.",
-  "Continue without": "Continuer sans",
-  "Fuelnode will read your past training data up to 90 days. Your data is sent to Claude AI and never shared with third parties.":
-    "Fuelnode lira vos données d'entraînement des 90 derniers jours. Vos données sont envoyées à Claude AI et ne sont jamais partagées avec des tiers.",
-
-  // Step 5 (connected variant)
-  "Your training profile": "Votre profil d'entraînement",
-  "Data extracted from Apple Health. Edit if needed.": "Données extraites d'Apple Health. Modifiez si nécessaire.",
-  "Sessions / week (count)": "Séances / semaine (nombre)",
-  "e.g. 4": "ex. 4",
-  "Distance / week (km)": "Distance / semaine (km)",
-  "e.g. 35": "ex. 35",
-  "Training days": "Jours d'entraînement",
-  Monday: "Lundi",
-  Tuesday: "Mardi",
-  Wednesday: "Mercredi",
-  Thursday: "Jeudi",
-  Friday: "Vendredi",
-  Saturday: "Samedi",
-  Sunday: "Dimanche",
-  "Usual session time": "Horaire habituel des séances",
-  "Early morning": "Tôt le matin",
-  Morning: "Matin",
-  Afternoon: "Après-midi",
-  Evening: "Soir",
-  Night: "Nuit",
-  "Run type": "Type de course",
-  Track: "Piste",
-  Hybrid: "Hybride",
-  "Answer every question on this step to continue.": "Répondez à toutes les questions de cette étape pour continuer.",
-
-  // Step 5 (default variant)
-  "Describe your training": "Décrivez votre entraînement",
-  "Running · Road": "Course à pied · Route",
-  "Fill in the metrics that matter for this practice.": "Renseignez les indicateurs importants pour cette pratique.",
-  "Accepted format: 5:30, 5m30, or 5:30 min/km.": "Format accepté : 5:30, 5m30, ou 5:30 min/km.",
-  "Sessions per week (count)": "Séances par semaine (nombre)",
-  "Typical distance per session (km)": "Distance type par séance (km)",
-  "e.g. 6": "ex. 6",
-  "Pace (min/km)": "Allure (min/km)",
-  "e.g. 4:00": "ex. 4:00",
-  "Average elevation (m)": "Dénivelé moyen (m)",
-  "e.g. 21": "ex. 21",
-
-  // Step 6
-  "Do you have a target event planned?": "Avez-vous un événement cible prévu ?",
-  Yes: "Oui",
-  No: "Non",
-  "Event name": "Nom de l'événement",
-  "E.g. Paris Marathon": "Ex. Marathon de Paris",
-  Sport: "Sport",
-  "— Choose —": "— Choisir —",
-  Format: "Format",
-  "5 km": "5 km",
-  "10 km": "10 km",
-  "Half marathon": "Semi-marathon",
-  Marathon: "Marathon",
-  "Ultra Running": "Ultra-trail",
-  "Trail (specify distance)": "Trail (préciser la distance)",
-  "Road (specify distance)": "Route (préciser la distance)",
-  "Hybrid bike (specify distance)": "Vélo hybride (préciser la distance)",
-  "MTB (specify distance)": "VTT (préciser la distance)",
-  "Half (70.3)": "Half (70.3)",
-  "Full (Ironman)": "Full (Ironman)",
-  "Expected event time": "Horaire prévu de l'événement",
-  "In how many weeks? (wk)": "Dans combien de semaines ? (sem)",
-  "E.g. 10": "Ex. 10",
-  "Goal time (h:mm)": "Temps visé (h:mm)",
-  "E.g. 3:30": "Ex. 3:30",
-  "Example: 3:30 means 3h 30m. Accepted: 3:30, 3h30, or 210 min.":
-    "Exemple : 3:30 signifie 3h 30min. Accepté : 3:30, 3h30, ou 210 min.",
-  "Event location": "Lieu de l'événement",
-  "E.g. Paris": "Ex. Paris",
-  "Elevation gain (m) *": "Dénivelé positif (m) *",
-  "e.g. 499": "ex. 499",
-  "* Elevation changes energy needs and the box composition.":
-    "* Le dénivelé modifie les besoins énergétiques et la composition de la box.",
-
-  // Step 7
-  Sensitivities: "Sensibilités",
-  "Stomach sensitivity": "Sensibilité digestive",
-  None: "Aucune",
-  Mild: "Légère",
-  Moderate: "Modérée",
-  High: "Élevée",
-  "Caffeine intake": "Consommation de caféine",
-  Never: "Jamais",
-  Occasional: "Occasionnelle",
-  Regular: "Régulière",
-  "Heavy user": "Grand consommateur",
-
-  // Step 8
-  Diet: "Alimentation",
-  "Diet pattern": "Régime alimentaire",
-  Omnivore: "Omnivore",
-  Vegetarian: "Végétarien",
-  Vegan: "Végan",
-  Pescatarian: "Pescétarien",
-  "Dietary restrictions": "Restrictions alimentaires",
-  "Gluten-free": "Sans gluten",
-  "Lactose-free": "Sans lactose",
-  "Nut-free": "Sans fruits à coque",
-  "Soy-free": "Sans soja",
-  "Egg-free": "Sans œuf",
-
-  // Step 9
-  "Your preferences": "Vos préférences",
-  "Preferred formats": "Formats préférés",
-  "Choose the formats you actually want to open and use on the move.":
-    "Choisissez les formats que vous voulez vraiment ouvrir et utiliser en déplacement.",
-  "Fluid gel": "Gel liquide",
-  "Compact, fast to open, easy to take when the pace rises.":
-    "Compact, rapide à ouvrir, facile à prendre quand l'allure augmente.",
-  "Chewable bar": "Barre à mâcher",
-  "Chewy texture for longer or more progressive sessions.":
-    "Texture à mâcher pour les séances longues ou progressives.",
-  "Portable compote": "Compote nomade",
-  "Soft, digestible format when you want something smoother.":
-    "Format doux et digeste pour quelque chose de plus léger.",
-  "Soft chews": "Pâtes à mâcher",
-  "Small pieces that are easy to split during effort.": "Petits morceaux faciles à fractionner pendant l'effort.",
-  "Drink sachet": "Sachet boisson",
-  "Hydration and energy in a drinkable or mixable format.":
-    "Hydratation et énergie en format à boire ou à mélanger.",
-  "Natural food": "Aliment naturel",
-  "A less processed format for a routine that feels like real food.":
-    "Un format moins transformé pour une routine qui ressemble à de la vraie nourriture.",
-  "Preferred mental supplement type": "Type de complément mental préféré",
-  Focus: "Concentration",
-  Relaxation: "Relaxation",
-  Sleep: "Sommeil",
-  Energy: "Énergie",
-
-  // Step 10
-  "Delivery day": "Jour de livraison",
-  "Choose your preferred delivery day": "Choisissez votre jour de livraison préféré",
-  "Paris only, for now": "Paris uniquement, pour l'instant",
-  "We deliver within Paris only for now — expanding our zone soon.":
-    "Nous livrons uniquement à Paris pour l'instant — notre zone s'agrandit bientôt.",
-  "You can cancel or change your protocol until Tuesday at noon.":
-    "Vous pouvez annuler ou modifier votre protocole jusqu'à mardi midi.",
-  "You can collect your box upto 7 days after delivery":
-    "Vous pouvez récupérer votre box jusqu'à 7 jours après la livraison",
-
-  // Step 11
-  "Has nutrition ever cost you a race or ruined a session?":
-    "La nutrition vous a-t-elle déjà coûté une course ou gâché une séance ?",
-  "Your profile is ready. Fuelnode will now generate your personalized nutrition protocol from your answers, your training level, and your preferences.":
-    "Votre profil est prêt. Fuelnode va maintenant générer votre protocole nutritionnel personnalisé à partir de vos réponses, de votre niveau d'entraînement et de vos préférences.",
-};
+  return {
+    name: profile.firstName,
+    age: profile.age,
+    gender: profile.gender,
+    weight: profile.weightKg,
+    height: profile.heightCm,
+    sports,
+    sport_profiles: sportProfiles,
+    goals: profile.objectives || [],
+    connectChoice: profile.connectChoice,
+    sessions_per_week: profile.sessionsPerWeek,
+    typical_distance: profile.weeklyDistanceKm,
+    pace: profile.averagePace,
+    avg_elevation: profile.averageElevation,
+    session_time: profile.trainingTime,
+    target_event: profile.racePlanned ? "Yes" : "No",
+    event_name: profile.goalEvent,
+    event_sport: profile.eventSport,
+    event_format: profile.raceDistance,
+    expected_event_time: profile.expectedEventTime,
+    weeks_until_event: profile.weeksToEvent,
+    target_time: profile.targetTime,
+    event_location: profile.eventLocation,
+    elevation_gain: profile.elevationGain,
+    stomach_sensitivity: profile.stomachSensitivity,
+    caffeine_intake: profile.caffeinePreference,
+    diet_pattern: profile.regime,
+    restrictions: profile.restrictions || [],
+    preferred_formats: profile.preferredFormats || [],
+    supplement_type: profile.supplements || [],
+    delivery_day: profile.deliveryDay,
+    nutrition_issue_history: profile.nutritionIssueHistory,
+  };
+}
 
 /**
  * Drives the entire onboarding experience from the `questions` array.
@@ -267,12 +82,12 @@ const translations = {
 export default function OnboardingFlow() {
   const navigate = useNavigate();
   const { user, loading: authLoading, login, register } = useAuth();
+  const { t } = useLanguage();
 
   const [stepIndex, setStepIndex] = useState(0);
   const [userData, setUserData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [language, setLanguage] = useState("en");
 
   // Auth gate (Step 1 of the flow): create an account or sign in before
   // any question is shown. Once `user` is set, this component re-renders
@@ -283,6 +98,40 @@ export default function OnboardingFlow() {
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
+
+  // Set when login pre-fills userData from an existing profile, so Finish
+  // can detect "nothing changed since last time" and confirm before
+  // spending an AI generation call on an identical protocol.
+  const initialUserDataRef = useRef(null);
+  const [showNoChangeConfirm, setShowNoChangeConfirm] = useState(false);
+
+  // Pre-fill from an existing saved profile whenever there's an active
+  // session - not just right after logging in through the auth gate above.
+  // A session can just as easily already be active on mount (e.g. logged
+  // in via the standalone /login page, then clicked "Try FuelNode" from
+  // /landing), which skips the auth gate entirely and would otherwise
+  // leave the form blank despite the profile existing.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    apiClient
+      .get("/athletes/profile")
+      .then(({ data }) => {
+        if (cancelled) return;
+        const mapped = mapProfileToUserData(data);
+        initialUserDataRef.current = mapped;
+        setUserData((prev) => (Object.keys(prev).length === 0 ? mapped : prev));
+      })
+      .catch(() => {
+        // No saved profile yet (404) - proceed with a blank form, same
+        // as any first-time visitor.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Ref-based lock: blocks a second submitOnboarding() call from firing
   // (rapid double-click, StrictMode double-invoke, going back a step and
@@ -298,19 +147,6 @@ export default function OnboardingFlow() {
 
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
 
-  // Translates display text only. Values kept in userData / sent to the
-  // backend are always the original English strings from questions.js —
-  // this never touches state, only what's rendered.
-  const t = (text) => {
-    if (!text) return text;
-    if (language === "fr") return translations[text] ?? text;
-    return text;
-  };
-
-  const toggleLanguage = () => {
-    setLanguage((prev) => (prev === "en" ? "fr" : "en"));
-  };
-
   const handleAuthSubmit = async () => {
     setAuthError("");
     if (authMode === "register" && authPassword.length < 8) {
@@ -325,7 +161,8 @@ export default function OnboardingFlow() {
         await login(authEmail, authPassword);
       }
       // `user` is now set by AuthContext, so this component re-renders
-      // straight into the question wizard - no navigation needed.
+      // straight into the question wizard, and the useEffect above picks
+      // up the profile fetch/pre-fill - no navigation needed here.
     } catch (err) {
       setAuthError(
         err.response?.data?.message ||
@@ -506,10 +343,22 @@ export default function OnboardingFlow() {
 
   const goNext = () => {
     if (stepIndex === totalSteps - 1) {
+      const unchanged =
+        initialUserDataRef.current &&
+        stableStringify(userData) === stableStringify(initialUserDataRef.current);
+      if (unchanged) {
+        setShowNoChangeConfirm(true);
+        return;
+      }
       submitOnboarding();
       return;
     }
     setStepIndex((prev) => prev + 1);
+  };
+
+  const handleConfirmedSubmit = () => {
+    setShowNoChangeConfirm(false);
+    submitOnboarding();
   };
 
   const handleContinue = () => {
@@ -654,14 +503,7 @@ export default function OnboardingFlow() {
 
         <div className="ob-topbar">
           <span />
-          <button
-            type="button"
-            className="ob-lang"
-            onClick={toggleLanguage}
-            aria-label={language === "en" ? "Switch to French" : "Passer en anglais"}
-          >
-            {language === "en" ? "FR" : "EN"}
-          </button>
+          <LanguageToggle />
         </div>
 
         <div className="ob-content">
@@ -754,6 +596,8 @@ export default function OnboardingFlow() {
               : t(authMode === "register" ? "Sign Up" : "Log in")}
           </button>
         </div>
+
+        <CopyrightFooter />
       </div>
     );
   }
@@ -766,6 +610,42 @@ export default function OnboardingFlow() {
 
       <AccountBar />
 
+      {showNoChangeConfirm && (
+        <div className="ob-blocking-overlay" role="dialog" aria-modal="true">
+          <div className="ob-confirm-card">
+            <h2 className="ob-confirm-title">{t("No changes detected")}</h2>
+            <p className="ob-confirm-text">
+              {t(
+                "Your answers are the same as your last submission. Do you want to continue and generate a new protocol anyway?"
+              )}
+            </p>
+            <div className="ob-confirm-actions">
+              <button
+                type="button"
+                className="ob-confirm-cancel"
+                onClick={() => setShowNoChangeConfirm(false)}
+              >
+                {t("Go back and review")}
+              </button>
+              <button type="button" className="ob-continue" onClick={handleConfirmedSubmit}>
+                {t("Continue anyway")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {submitting && (
+        <div className="ob-blocking-overlay" role="status" aria-live="polite">
+          <div className="ob-blocking-spinner" aria-hidden="true" />
+          <p className="ob-blocking-text">
+            {t(
+              "Generating your personalized nutrition protocol. This can take up to a minute — please wait..."
+            )}
+          </p>
+        </div>
+      )}
+
       <div className="ob-topbar">
         <button
           type="button"
@@ -775,14 +655,8 @@ export default function OnboardingFlow() {
         >
           <span aria-hidden="true">←</span> {t("Back")}
         </button>
-        <button
-          type="button"
-          className="ob-lang"
-          onClick={toggleLanguage}
-          aria-label={language === "en" ? "Switch to French" : "Passer en anglais"}
-        >
-          {language === "en" ? "FR" : "EN"}
-        </button>
+        {/* Language toggle for this screen lives in AccountBar above,
+            so the whole app shares a single control instead of two. */}
       </div>
 
       <div className="ob-progress-wrap">
@@ -1090,6 +964,8 @@ export default function OnboardingFlow() {
           </button>
         </div>
       )}
+
+      <CopyrightFooter />
     </div>
   );
 }

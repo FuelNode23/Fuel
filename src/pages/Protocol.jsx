@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
+import CopyrightFooter from "../components/CopyrightFooter.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 import LoadingState from "../Protocol/LoadingState";
 import ErrorState from "../Protocol/ErrorState";
@@ -8,11 +10,7 @@ import AthleteSummary from "../Protocol/AthleteSummary";
 import MacroTargets from "../Protocol/MacroTargets";
 import DietProtocol from "../Protocol/DietProtocol";
 import FuelingProtocol from "../Protocol/FuelingProtocol";
-import SpecialistProtocols from "../Protocol/SpecialistProtocols";
-import WeeklyBox from "../Protocol/WeeklyBox";
-import ScienceCards from "../Protocol/ScienceCards";
-import Assumptions from "../Protocol/Assumptions";
-import MissingData from "../Protocol/MissingData";
+
 import {
   adaptDietProtocol,
   adaptFuelingProtocol,
@@ -44,6 +42,7 @@ import "./Protocol.css";
 export default function Protocol() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [protocol, setProtocol] = useState(null);
   const [status, setStatus] = useState("loading"); // "loading" | "success" | "error" | "empty"
@@ -51,6 +50,17 @@ export default function Protocol() {
   const [saveFailed, setSaveFailed] = useState(false);
 
   const handleBack = () => navigate(-1);
+
+  const handleViewWeeklyBox = () => {
+    const weeklyBoxHandoff = {
+      items: adaptWeeklyBoxItems(protocol.weekly_box_contents),
+      totalProducts: protocol.box_total_products,
+      frenchBrandPercentage: protocol.box_french_brand_percentage,
+      assemblyNotes: adaptAssemblyNotes(protocol.assembly_notes),
+    };
+    sessionStorage.setItem("weeklyBoxHandoff", JSON.stringify(weeklyBoxHandoff));
+    navigate("/weeklybox", { state: weeklyBoxHandoff });
+  };
 
   const loadHandoff = () => {
     setStatus("loading");
@@ -85,7 +95,9 @@ export default function Protocol() {
       setProtocol(null);
       setStatus("error");
       setErrorMessage(
-        "We couldn't save your profile, so your personalized protocol hasn't been generated yet. Your answers are safe — please try again."
+        t(
+          "We couldn't save your profile, so your personalized protocol hasn't been generated yet. Your answers are safe — please try again."
+        )
       );
       return;
     }
@@ -123,6 +135,7 @@ export default function Protocol() {
           onRetry={saveFailed ? () => navigate("/onboarding") : loadHandoff}
           onBack={handleBack}
         />
+        <CopyrightFooter />
       </div>
     );
   }
@@ -132,8 +145,9 @@ export default function Protocol() {
       <div className="protocol-page">
         <AccountBar />
         <div className="protocol-page__empty">
-          No protocol available. Please complete onboarding first.
+          {t("No protocol available. Please complete onboarding first.")}
         </div>
+        <CopyrightFooter />
       </div>
     );
   }
@@ -143,9 +157,9 @@ export default function Protocol() {
       <AccountBar />
       <div className="protocol-page__inner">
         <header className="protocol-page__header">
-          <h1 className="protocol-page__title">{protocol.title || "Your Nutrition Protocol"}</h1>
+          <h1 className="protocol-page__title">{protocol.title || t("Your Nutrition Protocol")}</h1>
           <p className="protocol-page__subtitle">
-            Personalized fueling, recovery, and product guidance based on your onboarding profile.
+            {t("Personalized fueling, recovery, and product guidance based on your onboarding profile.")}
           </p>
         </header>
 
@@ -162,21 +176,24 @@ export default function Protocol() {
 
         <FuelingProtocol fuelingProtocol={adaptFuelingProtocol(protocol.fueling_protocol)} />
 
-        <SpecialistProtocols protocols={adaptSpecialistProtocols(protocol.active_specialist_protocols)} />
 
-        <WeeklyBox
-          items={adaptWeeklyBoxItems(protocol.weekly_box_contents)}
-          totalProducts={protocol.box_total_products}
-          frenchBrandPercentage={protocol.box_french_brand_percentage}
-          assemblyNotes={adaptAssemblyNotes(protocol.assembly_notes)}
-        />
 
-        <ScienceCards cards={adaptScienceCards(protocol.science_cards)} />
-
-        <Assumptions assumptions={protocol.assumptions_made} />
-
-        <MissingData flags={protocol.missing_data_flags} />
+        <section className="protocol-section">
+          <h2 className="protocol-section__title">{t("Weekly Box")}</h2>
+          <p className="protocol-empty">
+            {protocol.box_total_products
+              ? t("Your {count}-product box is ready, assembled around this protocol.", {
+                  count: protocol.box_total_products,
+                })
+              : t("Your personalized product box is ready.")}
+          </p>
+          <button type="button" className="btn btn--primary" onClick={handleViewWeeklyBox}>
+            {t("View your weekly box →")}
+          </button>
+        </section>
       </div>
+
+      <CopyrightFooter />
     </div>
   );
 }
