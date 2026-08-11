@@ -162,7 +162,7 @@ export default function Protocol() {
 
         <FuelingProtocol fuelingProtocol={adaptFuelingProtocol(protocol.fueling_protocol)} />
 
-        <SpecialistProtocols protocols={adaptSpecialistProtocols(protocol.active_specialist_protocols)} />
+        
 
         <WeeklyBox
           items={adaptWeeklyBoxItems(protocol.weekly_box_contents)}
@@ -171,11 +171,7 @@ export default function Protocol() {
           assemblyNotes={adaptAssemblyNotes(protocol.assembly_notes)}
         />
 
-        <ScienceCards cards={adaptScienceCards(protocol.science_cards)} />
-
-        <Assumptions assumptions={protocol.assumptions_made} />
-
-        <MissingData flags={protocol.missing_data_flags} />
+       
       </div>
     </div>
   );
