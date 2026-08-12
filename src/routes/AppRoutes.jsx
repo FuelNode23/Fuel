@@ -12,7 +12,10 @@ import Dashboard from "../pages/Dashboard";
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* App starts on the landing/onboarding flow, not Login - Login is
+          only reached explicitly (nav, logout) or after onboarding's
+          Finish step for a visitor who isn't authenticated yet. */}
+      <Route path="/" element={<Navigate to="/landing" replace />} />
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -28,7 +31,7 @@ const AppRoutes = () => {
 
         <Route path="/dashboard" element={<Dashboard />} />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/landing" replace />} />
     </Routes>
   );
 };
