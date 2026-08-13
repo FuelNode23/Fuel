@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { saveSubscription } from "../api/client.js";
 import "./Subscriptions.css";
 
 /**
@@ -98,13 +99,22 @@ export default function Subscriptions() {
   const category = searchParams.get("category");
   const cameFromWeeklyBox = from === "weekly-box";
 
-  // No checkout/billing endpoint exists yet — picking a plan here has
-  // nothing real to submit to. This just carries the choice forward
-  // (dummy status) so the Account -> Athlete dashboard sequence has
-  // something to display; swap for a real call once billing exists.
-  const handleSelectPlan = (planKey) => {
+  // No checkout/billing endpoint exists yet, but the plan/box-variant
+  // choice itself is real now (POST /api/subscription) - only the payment
+  // step ahead of it (Account.jsx) is still a dummy flow. sessionStorage
+  // is kept too so the Account -> Athlete dashboard sequence has an
+  // immediate value to show without waiting on a fetch.
+  const handleSelectPlan = async (planKey) => {
     sessionStorage.setItem("selectedPlan", planKey);
     if (category) sessionStorage.setItem("selectedBoxVariant", category);
+
+    try {
+      await saveSubscription(planKey, category || null);
+    } catch {
+      // Save failed (network, expired session, etc.) - sessionStorage still
+      // carries the choice through this session, so don't block navigation.
+    }
+
     const params = new URLSearchParams({ plan: planKey });
     if (category) params.set("category", category);
     navigate(`/account?${params.toString()}`);
