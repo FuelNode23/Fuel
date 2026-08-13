@@ -6,15 +6,17 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 import LoadingState from "../Protocol/LoadingState";
 import ErrorState from "../Protocol/ErrorState";
-import AthleteSummary from "../Protocol/AthleteSummary";
-import MacroTargets from "../Protocol/MacroTargets";
-import DietProtocol from "../Protocol/DietProtocol";
-import FuelingProtocol from "../Protocol/FuelingProtocol";
+import AthleteFuelingCard from "../Protocol/AthleteFuelingCard";
+import SessionProtocol from "../Protocol/SessionProtocol";
+import RaceDayProtocol from "../Protocol/RaceDayProtocol";
+import MealGuidance from "../Protocol/MealGuidance";
+import SpecialistProtocols from "../Protocol/SpecialistProtocols";
+import Assumptions from "../Protocol/Assumptions";
+import MissingData from "../Protocol/MissingData";
 
 import {
-  adaptDietProtocol,
   adaptFuelingProtocol,
-  adaptMacroTargets,
+  adaptMealTimingWindows,
   adaptScienceCards,
   adaptSpecialistProtocols,
   adaptWeeklyBoxItems,
@@ -48,6 +50,9 @@ export default function Protocol() {
   const [status, setStatus] = useState("loading"); // "loading" | "success" | "error" | "empty"
   const [errorMessage, setErrorMessage] = useState("");
   const [saveFailed, setSaveFailed] = useState(false);
+  // Onboarding's raw answers, kept alongside protocol so the weekly-box page
+  // can read sessions_per_week (not part of the generated protocol JSON).
+  const [userData, setUserData] = useState(null);
 
   const handleBack = () => navigate(-1);
 
@@ -57,6 +62,8 @@ export default function Protocol() {
       totalProducts: protocol.box_total_products,
       frenchBrandPercentage: protocol.box_french_brand_percentage,
       assemblyNotes: adaptAssemblyNotes(protocol.assembly_notes),
+      scienceCards: adaptScienceCards(protocol.science_cards),
+      sessionsPerWeek: userData?.sessions_per_week ?? null,
     };
     sessionStorage.setItem("weeklyBoxHandoff", JSON.stringify(weeklyBoxHandoff));
     navigate("/weeklybox", { state: weeklyBoxHandoff });
@@ -109,6 +116,7 @@ export default function Protocol() {
     }
 
     setProtocol(handoff.onboardingResult);
+    setUserData(handoff.userData || null);
     setStatus("success");
   };
 
@@ -156,41 +164,41 @@ export default function Protocol() {
     <div className="protocol-page">
       <AccountBar />
       <div className="protocol-page__inner">
-        <header className="protocol-page__header">
-          <h1 className="protocol-page__title">{protocol.title || t("Your Nutrition Protocol")}</h1>
-          <p className="protocol-page__subtitle">
-            {t("Personalized fueling, recovery, and product guidance based on your onboarding profile.")}
-          </p>
-        </header>
+        <button type="button" className="back-link" onClick={handleBack}>
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+            <path
+              d="M12 4l-6 6 6 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {t("Back")}
+        </button>
 
-        <AthleteSummary
-          summary={protocol.athlete_summary}
-          generatedDate={protocol.generated_date}
-          language={protocol.language}
-          version={protocol.protocol_version}
+        <AthleteFuelingCard protocol={protocol} userData={userData} />
+
+        <SessionProtocol
+          fuelingProtocol={adaptFuelingProtocol(protocol.fueling_protocol)}
+          scienceCards={adaptScienceCards(protocol.science_cards)}
         />
 
-        <MacroTargets macroTargets={adaptMacroTargets(protocol.macro_targets)} />
+        <RaceDayProtocol raceDay={protocol.fueling_protocol?.race_day} />
 
-        <DietProtocol dietProtocol={adaptDietProtocol(protocol.diet_protocol)} />
+        <MealGuidance
+          mealTimingWindows={adaptMealTimingWindows(protocol.diet_protocol)}
+          userData={userData}
+          sessionFuelingPlan={protocol.session_fueling_plan}
+          onDiscoverBox={handleViewWeeklyBox}
+        />
 
-        <FuelingProtocol fuelingProtocol={adaptFuelingProtocol(protocol.fueling_protocol)} />
+        <SpecialistProtocols protocols={adaptSpecialistProtocols(protocol.active_specialist_protocols)} />
 
+        <Assumptions assumptions={protocol.assumptions_made} />
 
-
-        <section className="protocol-section">
-          <h2 className="protocol-section__title">{t("Weekly Box")}</h2>
-          <p className="protocol-empty">
-            {protocol.box_total_products
-              ? t("Your {count}-product box is ready, assembled around this protocol.", {
-                  count: protocol.box_total_products,
-                })
-              : t("Your personalized product box is ready.")}
-          </p>
-          <button type="button" className="btn btn--primary" onClick={handleViewWeeklyBox}>
-            {t("View your weekly box →")}
-          </button>
-        </section>
+        <MissingData flags={protocol.missing_data_flags} />
       </div>
 
       <CopyrightFooter />

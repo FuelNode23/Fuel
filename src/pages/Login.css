@@ -1,4 +1,6 @@
-/* src/pages/Login/Login.css */
+/* src/pages/Login.css — same art direction as Landing.css:
+   split-screen hero photo + glass form panel, Space Grotesk + Inter, lime/cyan accents. */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
 
 * {
   margin: 0;
@@ -14,102 +16,313 @@ body,
 }
 
 .login-page {
+  position: relative;
+  display: flex;
   width: 100%;
   min-height: 100vh;
-  background: #0a0a0e;
+  overflow-x: hidden;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  color: #f4f7f1;
+}
+
+/* Floating language switch, anchored to the page like the landing nav's,
+   instead of being crammed inside the form card. */
+.login-lang-toggle {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 10;
+}
+
+@media (max-width: 480px) {
+  .login-lang-toggle {
+    top: 1rem;
+    right: 1rem;
+  }
+}
+
+/* ---------- Left pane: full-height hero photo ---------- */
+.login-image-pane {
+  position: relative;
+  flex: 1 1 56%;
+  min-height: 100vh;
+  overflow: hidden;
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .login-image-pane {
+    display: block;
+  }
+}
+
+.login-image-pane__image {
+  position: absolute;
+  inset: 0;
+  background-image: url("../assets/main-img.png");
+  background-size: cover;
+  background-position: center 20%;
+  background-repeat: no-repeat;
+  transform: scale(1.02);
+  animation: loginBgZoom 22s ease-in-out infinite alternate;
+}
+
+@keyframes loginBgZoom {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.09);
+  }
+}
+
+.login-image-pane__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+      0deg,
+      rgba(4, 8, 14, 0.82) 0%,
+      rgba(4, 8, 14, 0.15) 42%,
+      rgba(4, 8, 14, 0.05) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(4, 8, 14, 0.15) 0%,
+      rgba(4, 8, 14, 0.05) 60%,
+      rgba(7, 12, 20, 0.98) 100%
+    );
+}
+
+.login-image-pane__brand {
+  position: relative;
+  z-index: 1;
+  height: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  max-width: 30rem;
+  padding: 3rem 4vw 4rem;
+  animation: loginBrandIn 0.7s ease both;
+}
+
+.login-image-pane__logo {
+  height: 4rem;
+  width: auto;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
+}
+
+.login-image-pane__title {
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: #f8fafc;
+  margin: 0;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.login-accent {
+  color: #22c55e;
+}
+
+.login-image-pane__sub {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: rgba(226, 232, 240, 0.88);
+  margin: 0;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes loginBrandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Right pane: login details ---------- */
+.login-form-pane {
+  position: relative;
+  flex: 1 1 44%;
+  min-height: 100vh;
+  display: flex;
   align-items: center;
-  padding: 20px;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2.5rem 1.5rem;
+  background: radial-gradient(120% 120% at 100% 0%, #10203a 0%, #070c14 55%),
+    #070c14;
+}
+
+/* Small mobile banner strip when the image pane is hidden */
+@media (max-width: 899px) {
+  .login-form-pane {
+    background-image: linear-gradient(
+        180deg,
+        rgba(4, 8, 14, 0.55) 0%,
+        rgba(7, 12, 20, 0.97) 62%,
+        #070c14 100%
+      ),
+      url("../assets/main-img.png");
+    background-size: 100% 260px, cover;
+    background-position: top, center 25%;
+    background-repeat: no-repeat;
+  }
+}
+
+.login-glow {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.login-glow-a {
+  top: -10%;
+  right: -10%;
+  width: 26rem;
+  height: 26rem;
+  background: rgba(103, 232, 249, 0.16);
+}
+
+.login-glow-b {
+  bottom: -14%;
+  left: -8%;
+  width: 22rem;
+  height: 22rem;
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.login-panel-wrap {
+  position: relative;
+  z-index: 1;
 }
 
 .form-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 430px;
-  background: #15151c;
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+  max-width: 420px;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 2.5rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: loginCardIn 0.6s ease both;
 }
 
-.form-card__topbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
+@keyframes loginCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .form-card h1 {
-  color: #ffffff;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  color: #f8fafc;
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 32px;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
   font-weight: 700;
+}
+
+.form-card__subtitle {
+  text-align: center;
+  color: rgba(203, 213, 225, 0.75);
+  font-size: 0.9rem;
+  margin-bottom: 1.75rem;
 }
 
 .form-card form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.1rem;
 }
 
 .form-card label {
   display: flex;
   flex-direction: column;
   color: #d1d5db;
-  font-size: 14px;
+  font-size: 0.85rem;
   font-weight: 500;
+  gap: 0.5rem;
 }
 
 .form-card input {
-  margin-top: 8px;
   width: 100%;
-  padding: 14px 16px;
-  background: #0f0f14;
-  border: 1px solid #2d2d36;
-  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  background: rgba(6, 12, 20, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
   color: white;
-  font-size: 15px;
+  font-size: 0.95rem;
   outline: none;
-  transition: 0.3s;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.form-card input::placeholder {
+  color: rgba(148, 163, 184, 0.6);
 }
 
 .form-card input:focus {
-  border-color:#3ab3ff;
-  box-shadow: 0 0 0 3px rgba(198, 255, 58, 0.2);
+  border-color: #38bdf8;
+  background: rgba(6, 12, 20, 0.9);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
 }
 
 .form-card button {
   width: 100%;
-  margin-top: 10px;
-  padding: 14px;
-  background: #3ab3ff;
-  color: #0a0a0e;
-  border: none;
+  margin-top: 0.5rem;
+  padding: 0.95rem;
+  background: #22c55e;
+  color: #07111f;
+  border: 1px solid rgba(201, 255, 77, 0.3);
   border-radius: 999px;
-  font-size: 16px;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.3s;
+  box-shadow: 0 18px 40px rgba(34, 197, 94, 0.22);
+  transition: background-color 0.25s ease, transform 0.25s ease;
 }
 
-.form-card button:hover {
-  background:#3ab3ff;
+.form-card button:hover:not(:disabled) {
+  background: #d7ff6d;
   transform: translateY(-2px);
 }
 
 .form-card button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  transform: none;
 }
 
-.form-card p {
-  margin-top: 24px;
+.form-card__footer-link {
+  margin-top: 1.5rem;
   text-align: center;
-  color: #bdbdbd;
+  color: rgba(203, 213, 225, 0.75);
+  font-size: 0.9rem;
 }
 
 .form-card a {
-  color:#3ab3ff;
+  color: #38bdf8;
   text-decoration: none;
   font-weight: 600;
 }
@@ -119,21 +332,40 @@ body,
 }
 
 .alert-error {
-  margin-bottom: 20px;
-  padding: 12px;
-  border-radius: 10px;
-  background: rgba(255, 0, 0, 0.15);
-  border: 1px solid rgba(255, 0, 0, 0.3);
-  color: #ff6b6b;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fca5a5;
   text-align: center;
+  font-size: 0.875rem;
+}
+
+.form-card .copyright-footer {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 480px) {
   .form-card {
-    padding: 30px 20px;
+    padding: 1.75rem 1.25rem;
   }
 
   .form-card h1 {
-    font-size: 28px;
+    font-size: 1.65rem;
+  }
+
+  .login-form-pane {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-image-pane__image,
+  .form-card,
+  .login-image-pane__brand {
+    animation: none;
   }
 }

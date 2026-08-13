@@ -48,6 +48,8 @@ apiClient.interceptors.response.use(
  */
 export async function submitOnboarding(userData) {
   const response = await apiClient.post('/protocol/generate-with-profile', userData)
+  
+  console.log('submitOnboarding response:', response.data) // Log the response data for debugging
   return response.data
 }
 
@@ -83,6 +85,46 @@ export async function completePendingOnboarding(navigate) {
   }
 
   return true
+}
+
+/**
+ * Persists the plan/box-variant chosen on the Subscriptions page for the
+ * current authenticated user. No billing exists yet - this only records
+ * the choice, via POST /api/subscription.
+ *
+ * @param {string} plan - one of the Subscriptions.jsx PLANS keys (free/amateur/performance/elite)
+ * @param {string|null} boxVariant - one of boxVariants.js's keys (international/value/french), or null
+ * @returns {Promise<object>} { plan, boxVariant, updatedAt }
+ */
+export async function saveSubscription(plan, boxVariant) {
+  const response = await apiClient.post('/subscription', { plan, boxVariant })
+  return response.data
+}
+
+/**
+ * Fetches the current user's saved subscription choice. Rejects with a 404
+ * (via the response) if nothing has been selected yet - callers should
+ * treat that as "no active plan", not an error to surface.
+ *
+ * @returns {Promise<object>} { plan, boxVariant, updatedAt }
+ */
+export async function getSubscription() {
+  const response = await apiClient.get('/subscription/me')
+  return response.data
+}
+
+/**
+ * Per-tier prices computed server-side from the athlete's actual generated
+ * box and the real product catalog (see UserSubscriptionService), not the
+ * static numbers in Subscriptions.jsx's PLANS array. Rejects (via the
+ * response) with a 404 if no protocol has been generated yet - callers
+ * should fall back to the static prices in that case.
+ *
+ * @returns {Promise<object>} { free, amateur, performance, elite } (numbers, EUR)
+ */
+export async function getSubscriptionPricing() {
+  const response = await apiClient.get('/subscription/pricing')
+  return response.data
 }
 
 export default apiClient
