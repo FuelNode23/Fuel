@@ -8,6 +8,9 @@ import Protocol from "../pages/Protocol" ;
 import WeeklyBox from "../pages/Weeklybox";
 import Profile from "../pages/Profile";
 import Dashboard from "../pages/Dashboard";
+import Subscriptions from "../pages/Subscriptions";
+import Account from "../pages/Account";
+import AthleteDashboard from "../pages/AthleteDashboard";
 
 const AppRoutes = () => {
   return (
@@ -27,6 +30,16 @@ const AppRoutes = () => {
         <Route path="/profile" element={<Profile />} />
 
         <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* Singular path matches the reference design's URL
+            (localhost:3000/subscription); /subscriptions kept as an alias
+            so any older link/bookmark still resolves. */}
+        <Route path="/subscription" element={<Subscriptions />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+
+        <Route path="/account" element={<Account />} />
+
+        <Route path="/athlete-dashboard" element={<AthleteDashboard />} />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
