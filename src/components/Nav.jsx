@@ -1,8 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "./LanguageToggle.jsx";
 
 export default function Nav() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <nav className="fn-nav">
@@ -16,6 +18,13 @@ export default function Nav() {
           </button>
         </div>
         <div className="fn-nav-actions">
+          <button
+            type="button"
+            className="fn-nav-signin"
+            onClick={() => navigate("/account")}   
+          >
+            {t("Sign In")}
+          </button>
           <LanguageToggle />
           <button type="button" className="fn-menu-button" aria-label={t("Menu")}>
             <span className="fn-menu-bar" />

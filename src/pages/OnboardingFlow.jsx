@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
 import { questions } from "../api/Questions.js";
+import { validateOnboardingField } from "../api/onboardingValidation.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import AccountBar from "../components/AccountBar.jsx";
@@ -136,6 +137,20 @@ export default function OnboardingFlow() {
 
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
 
+  // Sport-dependent numeric bounds (typical_distance / avg_elevation /
+  // elevation_gain) resolve against whichever sport is actually in play
+  // for the current step: the target event's sport on the event step,
+  // the athlete's selected sports everywhere else (defaulting to Running,
+  // since the training-profile card itself is Running-only for now).
+  const validationContext = {
+    sport:
+      rawQuestion.id === 6
+        ? userData.event_sport
+        : (userData.sports || []).includes("Cycling") && !(userData.sports || []).includes("Running")
+          ? "Cycling"
+          : "Running",
+  };
+
   // Coerces raw <input> values before they land in state. Any field
   // declared with inputType: "number" in questions.js is stored as a
   // real Number (not a string) so the backend never receives "70"
@@ -204,7 +219,7 @@ export default function OnboardingFlow() {
   };
 
   const isFieldValid = (field) =>
-    (userData[field.name] ?? "").toString().trim().length > 0;
+    validateOnboardingField(field.name, userData[field.name], validationContext).valid;
 
   const isStepValid = () => {
     if (currentQuestion.type === "text") {
@@ -348,12 +363,38 @@ export default function OnboardingFlow() {
 
   const selectedSports = userData.sports || [];
 
+  // Turns a validateOnboardingField() error descriptor into a localized
+  // sentence, composed from small t()-wrapped fragments plus the raw
+  // bound numbers - the same pattern this flow already uses for strings
+  // with numbers in them (see "Step {n} of {m}" in the progress row).
+  const describeFieldError = (error) => {
+    if (!error) return null;
+    if (error.kind === "pace") {
+      return `${t("Enter a pace under")} 20:00 min/km, ${t("e.g.")} 4:30.`;
+    }
+    const { min, max, minInclusive, integer } = error.bounds;
+    const lower = minInclusive ? t("at least") : t("more than");
+    const whole = integer ? ` ${t("(whole number)")}` : "";
+    return `${t("Enter a value")} ${lower} ${min} ${t("and less than")} ${max}${whole}.`;
+  };
+
   const renderField = (field, siblingFields = []) => {
     const dependsOnValue = field.dependsOn ? userData[field.dependsOn] : null;
     const resolvedOptions = field.optionsBySport
       ? field.optionsBySport[dependsOnValue] || []
       : field.options || [];
     const isDependentAndUnready = field.dependsOn && !dependsOnValue;
+
+    // Only free-typed values (not pill/dropdown selects) can be
+    // out-of-bounds, so only surface a bounds error once something has
+    // actually been entered - an empty required field already disables
+    // Continue without needing an error message of its own.
+    const rawValue = userData[field.name];
+    const hasValue = !(rawValue === undefined || rawValue === null || rawValue.toString().trim() === "");
+    const validation = hasValue
+      ? validateOnboardingField(field.name, rawValue, validationContext)
+      : { valid: true };
+    const fieldError = hasValue && !validation.valid ? describeFieldError(validation.error) : null;
 
     return (
       <div className="ob-field" key={field.name}>
@@ -407,15 +448,17 @@ export default function OnboardingFlow() {
             </label>
             <input
               id={field.name}
-              className="ob-input"
+              className={"ob-input" + (fieldError ? " ob-input-invalid" : "")}
               type={field.inputType || "text"}
               value={userData[field.name] ?? ""}
               placeholder={t(field.placeholder || "")}
+              aria-invalid={fieldError ? "true" : undefined}
               onChange={(e) => updateField(field.name, coerceValue(field, e.target.value))}
             />
           </>
         )}
         {field.note && <p className="ob-field-note">{t(field.note)}</p>}
+        {fieldError && <p className="ob-field-error">{fieldError}</p>}
       </div>
     );
   };

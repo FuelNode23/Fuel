@@ -123,7 +123,7 @@ export default function Subscriptions() {
 
   useEffect(() => {
     let cancelled = false;
-    getSubscriptionPricing()
+    getSubscriptionPricing(category)
       .then((data) => {
         if (!cancelled) setPricing(data);
       })
@@ -131,7 +131,7 @@ export default function Subscriptions() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [category]);
 
   // No checkout/billing endpoint exists yet, but the plan/box-variant
   // choice itself is real now (POST /api/subscription) - only the payment
