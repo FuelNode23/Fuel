@@ -62,6 +62,36 @@ export function adaptDietProtocol(dietProtocol) {
   return dietProtocol || {};
 }
 
+/**
+ * MealGuidance.jsx reads protocol.meal_timing_windows, an array of
+ * { window_name, timing, targets: {carbs_g, protein_g, fat_g}, base_type,
+ * constraints, protein_source, fibre, protocol_product_pairing }, but the
+ * backend has no such field - the same data is diet_protocol, an object
+ * keyed by the same 4 window names (pre_training_meal, pre_training_snack,
+ * recovery_window, main_meal), with targets.carbohydrates_g instead of
+ * targets.carbs_g. This reshapes the real object into the array
+ * MealGuidance expects.
+ */
+export function adaptMealTimingWindows(dietProtocol) {
+  if (!dietProtocol || typeof dietProtocol !== "object") return [];
+  return Object.entries(dietProtocol).map(([windowName, window]) => ({
+    window_name: windowName,
+    timing: window?.timing,
+    targets: window?.targets
+      ? {
+          carbs_g: window.targets.carbohydrates_g,
+          protein_g: window.targets.protein_g,
+          fat_g: window.targets.fat_g,
+        }
+      : undefined,
+    base_type: window?.base_type,
+    constraints: window?.constraints,
+    protein_source: window?.protein_source,
+    fibre: window?.fibre,
+    protocol_product_pairing: window?.protocol_product_pairing,
+  }));
+}
+
 export function adaptFuelingProtocol(fuelingProtocol) {
   return fuelingProtocol || {};
 }
