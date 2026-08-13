@@ -27,6 +27,16 @@ apiClient.interceptors.response.use(
 )
 
 /**
+ * sessionStorage key OnboardingFlow uses to stash { userData, stepIndex }
+ * when the user clicks "Log in" mid-flow (see the topbar login button) so
+ * they come back to the same step with the same answers instead of
+ * restarting. Distinct from "pendingOnboarding" below, which stashes
+ * answers to be *submitted* immediately after auth rather than resumed -
+ * Login/Register check for this key only after that one comes up empty.
+ */
+export const ONBOARDING_DRAFT_KEY = 'onboardingDraft'
+
+/**
  * Single call: submit onboarding answers, backend calls Claude, and the
  * AI-generated protocol comes back as JSON in this same response.
  * This is the ONLY place protocol generation happens — OnboardingFlow

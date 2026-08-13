@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
+import apiClient, {
+  submitOnboarding as postOnboarding,
+  ONBOARDING_DRAFT_KEY,
+} from "../api/client.js";
 import { questions } from "../api/Questions.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
@@ -82,7 +85,7 @@ function mapProfileToUserData(profile) {
  */
 export default function OnboardingFlow() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, login, register } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -90,28 +93,39 @@ export default function OnboardingFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  // Auth gate (Step 1 of the flow): create an account or sign in before
-  // any question is shown. Once `user` is set, this component re-renders
-  // straight into the question wizard below - nothing else has to change.
-  const [authMode, setAuthMode] = useState("register");
-  const [authFullName, setAuthFullName] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [authSubmitting, setAuthSubmitting] = useState(false);
-
   // Set when login pre-fills userData from an existing profile, so Finish
   // can detect "nothing changed since last time" and confirm before
   // spending an AI generation call on an identical protocol.
   const initialUserDataRef = useRef(null);
   const [showNoChangeConfirm, setShowNoChangeConfirm] = useState(false);
 
+  // Restores progress stashed by handleLoginClick below: the user was
+  // mid-flow, clicked "Log in" in the topbar, authenticated on /login (or
+  // /register), and got sent back here. Runs before the profile pre-fill
+  // effect below and, since it sets userData directly, wins the race with
+  // that effect's "only fill in if still empty" guard - so answers already
+  // typed in this session are never clobbered by a stale saved profile.
+  useEffect(() => {
+    if (!user) return;
+    const draftRaw = sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
+    if (!draftRaw) return;
+    sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    try {
+      const draft = JSON.parse(draftRaw);
+      setUserData(draft.userData || {});
+      setStepIndex(draft.stepIndex || 0);
+    } catch {
+      // Corrupt/unparseable draft - nothing to restore, carry on as a
+      // normal first-time visitor.
+    }
+  }, [user]);
+
   // Pre-fill from an existing saved profile whenever there's an active
-  // session - not just right after logging in through the auth gate above.
-  // A session can just as easily already be active on mount (e.g. logged
-  // in via the standalone /login page, then clicked "Try FuelNode" from
-  // /landing), which skips the auth gate entirely and would otherwise
-  // leave the form blank despite the profile existing.
+  // session - not just right after logging in via the topbar "Log in"
+  // button above. A session can just as easily already be active on mount
+  // (e.g. logged in via the standalone /login page, then clicked "Try
+  // FuelNode" from /landing), which would otherwise leave the form blank
+  // despite the profile existing.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -147,36 +161,6 @@ export default function OnboardingFlow() {
     : rawQuestion;
 
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
-
-  const handleAuthSubmit = async () => {
-    setAuthError("");
-    if (authMode === "register" && authPassword.length < 8) {
-      setAuthError(t("Password must be at least 8 characters long."));
-      return;
-    }
-    setAuthSubmitting(true);
-    try {
-      if (authMode === "register") {
-        await register(authEmail, authPassword, authFullName);
-      } else {
-        await login(authEmail, authPassword);
-      }
-      // `user` is now set by AuthContext, so this component re-renders
-      // straight into the question wizard, and the useEffect above picks
-      // up the profile fetch/pre-fill - no navigation needed here.
-    } catch (err) {
-      setAuthError(
-        err.response?.data?.message ||
-          t(
-            authMode === "register"
-              ? "Registration failed. Please try again."
-              : "Login failed. Please check your credentials."
-          )
-      );
-    } finally {
-      setAuthSubmitting(false);
-    }
-  };
 
   // Coerces raw <input> values before they land in state. Any field
   // declared with inputType: "number" in questions.js is stored as a
@@ -313,11 +297,14 @@ export default function OnboardingFlow() {
       if (err.response?.status === 401) {
         // apiClient's response interceptor already cleared localStorage
         // (token/user) on 401 — we just need to redirect here. Onboarding
-        // now requires signing in at Step 1, so reaching Finish without a
-        // valid session means the token expired or was cleared mid-flow -
-        // the person already has an account, so send them to log back in
-        // rather than register again. Stash their answers so login can
-        // resume the submission instead of losing everything.
+        // never required signing in up front, so this is the normal path
+        // for a visitor who filled out all the questions anonymously and
+        // just clicked Finish — same as it is for a session that expired
+        // mid-flow. Either way there's no way to tell "new" from
+        // "returning" from here, so send them to /login, which offers a
+        // "Sign up" link for anyone without an account. Stash their
+        // answers so Login/Register can submit this exact request right
+        // after auth instead of losing everything.
         // Reset the lock so a resumed submission isn't blocked by it.
         hasSubmittedRef.current = false;
         sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
@@ -374,6 +361,19 @@ export default function OnboardingFlow() {
 
   const handleBack = () => {
     setStepIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  // Topbar "Log in" button: lets an existing user identify themselves at
+  // any point in the flow, not just at Finish. Stashes exactly where they
+  // are (answers + step) so the draft-restore effect above can drop them
+  // back in afterward instead of restarting - Login/Register send them
+  // straight back to /onboarding when this key is set (see client.js).
+  const handleLoginClick = () => {
+    sessionStorage.setItem(
+      ONBOARDING_DRAFT_KEY,
+      JSON.stringify({ userData, stepIndex })
+    );
+    navigate("/login");
   };
 
   const selectedSports = userData.sports || [];
@@ -489,118 +489,10 @@ export default function OnboardingFlow() {
   };
 
   // Still checking localStorage for an existing session - render nothing
-  // rather than flashing the auth gate for a visitor who's already logged in.
+  // for a beat rather than flashing an anonymous topbar for a visitor
+  // who's actually already logged in.
   if (authLoading) {
     return <div className="ob-page" />;
-  }
-
-  // Step 1 of the flow: no question is shown until there's an account.
-  if (!user) {
-    return (
-      <div className="ob-page">
-        <div className="ob-bg-glow">
-          <div className="ob-bg-glow-top" />
-        </div>
-
-        <div className="ob-topbar">
-          <span />
-          <LanguageToggle />
-        </div>
-
-        <div className="ob-content">
-          <div className="ob-brand">FuelNode</div>
-          <h1 className="ob-title">
-            {t(authMode === "register" ? "Create your account" : "Log in")}
-          </h1>
-          <p className="ob-helper-text">
-            {t(
-              "Create an account to save your answers and get your personalized nutrition protocol."
-            )}
-          </p>
-
-          <div className="ob-fields">
-            {authMode === "register" && (
-              <div className="ob-field">
-                <label className="ob-label" htmlFor="auth-fullname">
-                  {t("Full name")}
-                </label>
-                <input
-                  id="auth-fullname"
-                  className="ob-input"
-                  type="text"
-                  value={authFullName}
-                  placeholder={t("Enter your full name")}
-                  onChange={(e) => setAuthFullName(e.target.value)}
-                />
-              </div>
-            )}
-
-            <div className="ob-field">
-              <label className="ob-label" htmlFor="auth-email">
-                {t("Email")}
-              </label>
-              <input
-                id="auth-email"
-                className="ob-input"
-                type="email"
-                value={authEmail}
-                placeholder={t("Enter your email")}
-                onChange={(e) => setAuthEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="ob-field">
-              <label className="ob-label" htmlFor="auth-password">
-                {t("Password")}
-              </label>
-              <input
-                id="auth-password"
-                className="ob-input"
-                type="password"
-                value={authPassword}
-                placeholder={t("Enter your password")}
-                onChange={(e) => setAuthPassword(e.target.value)}
-              />
-            </div>
-
-            {authError && <p className="ob-error">{authError}</p>}
-
-            <button
-              type="button"
-              className="ob-auth-switch"
-              onClick={() => {
-                setAuthMode((prev) => (prev === "register" ? "login" : "register"));
-                setAuthError("");
-              }}
-            >
-              {authMode === "register"
-                ? t("Already have an account? Log in")
-                : t("Need an account? Sign up")}
-            </button>
-          </div>
-        </div>
-
-        <div className="ob-footer">
-          <button
-            type="button"
-            className="ob-continue"
-            onClick={handleAuthSubmit}
-            disabled={
-              authSubmitting ||
-              !authEmail ||
-              !authPassword ||
-              (authMode === "register" && !authFullName)
-            }
-          >
-            {authSubmitting
-              ? t(authMode === "register" ? "Creating account..." : "Logging in...")
-              : t(authMode === "register" ? "Sign Up" : "Log in")}
-          </button>
-        </div>
-
-        <CopyrightFooter />
-      </div>
-    );
   }
 
   return (
@@ -647,8 +539,22 @@ export default function OnboardingFlow() {
         >
           <span aria-hidden="true">←</span> {t("Back")}
         </button>
-        {/* Language toggle for this screen lives in AccountBar above,
-            so the whole app shares a single control instead of two. */}
+        {user ? (
+          // Signed in: the language toggle lives in AccountBar above, so
+          // the whole app shares a single control instead of two.
+          <span />
+        ) : (
+          // Signed out: onboarding itself never requires an account, but
+          // an existing user can identify themselves at any step instead
+          // of waiting until Finish - handleLoginClick stashes progress
+          // so they land back on this exact step after authenticating.
+          <div className="ob-topbar-actions">
+            <LanguageToggle />
+            <button type="button" className="ob-login-btn" onClick={handleLoginClick}>
+              {t("Log in")}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="ob-progress-wrap">

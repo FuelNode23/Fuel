@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { completePendingOnboarding } from "../api/client.js";
+import { completePendingOnboarding, ONBOARDING_DRAFT_KEY } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
@@ -44,7 +44,21 @@ export default function Register() {
         setResumingOnboarding(true);
       }
       const resumed = await completePendingOnboarding(navigate);
-      if (!resumed) navigate("/login");
+      if (resumed) return;
+
+      if (sessionStorage.getItem(ONBOARDING_DRAFT_KEY)) {
+        // Came here via the onboarding topbar's "Log in" button, then
+        // "Need an account? Sign up" — no submission to make, just send
+        // them back to pick up the wizard where they left off.
+        navigate("/onboarding");
+        return;
+      }
+
+      // No onboarding to resume - a plain signup (e.g. via the Landing
+      // page's "Log in" button -> "Sign up" link). register() already
+      // persisted the session, so send them to /landing already signed
+      // in rather than back to /login to "log in" again.
+      navigate("/landing");
     } catch (err) {
       setError(
         err.response?.data?.message ||
