@@ -88,14 +88,28 @@ export default function Login() {
 
           {error && <div className="alert-error">{error}</div>}
 
-          <form onSubmit={handleSubmit}>
+          {/*
+            autoComplete is switched off deliberately: browsers were filling in
+            saved credentials on mount, so the fields looked pre-populated
+            before the user typed anything. The password input uses
+            "new-password" because Chrome ignores "off" on password fields in
+            anything it recognises as a sign-in form, and the name attributes
+            avoid the usual "email"/"password" heuristics. Values are read from
+            React state in handleSubmit, so the names are cosmetic.
+          */}
+          <form onSubmit={handleSubmit} autoComplete="off">
             <label>
               {t("Email")}
               <input
                 type="email"
+                name="fn-login-email"
                 placeholder={t("Enter your email")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck="false"
                 required
               />
             </label>
@@ -104,9 +118,11 @@ export default function Login() {
               {t("Password")}
               <input
                 type="password"
+                name="fn-login-pass"
                 placeholder={t("Enter your password")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
                 required
               />
             </label>

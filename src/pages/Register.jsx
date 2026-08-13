@@ -96,14 +96,28 @@ export default function Register() {
 
           {error && <div className="alert-error">{error}</div>}
 
-          <form onSubmit={handleSubmit}>
+          {/*
+            autoComplete is switched off deliberately — same reasoning as
+            Login.jsx: browsers were filling saved credentials on mount, so the
+            fields looked pre-populated before the user typed anything. The
+            password input uses "new-password" because Chrome ignores "off" on
+            password fields, and the name attributes avoid the usual
+            "name"/"email"/"password" heuristics. Values are read from React
+            state in handleSubmit, so the names are cosmetic.
+          */}
+          <form onSubmit={handleSubmit} autoComplete="off">
             <label>
               {t("Full Name")}
               <input
                 type="text"
+                name="fn-reg-name"
                 placeholder={t("Enter your full name")}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="words"
+                spellCheck="false"
                 required
               />
             </label>
@@ -112,9 +126,14 @@ export default function Register() {
               {t("Email")}
               <input
                 type="email"
+                name="fn-reg-email"
                 placeholder={t("Enter your email")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck="false"
                 required
               />
             </label>
@@ -123,9 +142,11 @@ export default function Register() {
               {t("Password")}
               <input
                 type="password"
+                name="fn-reg-pass"
                 placeholder={t("Enter your password")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
                 minLength={8}
                 required
               />
