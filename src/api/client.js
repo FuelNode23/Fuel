@@ -113,4 +113,18 @@ export async function getSubscription() {
   return response.data
 }
 
+/**
+ * Per-tier prices computed server-side from the athlete's actual generated
+ * box and the real product catalog (see UserSubscriptionService), not the
+ * static numbers in Subscriptions.jsx's PLANS array. Rejects (via the
+ * response) with a 404 if no protocol has been generated yet - callers
+ * should fall back to the static prices in that case.
+ *
+ * @returns {Promise<object>} { free, amateur, performance, elite } (numbers, EUR)
+ */
+export async function getSubscriptionPricing() {
+  const response = await apiClient.get('/subscription/pricing')
+  return response.data
+}
+
 export default apiClient
