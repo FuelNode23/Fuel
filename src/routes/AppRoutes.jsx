@@ -34,6 +34,16 @@ const AppRoutes = () => {
 
         <Route path="/dashboard" element={<Dashboard />} />
 
+        {/* Singular path matches the reference design's URL
+            (localhost:3000/subscription); /subscriptions kept as an alias
+            so any older link/bookmark still resolves. */}
+        <Route path="/subscription" element={<Subscriptions />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+
+        <Route path="/account" element={<Account />} />
+
+        <Route path="/athlete-dashboard" element={<AthleteDashboard />} />
+
       <Route path="*" element={<Navigate to="/landing" replace />} />
     </Routes>
   );

@@ -203,7 +203,11 @@ export default function AthleteDashboard() {
             </div>
             <p className="hub-card__note">{t("Complete your subscription to unlock your weekly box.")}</p>
             <div className="hub-card__actions">
-              <button type="button" className="btn btn--primary">
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => navigate("/subscription")}
+              >
                 {t("Continue with subscription")}
               </button>
               <span className="hub-card__warning">
