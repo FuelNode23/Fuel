@@ -5,19 +5,21 @@ import { lookupProductReference } from "../data/productCatalog";
  * International, Best value, French brands — from the single flat item
  * list the protocol response already returns (weekly_box_contents). The
  * backend/AI generation step returns one product per protocol_slot, not
- * multiple candidate products per slot, so french/value only reorder that
- * same set of items:
- *   - french: domestic (France) brands surfaced first
- *   - value:  ranked by a nutrition-per-euro score (see
- *             src/data/productCatalog.js — reference estimates, not live
- *             pricing, since the protocol response has no price/nutrition
- *             fields at all)
- * international is the one genuine exception: each domestic item is
- * swapped for a real international-origin product from FuelNode's own
- * catalog (GET /catalog/international, passed in by the caller) sharing
- * the same protocol_slot, when one exists - see
- * substituteWithInternational. An unmatched slot keeps its original item
- * rather than inventing a substitute.
+ * multiple candidate products per slot, so "value" is the one pure
+ * re-order of that same set of items, ranked by a nutrition-per-euro
+ * score (see src/data/productCatalog.js — reference estimates, not live
+ * pricing, since the protocol response has no price/nutrition fields at
+ * all).
+ * International and French each substitute for real: any item of the
+ * *other* origin gets swapped for a real catalog product of the target
+ * origin (GET /catalog/international or /catalog/french, passed in by
+ * the caller) sharing the same protocol_slot, when one exists - see
+ * substituteByOrigin. An unmatched slot, or an item with unspecified
+ * origin, keeps its original item rather than inventing a substitute -
+ * this is also why an all-French box's "International" view (or an
+ * all-international box's "French brands" view) can still show some
+ * items unchanged: not every slot has a real alternate in the other
+ * origin.
  * Items with no brand_origin, or with unmatched pricing data, sort last
  * within their variant and are flagged so the UI can say so rather than
  * silently guessing.
@@ -72,17 +74,23 @@ export function scoreToDots(valueScore) {
 }
 
 /**
- * Swaps a domestic (French) item for a real international-catalog product
- * sharing the same protocol_slot, when one exists. Never invents a
- * product - items with no international match at that slot (or that are
- * already international) pass through unchanged. Drops why_this_product/
- * storage_note on a swap, since that text was written by Claude for the
- * original product and may not hold for the substitute; the UI's own
- * fallbacks take over cleanly instead of carrying over a claim that's no
- * longer verified.
+ * Swaps an item confirmed to be the *other* origin for a real
+ * targetOrigin catalog product sharing the same protocol_slot, when one
+ * exists. Never invents a product - items with no match at that slot,
+ * items already matching targetOrigin, or items with unspecified origin
+ * (classifyOrigin returns null) all pass through unchanged; only a
+ * confirmed opposite-origin item is a candidate for substitution. Drops
+ * why_this_product/storage_note on a swap, since that text was written
+ * by Claude for the original product and may not hold for the
+ * substitute; the UI's own fallbacks take over cleanly instead of
+ * carrying over a claim that's no longer verified.
  */
-function substituteWithInternational(item, bestBySlot) {
-  if (classifyOrigin(item?.brand_origin) !== true) return item;
+function substituteByOrigin(item, bestBySlot, isTargetDomestic) {
+  const currentIsDomestic = classifyOrigin(item?.brand_origin);
+  const isConfirmedOpposite = isTargetDomestic
+    ? currentIsDomestic === false
+    : currentIsDomestic === true;
+  if (!isConfirmedOpposite) return item;
 
   const slot = (item?.protocol_slot || "").toLowerCase();
   const alternate = bestBySlot.get(slot);
@@ -99,13 +107,13 @@ function substituteWithInternational(item, bestBySlot) {
 }
 
 /**
- * internationalCatalog is the raw GET /catalog/international response
- * (already sorted best-first server-side) - reduced here to one
+ * originCatalog is the raw GET /catalog/international or /catalog/french
+ * response (already sorted best-first server-side) - reduced here to one
  * best-scored product per protocol_slot for substitution lookups.
  */
-function buildInternationalVariant(rawItems, internationalCatalog) {
+function buildOriginVariant(rawItems, originCatalog, isTargetDomestic) {
   const bestBySlot = new Map();
-  for (const product of internationalCatalog) {
+  for (const product of originCatalog) {
     const slot = (product?.protocolSlot || "").toLowerCase();
     if (slot && !bestBySlot.has(slot)) {
       bestBySlot.set(slot, product);
@@ -113,22 +121,20 @@ function buildInternationalVariant(rawItems, internationalCatalog) {
   }
 
   const substituted = rawItems
-    .map((item) => substituteWithInternational(item, bestBySlot))
+    .map((item) => substituteByOrigin(item, bestBySlot, isTargetDomestic))
     .map(enrichItem);
 
   return substituted.sort(
-    (a, b) => originRank(a.isDomestic, false) - originRank(b.isDomestic, false)
+    (a, b) => originRank(a.isDomestic, isTargetDomestic) - originRank(b.isDomestic, isTargetDomestic)
   );
 }
 
-export function buildBoxVariants(items, internationalCatalog = []) {
+export function buildBoxVariants(items, internationalCatalog = [], frenchCatalog = []) {
   const rawItems = Array.isArray(items) ? items : [];
   const enriched = rawItems.map(enrichItem);
 
-  const international = buildInternationalVariant(rawItems, internationalCatalog);
-  const french = [...enriched].sort(
-    (a, b) => originRank(a.isDomestic, true) - originRank(b.isDomestic, true)
-  );
+  const international = buildOriginVariant(rawItems, internationalCatalog, false);
+  const french = buildOriginVariant(rawItems, frenchCatalog, true);
   const value = [...enriched].sort((a, b) => b.valueScore - a.valueScore);
 
   return { international, value, french };
