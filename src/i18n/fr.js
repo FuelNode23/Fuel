@@ -30,6 +30,7 @@ const fr = {
   "How it works": "Comment ça marche",
   Delivery: "Livraison",
   "Finish onboarding": "Terminer l'onboarding",
+  "Sign In": "Se connecter",
 
   // ---------------------------------------------------------------------
   // Hero
