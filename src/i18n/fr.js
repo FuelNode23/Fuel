@@ -734,6 +734,17 @@ const fr = {
     "Votre profil est prêt. Fuelnode va maintenant générer votre protocole nutritionnel personnalisé à partir de vos réponses, de votre niveau d'entraînement et de vos préférences.",
 
   // ---------------------------------------------------------------------
+  // Onboarding — inline field validation errors (numeric bounds)
+  // ---------------------------------------------------------------------
+  "Enter a value": "Entrez une valeur",
+  "at least": "au moins",
+  "more than": "supérieure à",
+  "and less than": "et inférieure à",
+  "(whole number)": "(nombre entier)",
+  "Enter a pace under": "Entrez une allure inférieure à",
+  "e.g.": "ex.",
+
+  // ---------------------------------------------------------------------
   // Onboarding — no-change confirmation + generating overlay
   // ---------------------------------------------------------------------
   "No changes detected": "Aucun changement détecté",
