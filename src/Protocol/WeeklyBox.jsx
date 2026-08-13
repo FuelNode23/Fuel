@@ -140,27 +140,37 @@ export default function WeeklyBox({
   const { t } = useLanguage();
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [internationalCatalog, setInternationalCatalog] = useState([]);
+  const [frenchCatalog, setFrenchCatalog] = useState([]);
 
-  // Powers the "International" view's real product substitutions (see
-  // buildBoxVariants/substituteWithInternational in utils/boxVariants.js).
-  // A failed/empty fetch just leaves the International view showing the
-  // same re-sorted box, same as before this existed - never blocks render.
+  // Powers the International/French views' real product substitutions
+  // (see buildBoxVariants/substituteByOrigin in utils/boxVariants.js). A
+  // failed/empty fetch just leaves that view showing the same re-sorted
+  // box, same as before this existed - never blocks render.
   useEffect(() => {
     let cancelled = false;
+
     apiClient
       .get("/catalog/international")
       .then(({ data }) => {
         if (!cancelled) setInternationalCatalog(Array.isArray(data) ? data : []);
       })
       .catch(() => {});
+
+    apiClient
+      .get("/catalog/french")
+      .then(({ data }) => {
+        if (!cancelled) setFrenchCatalog(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {});
+
     return () => {
       cancelled = true;
     };
   }, []);
 
   const variants = useMemo(
-    () => buildBoxVariants(items, internationalCatalog),
-    [items, internationalCatalog]
+    () => buildBoxVariants(items, internationalCatalog, frenchCatalog),
+    [items, internationalCatalog, frenchCatalog]
   );
 
   if (!items || items.length === 0) {
