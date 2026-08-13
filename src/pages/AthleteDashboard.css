@@ -1,0 +1,277 @@
+/* ==========================================================================
+   Athlete dashboard — same dark theme + design tokens as the other new
+   post-onboarding pages (Weeklybox.css, Subscriptions.css, Account.css).
+   ========================================================================== */
+
+.athlete-dashboard {
+  --protocol-bg: #0a0e1a;
+  --protocol-surface: #141a29;
+  --protocol-surface-alt: rgba(244, 247, 251, 0.04);
+  --protocol-border: rgba(244, 247, 251, 0.14);
+  --protocol-text: #f4f7fb;
+  --protocol-text-muted: rgba(244, 247, 251, 0.6);
+  --protocol-accent: #22c55e;
+  --protocol-accent-hover: #1ea850;
+  --protocol-radius: 12px;
+
+  position: relative;
+  background: var(--protocol-bg);
+  color: var(--protocol-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.athlete-dashboard * {
+  box-sizing: border-box;
+}
+
+.athlete-dashboard__container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.hub-card {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hub-card--third {
+  grid-column: span 2;
+}
+
+.hub-card--half {
+  grid-column: span 3;
+}
+
+@media (max-width: 900px) {
+  .hub-card--third,
+  .hub-card--half {
+    grid-column: span 6;
+  }
+}
+
+.hub-card__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--protocol-text-muted);
+}
+
+.hub-card__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.hub-card__text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--protocol-text-muted);
+  flex-grow: 1;
+}
+
+.hub-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.hub-card__stat {
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.5rem 0.65rem;
+}
+
+.hub-card__stat-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--protocol-text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.hub-card__stat-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--protocol-text);
+}
+
+.hub-card__note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--protocol-text-muted);
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.65rem 0.8rem;
+}
+
+.hub-card__note--highlight {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.hub-card__warning {
+  font-size: 0.75rem;
+  color: #fbbf24;
+  margin: 0;
+}
+
+.hub-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.hub-route-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hub-route-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--protocol-text-muted);
+  background: var(--protocol-surface-alt);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.45rem 0.65rem;
+}
+
+.hub-route-list .pill {
+  flex-shrink: 0;
+}
+
+.hub-chip-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hub-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.hub-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.hub-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.hub-field-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--protocol-text-muted);
+}
+
+.hub-field .account-input {
+  margin-bottom: 0;
+}
+
+.hub-field-static {
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.hub-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hub-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--protocol-text);
+}
+
+.hub-toggle {
+  border: none;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hub-toggle--on {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.hub-toggle--off {
+  background: var(--protocol-surface-alt);
+  color: var(--protocol-text-muted);
+}
+
+.hub-card--cta {
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.hub-card--cta .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.athlete-dashboard__legal {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 2rem 0 1rem;
+  font-size: 0.8rem;
+  color: var(--protocol-text-muted);
+}
+
+@media (max-width: 640px) {
+  .athlete-dashboard {
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .hub-field-grid,
+  .hub-card__stats {
+    grid-template-columns: 1fr;
+  }
+}

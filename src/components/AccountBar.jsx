@@ -1,6 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { Icon } from "./Icons.jsx";
 import LanguageToggle from "./LanguageToggle.jsx";
 import "./AccountBar.css";
 
@@ -24,8 +25,11 @@ export default function AccountBar() {
   const { user, logout } = useAuth();
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!user) return null;
+
+  const onWeeklyBoxPage = location.pathname === "/weeklybox";
 
   const handleLogout = () => {
     logout();
@@ -45,6 +49,12 @@ export default function AccountBar() {
           </span>
         )}
       </div>
+      {!onWeeklyBoxPage && (
+        <button type="button" className="account-bar__nav-link" onClick={() => navigate("/weeklybox")}>
+          <Icon.Package width={14} height={14} />
+          {t("Weekly box")}
+        </button>
+      )}
       <LanguageToggle />
       <button type="button" className="account-bar__logout" onClick={handleLogout}>
         {t("Log out")}

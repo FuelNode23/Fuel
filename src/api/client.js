@@ -48,6 +48,8 @@ apiClient.interceptors.response.use(
  */
 export async function submitOnboarding(userData) {
   const response = await apiClient.post('/protocol/generate-with-profile', userData)
+  
+  console.log('submitOnboarding response:', response.data) // Log the response data for debugging
   return response.data
 }
 

@@ -8,6 +8,9 @@ import Protocol from "../pages/Protocol" ;
 import WeeklyBox from "../pages/Weeklybox";
 import Profile from "../pages/Profile";
 import Dashboard from "../pages/Dashboard";
+import Subscriptions from "../pages/Subscriptions";
+import Account from "../pages/Account";
+import AthleteDashboard from "../pages/AthleteDashboard";
 
 const AppRoutes = () => {
   return (

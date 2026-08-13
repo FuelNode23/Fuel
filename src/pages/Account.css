@@ -1,0 +1,214 @@
+/* ==========================================================================
+   Account (sign-in) page — same dark theme + design tokens as
+   Weeklybox.css / Subscriptions.css.
+   ========================================================================== */
+
+.account-page {
+  --protocol-bg: #0a0e1a;
+  --protocol-surface: #141a29;
+  --protocol-surface-alt: rgba(244, 247, 251, 0.04);
+  --protocol-border: rgba(244, 247, 251, 0.14);
+  --protocol-text: #f4f7fb;
+  --protocol-text-muted: rgba(244, 247, 251, 0.6);
+  --protocol-accent: #22c55e;
+  --protocol-accent-hover: #1ea850;
+  --protocol-danger: #ef4444;
+  --protocol-danger-hover: #dc2626;
+  --protocol-radius: 12px;
+
+  position: relative;
+  background: var(--protocol-bg);
+  color: var(--protocol-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.account-page * {
+  box-sizing: border-box;
+}
+
+.account-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--protocol-surface);
+  border: 1px solid var(--protocol-border);
+  border-radius: var(--protocol-radius);
+  padding: 2rem;
+}
+
+.account-card .back-link {
+  margin-bottom: 1rem;
+}
+
+.account-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.account-card__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+
+.account-card__subtitle {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--protocol-text-muted);
+  margin: 0 0 1.5rem;
+}
+
+.account-tabs {
+  display: flex;
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: 999px;
+  padding: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.account-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--protocol-text-muted);
+  cursor: pointer;
+}
+
+.account-tab--active {
+  background: #fff;
+  color: #0a0e1a;
+}
+
+.account-field-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+}
+
+.account-field-hint {
+  font-size: 0.8rem;
+  color: var(--protocol-text-muted);
+  margin: 0 0 0.75rem;
+}
+
+.account-input {
+  width: 100%;
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.7rem 0.9rem;
+  color: var(--protocol-text);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.account-input::placeholder {
+  color: var(--protocol-text-muted);
+}
+
+.btn--danger {
+  background: var(--protocol-danger);
+  color: #fff;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn--danger:hover {
+  background: var(--protocol-danger-hover);
+}
+
+.account-terms {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.82rem;
+  color: var(--protocol-text-muted);
+  margin: 1rem 0;
+  cursor: pointer;
+}
+
+.account-terms input {
+  accent-color: var(--protocol-accent);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.account-terms strong {
+  color: var(--protocol-text);
+  font-weight: 600;
+}
+
+.account-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--protocol-text-muted);
+}
+
+.account-divider::before,
+.account-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--protocol-border);
+}
+
+.account-oauth {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.7rem 0.9rem;
+  color: var(--protocol-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 0.6rem;
+  transition: background 0.15s ease;
+}
+
+.account-oauth:hover:not(:disabled) {
+  background: var(--protocol-border);
+}
+
+.account-oauth:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.account-oauth-note {
+  font-size: 0.75rem;
+  color: var(--protocol-text-muted);
+  margin: 0.5rem 0 0;
+  text-align: center;
+}
