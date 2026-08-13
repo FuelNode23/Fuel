@@ -87,4 +87,30 @@ export async function completePendingOnboarding(navigate) {
   return true
 }
 
+/**
+ * Persists the plan/box-variant chosen on the Subscriptions page for the
+ * current authenticated user. No billing exists yet - this only records
+ * the choice, via POST /api/subscription.
+ *
+ * @param {string} plan - one of the Subscriptions.jsx PLANS keys (free/amateur/performance/elite)
+ * @param {string|null} boxVariant - one of boxVariants.js's keys (international/value/french), or null
+ * @returns {Promise<object>} { plan, boxVariant, updatedAt }
+ */
+export async function saveSubscription(plan, boxVariant) {
+  const response = await apiClient.post('/subscription', { plan, boxVariant })
+  return response.data
+}
+
+/**
+ * Fetches the current user's saved subscription choice. Rejects with a 404
+ * (via the response) if nothing has been selected yet - callers should
+ * treat that as "no active plan", not an error to surface.
+ *
+ * @returns {Promise<object>} { plan, boxVariant, updatedAt }
+ */
+export async function getSubscription() {
+  const response = await apiClient.get('/subscription/me')
+  return response.data
+}
+
 export default apiClient
