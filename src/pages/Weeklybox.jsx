@@ -19,6 +19,10 @@ export default function WeeklyBoxPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [box, setBox] = useState(null);
+  // Which of the 3 box variants the athlete picked — lifted up from
+  // WeeklyBox so the bottom "Continue" button can depend on it too, not
+  // just each column's own "Choose this box" button.
+  const [selectedVariant, setSelectedVariant] = useState(null);
 
   useEffect(() => {
     let handoff = location.state;
@@ -37,6 +41,19 @@ export default function WeeklyBoxPage() {
     setBox(handoff);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // No backend endpoint exists yet to persist which box variant was chosen
+  // (see WeeklyBox.jsx), so this only keeps the choice in sessionStorage —
+  // enough for the dashboard/next screen to read it back this session —
+  // and moves on. Swap in a real save call once that endpoint exists.
+  // tierHint defaults to "amateur" (the cheapest tier that actually
+  // unlocks a box) regardless of which variant was picked; category
+  // carries the chosen variant through so Subscriptions can flag it.
+  const handleContinue = () => {
+    if (!selectedVariant) return;
+    sessionStorage.setItem("selectedBoxVariant", selectedVariant);
+    navigate(`/subscription?from=weekly-box&tierHint=amateur&category=${selectedVariant}`);
+  };
 
   return (
     <div className="weekly-box">
@@ -64,18 +81,40 @@ export default function WeeklyBoxPage() {
           {t("Box of the week")}
         </div>
 
-        <h1 className="page-title">{t("Your FuelNode box")}</h1>
+        <h1 className="page-title">{t("Discover your FuelNode box")}</h1>
         <p className="page-subtitle">
-          {t("The products assembled for your protocol, based on your profile and preferences.")}
+          {t("Three options built around your profile, your protocol, and your preferences. Choose the one that fits you best this week.")}
         </p>
 
         {box ? (
-          <WeeklyBox
-            items={box.items}
-            totalProducts={box.totalProducts}
-            frenchBrandPercentage={box.frenchBrandPercentage}
-            assemblyNotes={box.assemblyNotes}
-          />
+          <>
+            <WeeklyBox
+              items={box.items}
+              totalProducts={box.totalProducts}
+              frenchBrandPercentage={box.frenchBrandPercentage}
+              assemblyNotes={box.assemblyNotes}
+              scienceCards={box.scienceCards}
+              sessionsPerWeek={box.sessionsPerWeek}
+              selectedVariant={selectedVariant}
+              onSelectVariant={setSelectedVariant}
+            />
+
+            <div className="weekly-box__continue">
+              {!selectedVariant && (
+                <p className="page-subtitle weekly-box__continue-hint">
+                  {t("Choose a box above to continue.")}
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn btn--primary"
+                disabled={!selectedVariant}
+                onClick={handleContinue}
+              >
+                {t("Continue →")}
+              </button>
+            </div>
+          </>
         ) : (
           <p className="page-subtitle">
             {t("No box to show yet — generate a protocol first to see your weekly box.")}

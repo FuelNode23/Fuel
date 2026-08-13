@@ -280,10 +280,234 @@
   color: var(--protocol-text-muted, #6b7280);
 }
 
+.product-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .product-card__name {
   font-size: 1.05rem;
   font-weight: 700;
   margin: 0;
+}
+
+/* ---- Box "ambitious for your load" banner --------------------------------- */
+
+.box-load-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: var(--protocol-radius, 12px);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.box-load-banner__icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.box-load-banner__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.box-load-banner__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.box-load-banner__body p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.box-load-banner__tip {
+  font-style: italic;
+}
+
+.box-load-banner__body .btn {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
+/* ---- Box variant columns (International / Best value / French brands) ---- */
+
+.box-variant-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.box-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--protocol-surface, #ffffff);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: var(--protocol-radius, 12px);
+  padding: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.box-column--selected {
+  border-color: var(--protocol-accent, #b5562f);
+  box-shadow: 0 0 0 1px var(--protocol-accent, #b5562f);
+}
+
+.box-column__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.box-column__description {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--protocol-text-muted, #6b7280);
+  line-height: 1.4;
+}
+
+.box-column__note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--protocol-text-muted, #6b7280);
+  background: var(--protocol-surface-alt, #f6f5f2);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  padding: 0.6rem 0.75rem;
+}
+
+.box-column__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.box-column__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--protocol-border, #e5e2da);
+}
+
+@media (max-width: 900px) {
+  .box-variant-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .box-column__list {
+    max-height: none;
+  }
+}
+
+/* ---- Box product card (compact, used inside box-column) ------------------ */
+
+.box-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.9rem;
+}
+
+.box-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.box-card__name {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.box-card__brand {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.box-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.pill--removed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  text-decoration: line-through;
+}
+
+.pill--slot {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.68rem;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.box-card__storage {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.box-card__dots {
+  display: inline-flex;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.box-card__dot {
+  color: var(--protocol-border, #e5e2da);
+}
+
+.box-card__dot--filled {
+  color: var(--protocol-accent, #b5562f);
+}
+
+.box-card__science-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.box-card__science-line {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.box-card__science-line--deep {
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--protocol-border, #e5e2da);
 }
 
 .product-card__brand {
@@ -624,6 +848,430 @@
 
 .btn--ghost:hover {
   background: var(--protocol-surface-alt, #f6f5f2);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--primary:disabled:hover {
+  background: var(--protocol-accent, #b5562f);
+}
+
+/* ---- Athlete fueling card (page header + daily/off-day targets) --------- */
+
+.fueling-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.fueling-header__title {
+  font-size: clamp(24px, 3.5vw, 32px);
+  font-weight: 700;
+  margin: 6px 0 6px;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.fueling-header__subtitle {
+  margin: 0;
+  color: var(--protocol-text-muted, #6b7280);
+  font-size: 0.92rem;
+}
+
+.fueling-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--protocol-border, #e5e2da);
+}
+
+.warning-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.warning-card__sub {
+  color: var(--protocol-text-muted, #6b7280);
+  font-weight: 400;
+}
+
+.section-title-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.athlete-fueling-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.athlete-stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.athlete-stat-row {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.athlete-stat-row--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.athlete-stat-row--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.athlete-stat-tile {
+  background: var(--protocol-surface, #fff);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: var(--protocol-radius, 12px);
+  padding: 0.75rem 0.9rem;
+}
+
+.athlete-stat-tile__label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--protocol-text-muted, #6b7280);
+  margin-bottom: 0.3rem;
+}
+
+.athlete-stat-tile__value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.athlete-stat-tile__sub {
+  font-size: 0.78rem;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.athlete-stat-tile__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.daily-targets-panel {
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--protocol-radius, 12px);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.daily-targets-panel__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--protocol-accent, #b5562f);
+}
+
+.fueling-rate-tile {
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fueling-rate-tile__label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.fueling-rate-tile__value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.daily-targets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.daily-targets-grid .athlete-stat-tile {
+  background: var(--protocol-surface, #fff);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.daily-targets-grid .athlete-stat-tile__icon {
+  color: var(--protocol-accent, #b5562f);
+  margin-bottom: 0.15rem;
+}
+
+.daily-targets-panel__footnote,
+.off-day-panel__footnote {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--protocol-text-muted, #6b7280);
+  line-height: 1.5;
+}
+
+.off-day-panel {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.off-day-panel__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.off-day-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.off-day-stat {
+  min-width: 90px;
+}
+
+.off-day-stat__label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--protocol-text-muted, #6b7280);
+  margin-bottom: 0.2rem;
+}
+
+.off-day-stat__value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+@media (max-width: 900px) {
+  .athlete-fueling-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .athlete-stat-row--3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .daily-targets-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Session protocol (before / during / after cards) ------------------- */
+
+.session-stage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-stage-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-stage-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.session-stage-card__timing {
+  align-self: flex-start;
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.session-stage-card__product-box,
+.session-stage-card__text-box {
+  background: var(--protocol-surface-alt, #f6f5f2);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  padding: 0.75rem 0.9rem;
+}
+
+.session-stage-card__product-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--protocol-text-muted, #6b7280);
+  margin-bottom: 0.25rem;
+}
+
+.session-stage-card__product-value {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.session-stage-card__text-box p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.session-stage-card__why {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: transparent;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: var(--protocol-accent, #b5562f);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.session-stage-card__why:hover {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.session-stage-card__science {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.session-stage-card__science p {
+  margin: 0;
+}
+
+/* ---- Meal guidance cards -------------------------------------------------- */
+
+.meal-guidance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.meal-guidance-card__timing {
+  font-size: 0.78rem;
+  color: var(--protocol-text-muted, #6b7280);
+  margin: -0.4rem 0 0;
+}
+
+.meal-guidance-card__timing-detail {
+  font-size: 0.74rem;
+  font-style: italic;
+  color: var(--protocol-text-muted, #6b7280);
+  opacity: 0.8;
+  margin: 0.15rem 0 0;
+}
+
+.meal-guidance-card__box {
+  background: var(--protocol-surface-alt, #f6f5f2);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  padding: 0.7rem 0.85rem;
+}
+
+.meal-guidance-card__box-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--protocol-text-muted, #6b7280);
+  margin-bottom: 0.3rem;
+}
+
+.meal-guidance-card__box p {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.meal-guidance-card__sources p {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.meal-guidance-card__sources p:last-child {
+  margin-bottom: 0;
+}
+
+.meal-guidance-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--protocol-surface, #fff);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: var(--protocol-radius, 12px);
+  padding: 1.1rem 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.meal-guidance-cta__title {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.meal-guidance-cta__subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--protocol-text-muted, #6b7280);
+}
+
+.meal-guidance-cta .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
 }
 
 /* ---- Responsive ------------------------------------------------------------ */
