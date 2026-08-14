@@ -87,7 +87,6 @@ function mapProfileToUserData(profile) {
 export default function OnboardingFlow() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -163,6 +162,20 @@ export default function OnboardingFlow() {
     : rawQuestion;
 
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
+
+  // Sport-dependent numeric bounds (typical_distance / avg_elevation /
+  // elevation_gain) resolve against whichever sport is actually in play
+  // for the current step: the target event's sport on the event step,
+  // the athlete's selected sports everywhere else (defaulting to Running,
+  // since the training-profile card itself is Running-only for now).
+  const validationContext = {
+    sport:
+      rawQuestion.id === 6
+        ? userData.event_sport
+        : (userData.sports || []).includes("Cycling") && !(userData.sports || []).includes("Running")
+          ? "Cycling"
+          : "Running",
+  };
 
   // Coerces raw <input> values before they land in state. Any field
   // declared with inputType: "number" in questions.js is stored as a
