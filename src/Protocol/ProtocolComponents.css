@@ -452,6 +452,11 @@
   color: var(--protocol-text-muted, #6b7280);
 }
 
+.box-card__brand-name {
+  font-weight: 700;
+  color: #f97316;
+}
+
 .box-card__chips {
   display: flex;
   flex-wrap: wrap;

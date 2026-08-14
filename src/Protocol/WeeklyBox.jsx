@@ -98,7 +98,7 @@ function ProductCard({ item, showValueBadge, scienceCard, t }) {
         <RatingDots dots={scoreToDots(item.valueScore)} t={t} />
       </div>
       <p className="box-card__brand">
-        {item?.brand || t("Unknown brand")}
+        <span className="box-card__brand-name">{item?.brand || t("Unknown brand")}</span>
         {item?.brand_origin ? ` · ${item.brand_origin}` : ""}
       </p>
 
