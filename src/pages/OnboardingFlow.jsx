@@ -391,6 +391,19 @@ export default function OnboardingFlow() {
     setStepIndex((prev) => Math.max(prev - 1, 0));
   };
 
+  // Topbar "Log in" button: lets an existing user identify themselves at
+  // any point in the flow, not just at Finish. Stashes exactly where they
+  // are (answers + step) so the draft-restore effect above can drop them
+  // back in afterward instead of restarting - Login/Register send them
+  // straight back to /onboarding when this key is set (see client.js).
+  const handleLoginClick = () => {
+    sessionStorage.setItem(
+      ONBOARDING_DRAFT_KEY,
+      JSON.stringify({ userData, stepIndex })
+    );
+    navigate("/login");
+  };
+
   const selectedSports = userData.sports || [];
 
   // Turns a validateOnboardingField() error descriptor into a localized
@@ -587,9 +600,15 @@ export default function OnboardingFlow() {
           // the whole app shares a single control instead of two.
           <span />
         ) : (
-          // Signed out: onboarding itself never requires an account.
+          // Signed out: onboarding itself never requires an account, but
+          // an existing user can identify themselves at any step instead
+          // of waiting until Finish - handleLoginClick stashes progress
+          // so they land back on this exact step after authenticating.
           <div className="ob-topbar-actions">
             <LanguageToggle />
+            <button type="button" className="ob-login-btn" onClick={handleLoginClick}>
+              {t("Log in")}
+            </button>
           </div>
         )}
       </div>
