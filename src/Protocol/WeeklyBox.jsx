@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./ProtocolComponents.css";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildBoxVariants, scoreToDots } from "../utils/boxVariants";
 import { Icon } from "../components/Icons.jsx";
+import apiClient from "../api/client.js";
 
 const VARIANTS = [
   {
@@ -138,8 +139,39 @@ export default function WeeklyBox({
 }) {
   const { t } = useLanguage();
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [internationalCatalog, setInternationalCatalog] = useState([]);
+  const [frenchCatalog, setFrenchCatalog] = useState([]);
 
-  const variants = useMemo(() => buildBoxVariants(items), [items]);
+  // Powers the International/French views' real product substitutions
+  // (see buildBoxVariants/substituteByOrigin in utils/boxVariants.js). A
+  // failed/empty fetch just leaves that view showing the same re-sorted
+  // box, same as before this existed - never blocks render.
+  useEffect(() => {
+    let cancelled = false;
+
+    apiClient
+      .get("/catalog/international")
+      .then(({ data }) => {
+        if (!cancelled) setInternationalCatalog(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {});
+
+    apiClient
+      .get("/catalog/french")
+      .then(({ data }) => {
+        if (!cancelled) setFrenchCatalog(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const variants = useMemo(
+    () => buildBoxVariants(items, internationalCatalog, frenchCatalog),
+    [items, internationalCatalog, frenchCatalog]
+  );
 
   if (!items || items.length === 0) {
     return (

@@ -16,6 +16,7 @@ import MissingData from "../Protocol/MissingData";
 
 import {
   adaptFuelingProtocol,
+  adaptMealTimingWindows,
   adaptScienceCards,
   adaptSpecialistProtocols,
   adaptWeeklyBoxItems,
@@ -187,7 +188,7 @@ export default function Protocol() {
         <RaceDayProtocol raceDay={protocol.fueling_protocol?.race_day} />
 
         <MealGuidance
-          mealTimingWindows={protocol.meal_timing_windows}
+          mealTimingWindows={adaptMealTimingWindows(protocol.diet_protocol)}
           userData={userData}
           sessionFuelingPlan={protocol.session_fueling_plan}
           onDiscoverBox={handleViewWeeklyBox}
@@ -195,9 +196,7 @@ export default function Protocol() {
 
         <SpecialistProtocols protocols={adaptSpecialistProtocols(protocol.active_specialist_protocols)} />
 
-        <Assumptions assumptions={protocol.assumptions_made} />
-
-        <MissingData flags={protocol.missing_data_flags} />
+      
       </div>
 
       <CopyrightFooter />

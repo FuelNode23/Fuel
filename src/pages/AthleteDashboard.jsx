@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { Icon } from "../components/Icons.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { getSubscription } from "../api/client.js";
 import "../Protocol/ProtocolComponents.css";
 import "./AthleteDashboard.css";
 
@@ -76,8 +77,33 @@ export default function AthleteDashboard() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const selectedPlan = sessionStorage.getItem("selectedPlan");
-  const selectedBoxVariant = sessionStorage.getItem("selectedBoxVariant");
+  // Starts from this session's own sessionStorage breadcrumb (set the
+  // moment a plan is picked, before any network round trip) so the choice
+  // shows immediately; the fetch below then overwrites it with the real
+  // saved subscription, which is what makes it survive a refresh, a new
+  // device, or a cleared session - not just this one tab.
+  const [selectedPlan, setSelectedPlan] = useState(sessionStorage.getItem("selectedPlan"));
+  const [selectedBoxVariant, setSelectedBoxVariant] = useState(
+    sessionStorage.getItem("selectedBoxVariant")
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    getSubscription()
+      .then((data) => {
+        if (cancelled) return;
+        setSelectedPlan(data.plan);
+        setSelectedBoxVariant(data.boxVariant);
+      })
+      .catch(() => {
+        // No saved subscription yet (404) or the request failed - keep
+        // whatever sessionStorage already had.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const planLabel = selectedPlan ? t(PLAN_LABELS[selectedPlan] || selectedPlan) : t("No active plan");
 
   return (
@@ -203,7 +229,11 @@ export default function AthleteDashboard() {
             </div>
             <p className="hub-card__note">{t("Complete your subscription to unlock your weekly box.")}</p>
             <div className="hub-card__actions">
-              <button type="button" className="btn btn--primary">
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => navigate("/subscription")}
+              >
                 {t("Continue with subscription")}
               </button>
               <span className="hub-card__warning">

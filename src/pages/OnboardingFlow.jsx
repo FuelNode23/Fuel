@@ -5,6 +5,7 @@ import apiClient, {
   ONBOARDING_DRAFT_KEY,
 } from "../api/client.js";
 import { questions } from "../api/Questions.js";
+import { validateOnboardingField } from "../api/onboardingValidation.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import AccountBar from "../components/AccountBar.jsx";
@@ -85,6 +86,7 @@ function mapProfileToUserData(profile) {
  */
 export default function OnboardingFlow() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
@@ -230,7 +232,7 @@ export default function OnboardingFlow() {
   };
 
   const isFieldValid = (field) =>
-    (userData[field.name] ?? "").toString().trim().length > 0;
+    validateOnboardingField(field.name, userData[field.name], validationContext).valid;
 
   const isStepValid = () => {
     if (currentQuestion.type === "text") {
@@ -277,6 +279,19 @@ export default function OnboardingFlow() {
     // again after a submission is already in flight or completed.
     if (hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
+
+    // Onboarding no longer requires signing in up front, so a new visitor
+    // can reach Finish with no session at all. The generation endpoint
+    // needs auth, so stash the answers and send them to log in instead of
+    // firing a request that can only fail — completePendingOnboarding()
+    // (already wired into both Login and Register right after auth
+    // succeeds) resumes this exact submission once there's a real
+    // session, so nothing they entered is lost.
+    if (!user) {
+      sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
+      navigate("/login");
+      return;
+    }
 
     console.log("Onboarding userData:", userData);
     setSubmitting(true);
@@ -378,12 +393,38 @@ export default function OnboardingFlow() {
 
   const selectedSports = userData.sports || [];
 
+  // Turns a validateOnboardingField() error descriptor into a localized
+  // sentence, composed from small t()-wrapped fragments plus the raw
+  // bound numbers - the same pattern this flow already uses for strings
+  // with numbers in them (see "Step {n} of {m}" in the progress row).
+  const describeFieldError = (error) => {
+    if (!error) return null;
+    if (error.kind === "pace") {
+      return `${t("Enter a pace under")} 20:00 min/km, ${t("e.g.")} 4:30.`;
+    }
+    const { min, max, minInclusive, integer } = error.bounds;
+    const lower = minInclusive ? t("at least") : t("more than");
+    const whole = integer ? ` ${t("(whole number)")}` : "";
+    return `${t("Enter a value")} ${lower} ${min} ${t("and less than")} ${max}${whole}.`;
+  };
+
   const renderField = (field, siblingFields = []) => {
     const dependsOnValue = field.dependsOn ? userData[field.dependsOn] : null;
     const resolvedOptions = field.optionsBySport
       ? field.optionsBySport[dependsOnValue] || []
       : field.options || [];
     const isDependentAndUnready = field.dependsOn && !dependsOnValue;
+
+    // Only free-typed values (not pill/dropdown selects) can be
+    // out-of-bounds, so only surface a bounds error once something has
+    // actually been entered - an empty required field already disables
+    // Continue without needing an error message of its own.
+    const rawValue = userData[field.name];
+    const hasValue = !(rawValue === undefined || rawValue === null || rawValue.toString().trim() === "");
+    const validation = hasValue
+      ? validateOnboardingField(field.name, rawValue, validationContext)
+      : { valid: true };
+    const fieldError = hasValue && !validation.valid ? describeFieldError(validation.error) : null;
 
     return (
       <div className="ob-field" key={field.name}>
@@ -437,15 +478,17 @@ export default function OnboardingFlow() {
             </label>
             <input
               id={field.name}
-              className="ob-input"
+              className={"ob-input" + (fieldError ? " ob-input-invalid" : "")}
               type={field.inputType || "text"}
               value={userData[field.name] ?? ""}
               placeholder={t(field.placeholder || "")}
+              aria-invalid={fieldError ? "true" : undefined}
               onChange={(e) => updateField(field.name, coerceValue(field, e.target.value))}
             />
           </>
         )}
         {field.note && <p className="ob-field-note">{t(field.note)}</p>}
+        {fieldError && <p className="ob-field-error">{fieldError}</p>}
       </div>
     );
   };

@@ -6,6 +6,7 @@ import WeeklyBox from "../Protocol/WeeklyBox.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import "./Weeklybox.css";
 
+
 /**
  * Reached from Protocol's "View your weekly box" button, which builds
  * { items, totalProducts, frenchBrandPercentage, assemblyNotes } (already

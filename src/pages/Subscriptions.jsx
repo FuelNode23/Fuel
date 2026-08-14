@@ -1,14 +1,19 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { saveSubscription, getSubscriptionPricing } from "../api/client.js";
 import "./Subscriptions.css";
 
 /**
- * Static placeholder plans — there is no billing/subscription endpoint
- * anywhere in src/api/client.js, so pricing/features/box sizes below are
- * illustrative content, not a live catalog. Swap PLANS for a real
- * GET /subscriptions/plans (or similar) once that endpoint exists.
+ * Tier names/features/box sizes are still static placeholder content -
+ * there is no plans-catalog endpoint. Prices are NOT: PLANS.price below is
+ * only the fallback shown before GET /subscription/pricing resolves (or if
+ * it 404s because the athlete has no generated protocol yet). Once it
+ * resolves, the real per-tier total - computed server-side from the
+ * athlete's actual box plus real catalog products - overrides it. See
+ * dynamicPrice() below and UserSubscriptionService.computePricing().
  */
 const PLANS = [
   {
@@ -17,6 +22,7 @@ const PLANS = [
     description: "Keep Fuelnode protocol access without any physical box delivery.",
     tierStat: "Protocol only",
     price: "€0",
+    priceSuffix: "",
     cadence: "No delivery",
     boxCount: "0 products",
     note: "Protocol only.",
@@ -32,6 +38,7 @@ const PLANS = [
     description: "Core 8-product protocol base box.",
     tierStat: "8-product base",
     price: "€24.90 / week",
+    priceSuffix: " / week",
     cadence: "Weekly",
     boxCount: "8 products",
     note: "Core 8-product protocol base box.",
@@ -47,6 +54,7 @@ const PLANS = [
     description: "Same 8-product Amateur base box + 2 support products.",
     tierStat: "8 + 2 support",
     price: "€34.90 / week",
+    priceSuffix: " / week",
     cadence: "Weekly",
     boxCount: "10 products",
     note: "Same 8-product Amateur base box + 2 support products.",
@@ -62,6 +70,7 @@ const PLANS = [
     description: "Same 8-product Amateur base box + 9 premium products as a 14-day fueling block.",
     tierStat: "8 + 9 premium",
     price: "€64.90 / 2 weeks",
+    priceSuffix: " / 2 weeks",
     cadence: "Every 2 weeks",
     boxCount: "17 products",
     note: "Same 8-product Amateur base box + 9 premium products as a 14-day fueling block.",
@@ -71,6 +80,15 @@ const PLANS = [
     ctaStyle: "primary",
   },
 ];
+
+/** Formats a real per-tier total the same way the static fallback reads
+ *  ("€24.90 / week"), or returns the static plan.price if pricing hasn't
+ *  loaded (still fetching, or the athlete has no generated box yet). */
+function dynamicPrice(plan, pricing) {
+  const amount = pricing?.[plan.key];
+  if (amount == null) return plan.price;
+  return `€${amount.toFixed(2)}${plan.priceSuffix}`;
+}
 
 // Maps the lowercase variant keys WeeklyBox.jsx stores (see
 // src/utils/boxVariants.js) to their proper display labels, so they go
@@ -98,13 +116,39 @@ export default function Subscriptions() {
   const category = searchParams.get("category");
   const cameFromWeeklyBox = from === "weekly-box";
 
-  // No checkout/billing endpoint exists yet — picking a plan here has
-  // nothing real to submit to. This just carries the choice forward
-  // (dummy status) so the Account -> Athlete dashboard sequence has
-  // something to display; swap for a real call once billing exists.
-  const handleSelectPlan = (planKey) => {
+  // Real per-tier prices, once loaded - see dynamicPrice(). Stays null (all
+  // cards show the static PLANS.price fallback) if the athlete has no
+  // generated protocol yet (404) or the request fails.
+  const [pricing, setPricing] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSubscriptionPricing(category)
+      .then((data) => {
+        if (!cancelled) setPricing(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [category]);
+
+  // No checkout/billing endpoint exists yet, but the plan/box-variant
+  // choice itself is real now (POST /api/subscription) - only the payment
+  // step ahead of it (Account.jsx) is still a dummy flow. sessionStorage
+  // is kept too so the Account -> Athlete dashboard sequence has an
+  // immediate value to show without waiting on a fetch.
+  const handleSelectPlan = async (planKey) => {
     sessionStorage.setItem("selectedPlan", planKey);
     if (category) sessionStorage.setItem("selectedBoxVariant", category);
+
+    try {
+      await saveSubscription(planKey, category || null);
+    } catch {
+      // Save failed (network, expired session, etc.) - sessionStorage still
+      // carries the choice through this session, so don't block navigation.
+    }
+
     const params = new URLSearchParams({ plan: planKey });
     if (category) params.set("category", category);
     navigate(`/account?${params.toString()}`);
@@ -182,7 +226,7 @@ export default function Subscriptions() {
                 <div className="plan-card__stats">
                   <div className="plan-card__tier-stat">
                     <span className="plan-card__stat-label">{t("Price")}</span>
-                    <span className="plan-card__stat-value">{plan.price}</span>
+                    <span className="plan-card__stat-value">{dynamicPrice(plan, pricing)}</span>
                   </div>
                   <div className="plan-card__tier-stat">
                     <span className="plan-card__stat-label">{t("Cadence")}</span>

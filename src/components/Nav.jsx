@@ -20,6 +20,13 @@ export default function Nav() {
           </button>
         </div>
         <div className="fn-nav-actions">
+          <button
+            type="button"
+            className="fn-nav-signin"
+            onClick={() => navigate("/account")}   
+          >
+            {t("Sign In")}
+          </button>
           <LanguageToggle />
           {/* Signed-in visitors already have a session (AccountBar shows
               on the pages that need it) - only prompt an anonymous

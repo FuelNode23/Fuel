@@ -458,6 +458,16 @@
   margin: 0.1rem 0 0;
 }
 
+.ob-field-error {
+  font-size: 0.78rem;
+  color: #ff6b6b;
+  margin: 0.1rem 0 0;
+}
+
+.ob-input-invalid {
+  border-color: #ff6b6b;
+}
+
 /* --- Added for Q9 (format icon cards with Tap/Chosen badge) --- */
 
 .ob-option-card {
