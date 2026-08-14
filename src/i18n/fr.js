@@ -103,6 +103,14 @@ const fr = {
   "Welcome, {name}": "Bienvenue, {name}",
   "Last login: {value}": "Dernière connexion : {value}",
   "Log out": "Déconnexion",
+  "Log out of FuelNode?": "Se déconnecter de FuelNode ?",
+  "You'll need to sign in again to see your protocol and weekly box.":
+    "Vous devrez vous reconnecter pour voir votre protocole et votre box hebdomadaire.",
+  Cancel: "Annuler",
+  "Yes, log out": "Oui, se déconnecter",
+  "See you again!": "À bientôt !",
+  "You've been logged out safely. Come back soon.":
+    "Vous avez été déconnecté(e) en toute sécurité. Revenez vite.",
 
   // ---------------------------------------------------------------------
   // Login / Register

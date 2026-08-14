@@ -21,7 +21,7 @@ export default function Nav() {
           <button
             type="button"
             className="fn-nav-signin"
-            onClick={() => navigate("/account")}   
+            onClick={() => navigate("/login")}
           >
             {t("Sign In")}
           </button>

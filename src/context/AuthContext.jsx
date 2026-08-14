@@ -7,6 +7,23 @@ const AuthContext = createContext(null)
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000 // 30 minutes
 const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart']
 
+// Cookies aren't how this app stores its session (that's localStorage, see
+// persistSession below), but logout is still the right place to sweep any
+// that do exist - e.g. ones a browser extension, ad blocker, or a future
+// API change might drop on this origin - so a "log out" always leaves the
+// browser holding nothing tied to the account. Expires each cookie for
+// both "/" and the current path since a cookie set without an explicit
+// path defaults to the path it was set from, not "/".
+function clearAllCookies() {
+  if (typeof document === 'undefined' || !document.cookie) return
+  document.cookie.split(';').forEach((entry) => {
+    const name = entry.split('=')[0].trim()
+    if (!name) return
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${window.location.pathname}`
+  })
+}
+
 export function AuthProvider({ children }) {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
@@ -49,6 +66,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    clearAllCookies()
     setUser(null)
   }, [])
 
