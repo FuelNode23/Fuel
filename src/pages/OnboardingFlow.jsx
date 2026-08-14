@@ -87,6 +87,7 @@ function mapProfileToUserData(profile) {
 export default function OnboardingFlow() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -162,20 +163,6 @@ export default function OnboardingFlow() {
     : rawQuestion;
 
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
-
-  // Sport-dependent numeric bounds (typical_distance / avg_elevation /
-  // elevation_gain) resolve against whichever sport is actually in play
-  // for the current step: the target event's sport on the event step,
-  // the athlete's selected sports everywhere else (defaulting to Running,
-  // since the training-profile card itself is Running-only for now).
-  const validationContext = {
-    sport:
-      rawQuestion.id === 6
-        ? userData.event_sport
-        : (userData.sports || []).includes("Cycling") && !(userData.sports || []).includes("Running")
-          ? "Cycling"
-          : "Running",
-  };
 
   // Coerces raw <input> values before they land in state. Any field
   // declared with inputType: "number" in questions.js is stored as a
@@ -391,6 +378,19 @@ export default function OnboardingFlow() {
     setStepIndex((prev) => Math.max(prev - 1, 0));
   };
 
+  // Topbar "Log in" button: lets an existing user identify themselves at
+  // any point in the flow, not just at Finish. Stashes exactly where they
+  // are (answers + step) so the draft-restore effect above can drop them
+  // back in afterward instead of restarting - Login/Register send them
+  // straight back to /onboarding when this key is set (see client.js).
+  const handleLoginClick = () => {
+    sessionStorage.setItem(
+      ONBOARDING_DRAFT_KEY,
+      JSON.stringify({ userData, stepIndex })
+    );
+    navigate("/login");
+  };
+
   const selectedSports = userData.sports || [];
 
   // Turns a validateOnboardingField() error descriptor into a localized
@@ -587,9 +587,15 @@ export default function OnboardingFlow() {
           // the whole app shares a single control instead of two.
           <span />
         ) : (
-          // Signed out: onboarding itself never requires an account.
+          // Signed out: onboarding itself never requires an account, but
+          // an existing user can identify themselves at any step instead
+          // of waiting until Finish - handleLoginClick stashes progress
+          // so they land back on this exact step after authenticating.
           <div className="ob-topbar-actions">
             <LanguageToggle />
+            <button type="button" className="ob-login-btn" onClick={handleLoginClick}>
+              {t("Log in")}
+            </button>
           </div>
         )}
       </div>
