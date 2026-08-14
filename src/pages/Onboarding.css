@@ -53,6 +53,29 @@
   cursor: not-allowed;
 }
 
+.ob-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ob-login-btn {
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 247, 251, 0.2);
+  background: none;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(244, 247, 251, 0.85);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.ob-login-btn:hover {
+  border-color: rgba(244, 247, 251, 0.45);
+  color: #f4f7fb;
+}
+
 .ob-lang {
   display: inline-flex;
   align-items: center;
