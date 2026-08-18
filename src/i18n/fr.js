@@ -30,6 +30,7 @@ const fr = {
   "How it works": "Comment ça marche",
   Delivery: "Livraison",
   "Finish onboarding": "Terminer l'onboarding",
+  "Sign In": "Se connecter",
 
   // ---------------------------------------------------------------------
   // Hero
@@ -102,6 +103,14 @@ const fr = {
   "Welcome, {name}": "Bienvenue, {name}",
   "Last login: {value}": "Dernière connexion : {value}",
   "Log out": "Déconnexion",
+  "Log out of FuelNode?": "Se déconnecter de FuelNode ?",
+  "You'll need to sign in again to see your protocol and weekly box.":
+    "Vous devrez vous reconnecter pour voir votre protocole et votre box hebdomadaire.",
+  Cancel: "Annuler",
+  "Yes, log out": "Oui, se déconnecter",
+  "See you again!": "À bientôt !",
+  "You've been logged out safely. Come back soon.":
+    "Vous avez été déconnecté(e) en toute sécurité. Revenez vite.",
 
   // ---------------------------------------------------------------------
   // Login / Register
@@ -731,6 +740,17 @@ const fr = {
     "La nutrition vous a-t-elle déjà coûté une course ou gâché une séance ?",
   "Your profile is ready. Fuelnode will now generate your personalized nutrition protocol from your answers, your training level, and your preferences.":
     "Votre profil est prêt. Fuelnode va maintenant générer votre protocole nutritionnel personnalisé à partir de vos réponses, de votre niveau d'entraînement et de vos préférences.",
+
+  // ---------------------------------------------------------------------
+  // Onboarding — inline field validation errors (numeric bounds)
+  // ---------------------------------------------------------------------
+  "Enter a value": "Entrez une valeur",
+  "at least": "au moins",
+  "more than": "supérieure à",
+  "and less than": "et inférieure à",
+  "(whole number)": "(nombre entier)",
+  "Enter a pace under": "Entrez une allure inférieure à",
+  "e.g.": "ex.",
 
   // ---------------------------------------------------------------------
   // Onboarding — no-change confirmation + generating overlay

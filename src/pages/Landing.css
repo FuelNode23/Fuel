@@ -123,6 +123,22 @@
   display: none;
 }
 
+.fn-nav-signin {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #F8FAFC;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  padding: 0.4rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.fn-nav-signin:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
 .fn-nav-links {
   display: none;
   align-items: center;
@@ -171,6 +187,25 @@
 }
 
 .fn-lang-toggle:hover {
+  border-color: rgba(103, 232, 249, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.fn-login-btn {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #F8FAFC;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.fn-login-btn:hover {
   border-color: rgba(103, 232, 249, 0.4);
   background: rgba(255, 255, 255, 0.08);
 }

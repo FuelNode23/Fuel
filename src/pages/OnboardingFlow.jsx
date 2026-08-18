@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
+import apiClient, {
+  submitOnboarding as postOnboarding,
+  ONBOARDING_DRAFT_KEY,
+} from "../api/client.js";
 import { questions } from "../api/Questions.js";
+import { validateOnboardingField } from "../api/onboardingValidation.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import AccountBar from "../components/AccountBar.jsx";
@@ -96,10 +100,33 @@ export default function OnboardingFlow() {
   const initialUserDataRef = useRef(null);
   const [showNoChangeConfirm, setShowNoChangeConfirm] = useState(false);
 
+  // Restores progress stashed by handleLoginClick below: the user was
+  // mid-flow, clicked "Log in" in the topbar, authenticated on /login (or
+  // /register), and got sent back here. Runs before the profile pre-fill
+  // effect below and, since it sets userData directly, wins the race with
+  // that effect's "only fill in if still empty" guard - so answers already
+  // typed in this session are never clobbered by a stale saved profile.
+  useEffect(() => {
+    if (!user) return;
+    const draftRaw = sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
+    if (!draftRaw) return;
+    sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    try {
+      const draft = JSON.parse(draftRaw);
+      setUserData(draft.userData || {});
+      setStepIndex(draft.stepIndex || 0);
+    } catch {
+      // Corrupt/unparseable draft - nothing to restore, carry on as a
+      // normal first-time visitor.
+    }
+  }, [user]);
+
   // Pre-fill from an existing saved profile whenever there's an active
-  // session on mount (e.g. logged in via the standalone /login page, then
-  // clicked "Try FuelNode" from /landing) - otherwise a returning user
-  // would see a blank form despite their profile existing.
+  // session - not just right after logging in via the topbar "Log in"
+  // button above. A session can just as easily already be active on mount
+  // (e.g. logged in via the standalone /login page, then clicked "Try
+  // FuelNode" from /landing), which would otherwise leave the form blank
+  // despite the profile existing.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -135,6 +162,20 @@ export default function OnboardingFlow() {
     : rawQuestion;
 
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
+
+  // Sport-dependent numeric bounds (typical_distance / avg_elevation /
+  // elevation_gain) resolve against whichever sport is actually in play
+  // for the current step: the target event's sport on the event step,
+  // the athlete's selected sports everywhere else (defaulting to Running,
+  // since the training-profile card itself is Running-only for now).
+  const validationContext = {
+    sport:
+      rawQuestion.id === 6
+        ? userData.event_sport
+        : (userData.sports || []).includes("Cycling") && !(userData.sports || []).includes("Running")
+          ? "Cycling"
+          : "Running",
+  };
 
   // Coerces raw <input> values before they land in state. Any field
   // declared with inputType: "number" in questions.js is stored as a
@@ -204,7 +245,7 @@ export default function OnboardingFlow() {
   };
 
   const isFieldValid = (field) =>
-    (userData[field.name] ?? "").toString().trim().length > 0;
+    validateOnboardingField(field.name, userData[field.name], validationContext).valid;
 
   const isStepValid = () => {
     if (currentQuestion.type === "text") {
@@ -282,12 +323,16 @@ export default function OnboardingFlow() {
       navigate("/protocol", { state: { onboardingResult: protocolResult, userData } });
     } catch (err) {
       if (err.response?.status === 401) {
-        // Defensive fallback: there was a session when the `user` check
-        // above ran, but the token expired or was cleared before this
-        // request landed. apiClient's response interceptor already
-        // cleared localStorage (token/user) - just redirect here. Stash
-        // their answers so login can resume the submission instead of
-        // losing everything.
+        // apiClient's response interceptor already cleared localStorage
+        // (token/user) on 401 — we just need to redirect here. Onboarding
+        // never required signing in up front, so this is the normal path
+        // for a visitor who filled out all the questions anonymously and
+        // just clicked Finish — same as it is for a session that expired
+        // mid-flow. Either way there's no way to tell "new" from
+        // "returning" from here, so send them to /login, which offers a
+        // "Sign up" link for anyone without an account. Stash their
+        // answers so Login/Register can submit this exact request right
+        // after auth instead of losing everything.
         // Reset the lock so a resumed submission isn't blocked by it.
         hasSubmittedRef.current = false;
         sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
@@ -346,7 +391,35 @@ export default function OnboardingFlow() {
     setStepIndex((prev) => Math.max(prev - 1, 0));
   };
 
+  // Topbar "Log in" button: lets an existing user identify themselves at
+  // any point in the flow, not just at Finish. Stashes exactly where they
+  // are (answers + step) so the draft-restore effect above can drop them
+  // back in afterward instead of restarting - Login/Register send them
+  // straight back to /onboarding when this key is set (see client.js).
+  const handleLoginClick = () => {
+    sessionStorage.setItem(
+      ONBOARDING_DRAFT_KEY,
+      JSON.stringify({ userData, stepIndex })
+    );
+    navigate("/login");
+  };
+
   const selectedSports = userData.sports || [];
+
+  // Turns a validateOnboardingField() error descriptor into a localized
+  // sentence, composed from small t()-wrapped fragments plus the raw
+  // bound numbers - the same pattern this flow already uses for strings
+  // with numbers in them (see "Step {n} of {m}" in the progress row).
+  const describeFieldError = (error) => {
+    if (!error) return null;
+    if (error.kind === "pace") {
+      return `${t("Enter a pace under")} 20:00 min/km, ${t("e.g.")} 4:30.`;
+    }
+    const { min, max, minInclusive, integer } = error.bounds;
+    const lower = minInclusive ? t("at least") : t("more than");
+    const whole = integer ? ` ${t("(whole number)")}` : "";
+    return `${t("Enter a value")} ${lower} ${min} ${t("and less than")} ${max}${whole}.`;
+  };
 
   const renderField = (field, siblingFields = []) => {
     const dependsOnValue = field.dependsOn ? userData[field.dependsOn] : null;
@@ -354,6 +427,17 @@ export default function OnboardingFlow() {
       ? field.optionsBySport[dependsOnValue] || []
       : field.options || [];
     const isDependentAndUnready = field.dependsOn && !dependsOnValue;
+
+    // Only free-typed values (not pill/dropdown selects) can be
+    // out-of-bounds, so only surface a bounds error once something has
+    // actually been entered - an empty required field already disables
+    // Continue without needing an error message of its own.
+    const rawValue = userData[field.name];
+    const hasValue = !(rawValue === undefined || rawValue === null || rawValue.toString().trim() === "");
+    const validation = hasValue
+      ? validateOnboardingField(field.name, rawValue, validationContext)
+      : { valid: true };
+    const fieldError = hasValue && !validation.valid ? describeFieldError(validation.error) : null;
 
     return (
       <div className="ob-field" key={field.name}>
@@ -407,15 +491,17 @@ export default function OnboardingFlow() {
             </label>
             <input
               id={field.name}
-              className="ob-input"
+              className={"ob-input" + (fieldError ? " ob-input-invalid" : "")}
               type={field.inputType || "text"}
               value={userData[field.name] ?? ""}
               placeholder={t(field.placeholder || "")}
+              aria-invalid={fieldError ? "true" : undefined}
               onChange={(e) => updateField(field.name, coerceValue(field, e.target.value))}
             />
           </>
         )}
         {field.note && <p className="ob-field-note">{t(field.note)}</p>}
+        {fieldError && <p className="ob-field-error">{fieldError}</p>}
       </div>
     );
   };
@@ -459,17 +545,12 @@ export default function OnboardingFlow() {
   };
 
   // Still checking localStorage for an existing session - render nothing
-  // rather than flashing the (unauthenticated) wizard for a visitor who's
-  // already logged in, since the profile pre-fill effect above depends on
-  // `user` being settled first.
+  // for a beat rather than flashing an anonymous topbar for a visitor
+  // who's actually already logged in.
   if (authLoading) {
     return <div className="ob-page" />;
   }
 
-  // No auth gate here anymore: onboarding is answerable anonymously, and
-  // authentication only happens if/when Finish needs it (see
-  // submitOnboarding above) - an existing session just means the wizard
-  // pre-fills from the saved profile via the effect above.
   return (
     <div className="ob-page">
       <div className="ob-bg-glow">
@@ -514,10 +595,22 @@ export default function OnboardingFlow() {
         >
           <span aria-hidden="true">←</span> {t("Back")}
         </button>
-        {/* Signed-in visitors already get a language toggle from AccountBar
-            above, so only render a second one here for anonymous visitors
-            (AccountBar renders nothing when logged out). */}
-        {!user && <LanguageToggle />}
+        {user ? (
+          // Signed in: the language toggle lives in AccountBar above, so
+          // the whole app shares a single control instead of two.
+          <span />
+        ) : (
+          // Signed out: onboarding itself never requires an account, but
+          // an existing user can identify themselves at any step instead
+          // of waiting until Finish - handleLoginClick stashes progress
+          // so they land back on this exact step after authenticating.
+          <div className="ob-topbar-actions">
+            <LanguageToggle />
+            <button type="button" className="ob-login-btn" onClick={handleLoginClick}>
+              {t("Log in")}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="ob-progress-wrap">

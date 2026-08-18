@@ -196,9 +196,7 @@ export default function Protocol() {
 
         <SpecialistProtocols protocols={adaptSpecialistProtocols(protocol.active_specialist_protocols)} />
 
-        <Assumptions assumptions={protocol.assumptions_made} />
-
-        <MissingData flags={protocol.missing_data_flags} />
+      
       </div>
 
       <CopyrightFooter />

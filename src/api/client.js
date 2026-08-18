@@ -27,6 +27,16 @@ apiClient.interceptors.response.use(
 )
 
 /**
+ * sessionStorage key OnboardingFlow uses to stash { userData, stepIndex }
+ * when the user clicks "Log in" mid-flow (see the topbar login button) so
+ * they come back to the same step with the same answers instead of
+ * restarting. Distinct from "pendingOnboarding" below, which stashes
+ * answers to be *submitted* immediately after auth rather than resumed -
+ * Login/Register check for this key only after that one comes up empty.
+ */
+export const ONBOARDING_DRAFT_KEY = 'onboardingDraft'
+
+/**
  * Single call: submit onboarding answers, backend calls Claude, and the
  * AI-generated protocol comes back as JSON in this same response.
  * This is the ONLY place protocol generation happens — OnboardingFlow
@@ -120,10 +130,15 @@ export async function getSubscription() {
  * response) with a 404 if no protocol has been generated yet - callers
  * should fall back to the static prices in that case.
  *
+ * @param {string|null} boxVariant - one of boxVariants.js's keys (international/value/french);
+ *   only "international" changes the total (real substitute products), value/french price
+ *   the same as the base box since they're pure re-sorts of the same items.
  * @returns {Promise<object>} { free, amateur, performance, elite } (numbers, EUR)
  */
-export async function getSubscriptionPricing() {
-  const response = await apiClient.get('/subscription/pricing')
+export async function getSubscriptionPricing(boxVariant) {
+  const response = await apiClient.get('/subscription/pricing', {
+    params: boxVariant ? { boxVariant } : undefined,
+  })
   return response.data
 }
 
