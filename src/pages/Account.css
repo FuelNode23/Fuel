@@ -121,6 +121,35 @@
   color: var(--protocol-text-muted);
 }
 
+.account-input:disabled {
+  color: var(--protocol-text-muted);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.account-error {
+  font-size: 0.82rem;
+  color: var(--protocol-danger);
+  margin: -0.4rem 0 1rem;
+}
+
+.account-switch-link {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  padding: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--protocol-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.account-switch-link:hover {
+  color: var(--protocol-text);
+}
+
 .btn--danger {
   background: var(--protocol-danger);
   color: #fff;
