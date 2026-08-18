@@ -111,8 +111,9 @@ export default function OnboardingFlow() {
 
   // Pre-fill from an existing saved profile whenever there's an active
   // session on mount (e.g. logged in via the standalone /login page, then
-  // clicked "Try FuelNode" from /landing) - otherwise a returning user
-  // would see a blank form despite their profile existing.
+  // clicked "Try FuelNode" from /landing, or via IdentityGate's inline
+  // "an account already exists" login) - otherwise a returning user would
+  // see a blank form despite their profile existing.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;

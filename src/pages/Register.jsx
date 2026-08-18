@@ -44,7 +44,13 @@ export default function Register() {
         setResumingOnboarding(true);
       }
       const resumed = await completePendingOnboarding(navigate);
-      if (!resumed) navigate("/login");
+      if (resumed) return;
+
+      // No onboarding to resume - a plain signup (e.g. via the Landing
+      // page's "Log in" button -> "Sign up" link). register() already
+      // persisted the session, so send them to /landing already signed
+      // in rather than back to /login to "log in" again.
+      navigate("/landing");
     } catch (err) {
       setError(
         err.response?.data?.message ||
