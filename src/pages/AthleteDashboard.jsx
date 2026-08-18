@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { Icon } from "../components/Icons.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { getSubscription } from "../api/client.js";
 import "../Protocol/ProtocolComponents.css";
+import "./Account.css";
 import "./AthleteDashboard.css";
 
 // Matches the plan keys Subscriptions.jsx writes to sessionStorage —
@@ -76,6 +78,31 @@ function NotificationToggle({ label, t }) {
 export default function AthleteDashboard() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user, updateContactDetails } = useAuth();
+
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
+  const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "error"
+  const [saveError, setSaveError] = useState("");
+
+  // `user` starts null and only populates once AuthProvider's own effect
+  // reads localStorage - useState's initial value above only ever runs on
+  // the very first render, so a direct page load/refresh here would
+  // otherwise leave phoneNumber stuck empty even once `user` catches up.
+  useEffect(() => {
+    setPhoneNumber(user?.phoneNumber || "");
+  }, [user]);
+
+  const handleSaveContactDetails = async () => {
+    setSaveStatus("saving");
+    setSaveError("");
+    try {
+      await updateContactDetails(phoneNumber);
+      setSaveStatus("saved");
+    } catch (err) {
+      setSaveStatus("error");
+      setSaveError(err.response?.data?.message || t("Could not save your details."));
+    }
+  };
 
   // Starts from this session's own sessionStorage breadcrumb (set the
   // moment a plan is picked, before any network round trip) so the choice
@@ -121,7 +148,7 @@ export default function AthleteDashboard() {
         </div>
 
         <h1 className="page-title" style={{ marginTop: 12 }}>
-          {t("{name}, your athlete hub", { name: "admin" })}
+          {t("{name}, your athlete hub", { name: user?.fullName || t("Athlete") })}
         </h1>
         <p className="page-subtitle">
           {t(
@@ -136,7 +163,7 @@ export default function AthleteDashboard() {
               <Icon.User width={13} height={13} />
               {t("Athlete hub")}
             </div>
-            <h3 className="hub-card__title">{t("admin")}</h3>
+            <h3 className="hub-card__title">{user?.fullName || t("Athlete")}</h3>
             <p className="hub-card__text">
               {t(
                 "Your profile is live. Keep it up to date here, review your protocol, and activate a recurring box whenever you want Fuelnode to turn this profile into weekly execution."
@@ -307,11 +334,25 @@ export default function AthleteDashboard() {
             <div className="hub-field-grid">
               <div className="hub-field">
                 <span className="hub-field-label">{t("Email")}</span>
-                <input type="email" className="account-input" placeholder={t("you@example.com")} />
+                <input
+                  type="email"
+                  className="account-input"
+                  value={user?.email || ""}
+                  disabled
+                />
               </div>
               <div className="hub-field">
                 <span className="hub-field-label">{t("Phone")}</span>
-                <input type="tel" className="account-input" placeholder={t("+33 6 12 34 56 78")} />
+                <input
+                  type="tel"
+                  className="account-input"
+                  value={phoneNumber}
+                  placeholder={t("+33 6 12 34 56 78")}
+                  onChange={(e) => {
+                    setPhoneNumber(e.target.value);
+                    setSaveStatus("idle");
+                  }}
+                />
               </div>
               <div className="hub-field">
                 <span className="hub-field-label">{t("Smart locker")}</span>
@@ -322,8 +363,18 @@ export default function AthleteDashboard() {
                 <span className="hub-field-static">{t("No due date")}</span>
               </div>
             </div>
-            <button type="button" className="btn btn--primary">
-              {t("Save my contact details")}
+            {saveStatus === "error" && <p className="account-error">{saveError}</p>}
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={saveStatus === "saving"}
+              onClick={handleSaveContactDetails}
+            >
+              {saveStatus === "saving"
+                ? t("Saving...")
+                : saveStatus === "saved"
+                  ? t("Saved ✓")
+                  : t("Save my contact details")}
             </button>
           </div>
 

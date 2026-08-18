@@ -84,6 +84,21 @@ export function AuthProvider({ children }) {
     return data
   }, [])
 
+  // Saves the athlete-hub "Contact details" card's phone number. Unlike
+  // login/register/completeRegistration, the backend response here has no
+  // token (it's updating a field on the existing session, not issuing a
+  // new one) - merge it into the current user object in place instead of
+  // going through persistSession.
+  const updateContactDetails = useCallback(async (phoneNumber) => {
+    const { data } = await apiClient.put('/auth/contact-details', { phoneNumber })
+    setUser((prev) => {
+      const updated = { ...prev, ...data }
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
+    return data
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -115,7 +130,9 @@ export function AuthProvider({ children }) {
   }, [user, logout, navigate])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, completeRegistration, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, completeRegistration, updateContactDetails, logout }}
+    >
       {children}
     </AuthContext.Provider>
   )
