@@ -7,6 +7,14 @@ const apiClient = axios.create({
   },
 })
 
+// The draft token (from startOnboarding) is deliberately kept separate from
+// the real session token in localStorage - it's sent as its own header
+// (see generateDraftProtocol/AuthContext.completeRegistration), never
+// through the standard Authorization flow real sessions use. Holding it in
+// sessionStorage rather than AuthContext's `user` state is intentional:
+// there is no "logged in" state during the draft phase at all.
+export const DRAFT_TOKEN_KEY = 'draftToken'
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -128,6 +136,62 @@ export async function getSubscription() {
 export async function getSubscriptionPricing(boxVariant) {
   const response = await apiClient.get('/subscription/pricing', {
     params: boxVariant ? { boxVariant } : undefined,
+  })
+  return response.data
+}
+
+/**
+ * Identity capture with no account created - see AuthService (backend) for
+ * the full deferred-auth design. Returns a draft token and stores it in
+ * sessionStorage under DRAFT_TOKEN_KEY; this is NOT "being logged in" -
+ * AuthContext's `user` stays null until completeRegistration succeeds.
+ * Rejects with a 409 (via the response) if this email already has a real
+ * account - callers should show an inline login prompt in that case, not a
+ * generic error.
+ *
+ * @param {string} email
+ * @param {string} fullName
+ * @returns {Promise<object>} { draftToken, email, fullName }
+ */
+export async function startOnboarding(email, fullName) {
+  const { data } = await apiClient.post('/auth/start', { email, fullName })
+  sessionStorage.setItem(DRAFT_TOKEN_KEY, data.draftToken)
+  return data
+}
+
+/**
+ * Generates a protocol for an athlete with no account yet, using the draft
+ * token from startOnboarding - sent as its own header, deliberately never
+ * through the standard Authorization flow real sessions use (this is a
+ * different axios call shape from every other function in this file for
+ * exactly that reason). Saves nothing server-side; the result is held
+ * entirely client-side until completeRegistration + saveGeneratedProtocol
+ * persist it for real.
+ *
+ * @param {object} profileRequest - same shape submitOnboarding already sends
+ * @returns {Promise<object>} protocol JSON, same shape submitOnboarding returns
+ */
+export async function generateDraftProtocol(profileRequest) {
+  const draftToken = sessionStorage.getItem(DRAFT_TOKEN_KEY)
+  const response = await apiClient.post('/protocol/generate-draft', profileRequest, {
+    headers: { 'X-Draft-Token': draftToken },
+  })
+  return response.data
+}
+
+/**
+ * Persists a protocol already generated during the draft phase - call
+ * right after completeRegistration + PUT /api/athletes/profile succeed, so
+ * the box the athlete already reviewed is exactly what gets saved with no
+ * second Claude call. Normal authenticated call (real session token via
+ * the usual interceptor), no draft token involved.
+ *
+ * @param {object} protocolJson - the object returned by generateDraftProtocol
+ * @returns {Promise<object>} the saved NutritionProtocol row
+ */
+export async function saveGeneratedProtocol(protocolJson) {
+  const response = await apiClient.post('/protocol/save-generated', {
+    protocolJson: JSON.stringify(protocolJson),
   })
   return response.data
 }

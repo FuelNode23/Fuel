@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
+import apiClient, {
+  DRAFT_TOKEN_KEY,
+  generateDraftProtocol,
+  submitOnboarding as postOnboarding,
+} from "../api/client.js";
 import { questions } from "../api/Questions.js";
 import { validateOnboardingField } from "../api/onboardingValidation.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -9,6 +13,7 @@ import AccountBar from "../components/AccountBar.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import GeneratingOverlay from "../components/GeneratingOverlay.jsx";
+import IdentityGate from "../components/IdentityGate.jsx";
 import "../pages/Onboarding.css";
 
 /**
@@ -90,6 +95,13 @@ export default function OnboardingFlow() {
   const [userData, setUserData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+
+  // Setter-only state: bumped by IdentityGate's onSuccess purely to force
+  // a re-render once a draft token lands in sessionStorage. hasDraftToken
+  // itself is read fresh from storage on every render below rather than
+  // mirrored into state, since sessionStorage writes don't trigger React
+  // updates on their own.
+  const [, setIdentityVersion] = useState(0);
 
   // Set when login pre-fills userData from an existing profile, so Finish
   // can detect "nothing changed since last time" and confirm before
@@ -253,13 +265,19 @@ export default function OnboardingFlow() {
     return true;
   };
 
-  // Sends the full collected userData object to the backend. Called
-  // when the user clicks "Finish" on the last step. This is the single
-  // API call in the whole flow: postOnboarding() (submitOnboarding from
-  // client.js) posts userData to POST /api/generate-with-profile, and
-  // the backend's response IS the generated protocol JSON — no separate
-  // "generate" or "fetch" call happens anywhere else. The endpoint URL
-  // is defined ONLY in client.js, so it never drifts out of sync here.
+  // Sends the full collected userData object to the backend. Called when
+  // the user clicks "Finish" on the last step. Branches on whether this is
+  // a real session or a draft one (see IdentityGate):
+  //
+  // - Real (`user` truthy): a genuinely-returning visitor who logged in
+  //   inline via IdentityGate's "an account already exists" branch. They
+  //   already have a real account, so save + generate immediately via the
+  //   original postOnboarding()/generate-with-profile - unchanged from
+  //   before this whole deferred-auth flow existed.
+  // - Draft (`user` null, a draft token exists): the normal case now.
+  //   Generates via generateDraftProtocol() and saves nothing server-side
+  //   - CreateAccount.jsx (reached from the weekly box) persists this
+  //     exact result once a real password exists.
   const submitOnboarding = async () => {
     // Guards against duplicate submissions: double-click, StrictMode
     // double-invoke, or returning to the last step and hitting Finish
@@ -267,24 +285,29 @@ export default function OnboardingFlow() {
     if (hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
 
-    // Onboarding no longer requires signing in up front, so a new visitor
-    // can reach Finish with no session at all. The generation endpoint
-    // needs auth, so stash the answers and send them to log in instead of
-    // firing a request that can only fail — completePendingOnboarding()
-    // (already wired into both Login and Register right after auth
-    // succeeds) resumes this exact submission once there's a real
-    // session, so nothing they entered is lost.
-    if (!user) {
-      sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
-      navigate("/login");
+    setSubmitting(true);
+    setSubmitError(null);
+
+    if (user) {
+      try {
+        const protocolResult = await postOnboarding(userData);
+        sessionStorage.setItem(
+          "protocolHandoff",
+          JSON.stringify({ onboardingResult: protocolResult, userData })
+        );
+        navigate("/protocol", { state: { onboardingResult: protocolResult, userData } });
+      } catch (err) {
+        console.error("Onboarding submit failed, continuing with local data:", err);
+        sessionStorage.setItem("protocolHandoff", JSON.stringify({ userData, saveFailed: true }));
+        navigate("/protocol", { state: { userData, saveFailed: true } });
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
-    console.log("Onboarding userData:", userData);
-    setSubmitting(true);
-    setSubmitError(null);
     try {
-      const protocolResult = await postOnboarding(userData);
+      const protocolResult = await generateDraftProtocol(userData);
 
       // Mirror the handoff payload to sessionStorage so a refresh on
       // /protocol doesn't lose it — location.state doesn't survive
@@ -297,24 +320,19 @@ export default function OnboardingFlow() {
       navigate("/protocol", { state: { onboardingResult: protocolResult, userData } });
     } catch (err) {
       if (err.response?.status === 401) {
-        // Defensive fallback: there was a session when the `user` check
-        // above ran, but the token expired or was cleared before this
-        // request landed. apiClient's response interceptor already
-        // cleared localStorage (token/user) - just redirect here. Stash
-        // their answers so login can resume the submission instead of
-        // losing everything.
-        // Reset the lock so a resumed submission isn't blocked by it.
+        // Draft token missing/invalid/expired - clear it so a retry falls
+        // back to IdentityGate instead of repeating with the same bad
+        // token. Reset the submit lock too, same reasoning.
         hasSubmittedRef.current = false;
-        sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
-        navigate("/login", { replace: false });
-        return;
+        sessionStorage.removeItem(DRAFT_TOKEN_KEY);
       }
-      // The backend couldn't save the profile (500, network error, etc.).
-      // Protocol renders entirely from userData already, so don't strand
-      // the person on the last onboarding step — let them see their
-      // protocol now and flag that the save didn't go through, so it can
-      // be retried later instead of losing their answers.
-      console.error("Onboarding submit failed, continuing with local data:", err);
+      // Generation genuinely failed (502, network, etc.). Nothing was ever
+      // saved server-side in the draft flow, so there's no "resume" state
+      // to preserve beyond userData itself - Protocol's existing
+      // saveFailed path already handles this: show the error, retry from
+      // onboarding (which re-enters IdentityGate with a fresh draft token
+      // if the old one was cleared above).
+      console.error("Draft protocol generation failed:", err);
 
       sessionStorage.setItem(
         "protocolHandoff",
@@ -509,10 +527,18 @@ export default function OnboardingFlow() {
     return <div className="ob-page" />;
   }
 
-  // No auth gate here anymore: onboarding is answerable anonymously, and
-  // authentication only happens if/when Finish needs it (see
-  // submitOnboarding above) - an existing session just means the wizard
-  // pre-fills from the saved profile via the effect above.
+  // Identity (email + name, no password) is captured before question 1 -
+  // establishes a draft session, not a real one (see IdentityGate). A real
+  // session (`user` truthy) skips this entirely, whether from a
+  // genuinely-returning login inside IdentityGate itself or an existing
+  // session from elsewhere in the app - the profile pre-fill effect above
+  // already handles both. Real account creation happens later, right
+  // before Subscription (see CreateAccount.jsx) - not here.
+  const hasDraftToken = Boolean(sessionStorage.getItem(DRAFT_TOKEN_KEY));
+  if (!user && !hasDraftToken) {
+    return <IdentityGate onSuccess={() => setIdentityVersion((v) => v + 1)} />;
+  }
+
   return (
     <div className="ob-page">
       <div className="ob-bg-glow">

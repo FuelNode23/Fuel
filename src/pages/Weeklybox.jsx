@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import WeeklyBox from "../Protocol/WeeklyBox.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import "./Weeklybox.css";
 
@@ -18,6 +19,7 @@ import "./Weeklybox.css";
 export default function WeeklyBoxPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const [box, setBox] = useState(null);
   // Which of the 3 box variants the athlete picked — lifted up from
@@ -50,10 +52,17 @@ export default function WeeklyBoxPage() {
   // tierHint defaults to "amateur" (the cheapest tier that actually
   // unlocks a box) regardless of which variant was picked; category
   // carries the chosen variant through so Subscriptions can flag it.
+  //
+  // Real account (`user` truthy - a returning visitor who logged in inline
+  // during onboarding) already has one, so skip straight to Subscription.
+  // Everyone else still has only a draft session at this point - the
+  // protocol shown here was never saved, so /create-account persists it
+  // (see CreateAccount.jsx) before continuing on.
   const handleContinue = () => {
     if (!selectedVariant) return;
     sessionStorage.setItem("selectedBoxVariant", selectedVariant);
-    navigate(`/subscription?from=weekly-box&tierHint=amateur&category=${selectedVariant}`);
+    const query = `from=weekly-box&tierHint=amateur&category=${selectedVariant}`;
+    navigate(`/${user ? "subscription" : "create-account"}?${query}`);
   };
 
   return (

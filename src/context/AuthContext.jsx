@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import apiClient from '../api/client.js'
+import apiClient, { DRAFT_TOKEN_KEY } from '../api/client.js'
 
 const AuthContext = createContext(null)
 
@@ -46,6 +46,24 @@ export function AuthProvider({ children }) {
     return data
   }, [])
 
+  // Creates the real account for a draft session (see IdentityGate /
+  // CreateAccount) - the first moment a password exists for this email.
+  // Uses the draft token stashed by client.js's startOnboarding, sent as
+  // its own header rather than the standard Authorization flow. Clears
+  // that draft token on success since it's no longer needed - `user` is
+  // now set via the same persistSession path login/register use.
+  const completeRegistration = useCallback(async (password) => {
+    const draftToken = sessionStorage.getItem(DRAFT_TOKEN_KEY)
+    const { data } = await apiClient.post(
+      '/auth/complete-registration',
+      { password },
+      { headers: { 'X-Draft-Token': draftToken } }
+    )
+    persistSession(data)
+    sessionStorage.removeItem(DRAFT_TOKEN_KEY)
+    return data
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -76,7 +94,7 @@ export function AuthProvider({ children }) {
   }, [user, logout, navigate])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, completeRegistration, logout }}>
       {children}
     </AuthContext.Provider>
   )
