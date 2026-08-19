@@ -36,13 +36,13 @@ export default function AccountBar() {
 
   // Once the goodbye modal is showing, the session is already cleared -
   // this just gives the user a beat to read the message before sending
-  // them back to onboarding, then auto-dismisses instead of requiring
-  // another click.
+  // them back to the landing page, then auto-dismisses instead of
+  // requiring another click.
   useEffect(() => {
     if (!goodbyeOpen) return;
     const timer = setTimeout(() => {
       setGoodbyeOpen(false);
-      navigate("/onboarding");
+      navigate("/landing");
     }, GOODBYE_DISPLAY_MS);
     return () => clearTimeout(timer);
   }, [goodbyeOpen, navigate]);
