@@ -63,9 +63,9 @@ function EmailField({ value, onChange, disabled }) {
  *
  * The Email tab is a real email-OTP sign-in flow (see EmailOtpController):
  * "Send code" emails a 6-digit code, "Verify & continue" checks it and
- * either logs straight in (an account already exists for that email) or
- * hands off to the Sign-In tab's register form with the now-confirmed
- * email locked in (code was right, but no account exists yet). The OAuth
+ * always authenticates on success - an account already existing for that
+ * email logs straight in, and one that doesn't is created on the spot (no
+ * separate password step; see EmailOtpService.verifyOtp). The OAuth
  * buttons below it remain UI-only placeholders. Both tabs share one
  * identified email (see EmailField) - whichever method the visitor picks
  * authenticates the same address, so it's locked and visually called out
@@ -96,10 +96,6 @@ export default function Account() {
   const [otpCode, setOtpCode] = useState("");
   const [otpError, setOtpError] = useState("");
   const [otpSubmitting, setOtpSubmitting] = useState(false);
-  // Set once a code has been verified for an email with no account yet -
-  // folded into knownEmail below so the register form picks it up as
-  // already-identified, same as a real session or draft token would.
-  const [otpVerifiedEmail, setOtpVerifiedEmail] = useState("");
 
   // Sign-In tab state - always opens on "login"; "New here? Sign up"
   // switches to "register" explicitly, it's never the default.
@@ -114,16 +110,9 @@ export default function Account() {
 
   // A real session already knows its own email. Failing that, a draft
   // session (identity captured, registration not yet completed) carries
-  // it as the draft token's `sub` claim. Failing that too, a code just
-  // verified via the Email tab for an address with no account yet counts
-  // as known too (see handleVerifyCode's hasAccount=false branch). None
-  // of these exist only if this page is reached with no prior context at
-  // all, e.g. a direct URL visit.
-  const knownEmail =
-    user?.email ||
-    decodeJwtPayload(sessionStorage.getItem(DRAFT_TOKEN_KEY) || "")?.sub ||
-    otpVerifiedEmail ||
-    "";
+  // it as the draft token's `sub` claim. Neither exists only if this page
+  // is reached with no prior context at all, e.g. a direct URL visit.
+  const knownEmail = user?.email || decodeJwtPayload(sessionStorage.getItem(DRAFT_TOKEN_KEY) || "")?.sub || "";
   const signInEmail = knownEmail || manualEmail;
 
   const handleContinue = () => {
@@ -154,17 +143,11 @@ export default function Account() {
     setOtpError("");
     setOtpSubmitting(true);
     try {
-      const result = await verifyOtp(signInEmail, otpCode);
-      if (result.hasAccount) {
-        handleContinue();
-      } else {
-        // Code was right, but no account exists for this email yet -
-        // route into the Sign-In tab's register form with the address
-        // already locked in via otpVerifiedEmail/knownEmail above.
-        setOtpVerifiedEmail(signInEmail);
-        setMethod("signin");
-        setSignInMode("register");
-      }
+      // A correct code is sufficient by itself - the backend creates an
+      // account on the spot if this email doesn't have one yet (see
+      // EmailOtpService.verifyOtp), so this always lands on a real session.
+      await verifyOtp(signInEmail, otpCode);
+      handleContinue();
     } catch (err) {
       setOtpError(err.response?.data?.message || t("Incorrect code. Please try again."));
     } finally {
