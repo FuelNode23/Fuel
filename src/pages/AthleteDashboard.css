@@ -199,8 +199,28 @@
   color: var(--protocol-text-muted);
 }
 
+/* Was borrowed from Account.css, which now has its own, differently-themed
+   input styling (see Login.css) for the account gate - defined here
+   instead so this card doesn't depend on that page's unrelated CSS. */
 .hub-field .account-input {
+  width: 100%;
+  background: var(--protocol-surface-alt);
+  border: 1px solid var(--protocol-border);
+  border-radius: calc(var(--protocol-radius) - 4px);
+  padding: 0.7rem 0.9rem;
+  color: var(--protocol-text);
+  font-size: 0.9rem;
   margin-bottom: 0;
+}
+
+.hub-field .account-input::placeholder {
+  color: var(--protocol-text-muted);
+}
+
+.hub-field .account-input:disabled {
+  color: var(--protocol-text-muted);
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
 .hub-field-static {

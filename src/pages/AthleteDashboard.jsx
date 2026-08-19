@@ -7,7 +7,6 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { getSubscription } from "../api/client.js";
 import "../Protocol/ProtocolComponents.css";
-import "./Account.css";
 import "./AthleteDashboard.css";
 
 // Matches the plan keys Subscriptions.jsx writes to sessionStorage —

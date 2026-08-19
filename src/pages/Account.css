@@ -1,79 +1,47 @@
 /* ==========================================================================
-   Account (sign-in) page — same dark theme + design tokens as
-   Weeklybox.css / Subscriptions.css.
+   Account.jsx-specific pieces (tabs, OAuth row, terms checkbox, mode-switch
+   link) layered on top of Login.css's shared shell/theme - the page itself
+   now uses Login.jsx's .login-page/.form-card structure directly. Every
+   selector here is prefixed with .form-card so it reliably outranks
+   Login.css's generic ".form-card input"/".form-card button" rules instead
+   of depending on source order.
    ========================================================================== */
 
-.account-page {
-  --protocol-bg: #0a0e1a;
-  --protocol-surface: #141a29;
-  --protocol-surface-alt: rgba(244, 247, 251, 0.04);
-  --protocol-border: rgba(244, 247, 251, 0.14);
-  --protocol-text: #f4f7fb;
-  --protocol-text-muted: rgba(244, 247, 251, 0.6);
-  --protocol-accent: #22c55e;
-  --protocol-accent-hover: #1ea850;
-  --protocol-danger: #ef4444;
-  --protocol-danger-hover: #dc2626;
-  --protocol-radius: 12px;
-
-  position: relative;
-  background: var(--protocol-bg);
-  color: var(--protocol-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  min-height: 100vh;
-  display: flex;
+.form-card .back-link {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 2rem 1.5rem;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 1.25rem;
+  color: rgba(203, 213, 225, 0.75);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
 }
 
-.account-page * {
-  box-sizing: border-box;
-}
-
-.account-card {
-  width: 100%;
-  max-width: 480px;
-  background: var(--protocol-surface);
-  border: 1px solid var(--protocol-border);
-  border-radius: var(--protocol-radius);
-  padding: 2rem;
-}
-
-.account-card .back-link {
-  margin-bottom: 1rem;
+.form-card .back-link:hover {
+  color: #f8fafc;
+  transform: none;
 }
 
 .account-card__top {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 0.75rem;
 }
 
-.account-card__title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem;
-}
-
-.account-card__subtitle {
-  font-size: 0.88rem;
-  line-height: 1.5;
-  color: var(--protocol-text-muted);
+.form-card .account-tabs {
+  display: flex;
+  background: rgba(6, 12, 20, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.25rem;
   margin: 0 0 1.5rem;
 }
 
-.account-tabs {
-  display: flex;
-  background: var(--protocol-surface-alt);
-  border: 1px solid var(--protocol-border);
-  border-radius: 999px;
-  padding: 0.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.account-tab {
+.form-card .account-tab {
   flex: 1;
   display: flex;
   align-items: center;
@@ -83,161 +51,143 @@
   border: none;
   border-radius: 999px;
   padding: 0.5rem 0.75rem;
+  margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--protocol-text-muted);
+  color: rgba(203, 213, 225, 0.75);
   cursor: pointer;
+  box-shadow: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.account-tab--active {
-  background: #fff;
-  color: #0a0e1a;
+.form-card .account-tab:hover:not(.account-tab--active) {
+  background: rgba(255, 255, 255, 0.06);
+  transform: none;
 }
 
-.account-field-label {
+.form-card .account-tab--active {
+  background: #22c55e;
+  color: #07111f;
+}
+
+.form-card .account-field-label {
   font-size: 0.92rem;
   font-weight: 700;
+  color: #f8fafc;
   margin: 0 0 0.2rem;
 }
 
-.account-field-hint {
+.form-card .account-field-hint {
   font-size: 0.8rem;
-  color: var(--protocol-text-muted);
-  margin: 0 0 0.75rem;
+  color: rgba(203, 213, 225, 0.65);
+  margin: 0 0 0.9rem;
 }
 
-.account-input {
-  width: 100%;
-  background: var(--protocol-surface-alt);
-  border: 1px solid var(--protocol-border);
-  border-radius: calc(var(--protocol-radius) - 4px);
-  padding: 0.7rem 0.9rem;
-  color: var(--protocol-text);
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-}
-
-.account-input::placeholder {
-  color: var(--protocol-text-muted);
-}
-
-.account-input:disabled {
-  color: var(--protocol-text-muted);
-  cursor: not-allowed;
-  opacity: 0.75;
-}
-
-.account-error {
-  font-size: 0.82rem;
-  color: var(--protocol-danger);
-  margin: -0.4rem 0 1rem;
-}
-
-.account-switch-link {
-  display: block;
-  width: 100%;
-  text-align: center;
-  background: none;
-  border: none;
-  padding: 0.75rem 0 0;
-  font-size: 0.85rem;
-  color: var(--protocol-text-muted);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.account-switch-link:hover {
-  color: var(--protocol-text);
-}
-
-.btn--danger {
-  background: var(--protocol-danger);
-  color: #fff;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.btn--danger:hover {
-  background: var(--protocol-danger-hover);
-}
-
-.account-terms {
+.form-card .account-terms {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background: var(--protocol-surface-alt);
-  border: 1px solid var(--protocol-border);
-  border-radius: calc(var(--protocol-radius) - 4px);
+  background: rgba(6, 12, 20, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
   padding: 0.7rem 0.9rem;
   font-size: 0.82rem;
-  color: var(--protocol-text-muted);
+  color: rgba(203, 213, 225, 0.75);
   margin: 1rem 0;
   cursor: pointer;
 }
 
-.account-terms input {
-  accent-color: var(--protocol-accent);
+.form-card .account-terms input {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  accent-color: #22c55e;
 }
 
-.account-terms strong {
-  color: var(--protocol-text);
+.form-card .account-terms strong {
+  color: #f8fafc;
   font-weight: 600;
 }
 
-.account-divider {
+.form-card .account-divider {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin: 1.25rem 0;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
-  color: var(--protocol-text-muted);
+  color: rgba(203, 213, 225, 0.55);
 }
 
-.account-divider::before,
-.account-divider::after {
+.form-card .account-divider::before,
+.form-card .account-divider::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--protocol-border);
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.account-oauth {
+.form-card .account-oauth {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  background: var(--protocol-surface-alt);
-  border: 1px solid var(--protocol-border);
-  border-radius: calc(var(--protocol-radius) - 4px);
+  background: rgba(6, 12, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
   padding: 0.7rem 0.9rem;
-  color: var(--protocol-text);
+  color: #f8fafc;
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: 0.6rem;
-  transition: background 0.15s ease;
+  margin: 0 0 0.6rem;
+  box-shadow: none;
+  transition: background-color 0.2s ease;
 }
 
-.account-oauth:hover:not(:disabled) {
-  background: var(--protocol-border);
+.form-card .account-oauth:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  transform: none;
 }
 
-.account-oauth:disabled {
+.form-card .account-oauth:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.account-oauth-note {
+.form-card .account-oauth-note {
   font-size: 0.75rem;
-  color: var(--protocol-text-muted);
+  color: rgba(203, 213, 225, 0.55);
   margin: 0.5rem 0 0;
   text-align: center;
+}
+
+.form-card .account-switch-link {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #38bdf8;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.form-card .account-switch-link:hover {
+  text-decoration: underline;
+  transform: none;
+}
+
+.form-card input:disabled {
+  color: rgba(203, 213, 225, 0.65);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
