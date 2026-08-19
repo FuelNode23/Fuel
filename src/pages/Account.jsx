@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icons.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import apiClient, { DRAFT_TOKEN_KEY, saveGeneratedProtocol } from "../api/client.js";
+import apiClient, { DRAFT_TOKEN_KEY, saveGeneratedProtocol, sendOtp } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
@@ -61,14 +61,16 @@ function EmailField({ value, onChange, disabled }) {
  * full page rather than Login.jsx's split hero-image layout - this page
  * doesn't use that layout.
  *
- * The Email tab is an email+OTP-code flow - UI only for now, same as the
- * OAuth buttons below it: nothing in this app sends real email yet, so
- * "Send code" always succeeds and any 6-digit entry "verifies". Swap
- * handleSendCode/handleVerifyCode for real calls once a code-sending
- * backend exists. Both tabs share one identified email (see EmailField) -
- * whichever method the visitor picks authenticates the same address, so
- * it's locked and visually called out wherever it's already known rather
- * than tracked separately per tab. The Sign-In tab is real, in both
+ * The Email tab is a real email-OTP sign-in flow (see EmailOtpController):
+ * "Send code" emails a 6-digit code, "Verify & continue" checks it and
+ * either logs straight in (an account already exists for that email) or
+ * hands off to the Sign-In tab's register form with the now-confirmed
+ * email locked in (code was right, but no account exists yet). The OAuth
+ * buttons below it remain UI-only placeholders. Both tabs share one
+ * identified email (see EmailField) - whichever method the visitor picks
+ * authenticates the same address, so it's locked and visually called out
+ * wherever it's already known rather than tracked separately per tab.
+ * The Sign-In tab is real, in both
  * directions: it always opens on plain login (not registration) regardless
  * of session state, with "New here? Sign up" as an explicit opt-in for a
  * draft session that hasn't set a password yet, or a plain login for a
@@ -78,7 +80,7 @@ function EmailField({ value, onChange, disabled }) {
 export default function Account() {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, loading: authLoading, login, completeRegistration } = useAuth();
+  const { user, loading: authLoading, login, completeRegistration, verifyOtp } = useAuth();
   const [searchParams] = useSearchParams();
   const plan = searchParams.get("plan");
   const category = searchParams.get("category");
@@ -92,6 +94,12 @@ export default function Account() {
   // identified address.
   const [otpStep, setOtpStep] = useState("request");
   const [otpCode, setOtpCode] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [otpSubmitting, setOtpSubmitting] = useState(false);
+  // Set once a code has been verified for an email with no account yet -
+  // folded into knownEmail below so the register form picks it up as
+  // already-identified, same as a real session or draft token would.
+  const [otpVerifiedEmail, setOtpVerifiedEmail] = useState("");
 
   // Sign-In tab state - always opens on "login"; "New here? Sign up"
   // switches to "register" explicitly, it's never the default.
@@ -106,9 +114,16 @@ export default function Account() {
 
   // A real session already knows its own email. Failing that, a draft
   // session (identity captured, registration not yet completed) carries
-  // it as the draft token's `sub` claim. Neither exists only if this page
-  // is reached with no prior context at all, e.g. a direct URL visit.
-  const knownEmail = user?.email || decodeJwtPayload(sessionStorage.getItem(DRAFT_TOKEN_KEY) || "")?.sub || "";
+  // it as the draft token's `sub` claim. Failing that too, a code just
+  // verified via the Email tab for an address with no account yet counts
+  // as known too (see handleVerifyCode's hasAccount=false branch). None
+  // of these exist only if this page is reached with no prior context at
+  // all, e.g. a direct URL visit.
+  const knownEmail =
+    user?.email ||
+    decodeJwtPayload(sessionStorage.getItem(DRAFT_TOKEN_KEY) || "")?.sub ||
+    otpVerifiedEmail ||
+    "";
   const signInEmail = knownEmail || manualEmail;
 
   const handleContinue = () => {
@@ -118,14 +133,43 @@ export default function Account() {
     navigate("/athlete-dashboard");
   };
 
-  const handleSendCode = (e) => {
+  const handleSendCode = async (e) => {
     e.preventDefault();
-    setOtpStep("verify");
+    setOtpError("");
+    setOtpSubmitting(true);
+    try {
+      await sendOtp(signInEmail);
+      setOtpStep("verify");
+    } catch (err) {
+      setOtpError(
+        err.response?.data?.message || t("Could not send the code right now. Please try again.")
+      );
+    } finally {
+      setOtpSubmitting(false);
+    }
   };
 
-  const handleVerifyCode = (e) => {
+  const handleVerifyCode = async (e) => {
     e.preventDefault();
-    handleContinue();
+    setOtpError("");
+    setOtpSubmitting(true);
+    try {
+      const result = await verifyOtp(signInEmail, otpCode);
+      if (result.hasAccount) {
+        handleContinue();
+      } else {
+        // Code was right, but no account exists for this email yet -
+        // route into the Sign-In tab's register form with the address
+        // already locked in via otpVerifiedEmail/knownEmail above.
+        setOtpVerifiedEmail(signInEmail);
+        setMethod("signin");
+        setSignInMode("register");
+      }
+    } catch (err) {
+      setOtpError(err.response?.data?.message || t("Incorrect code. Please try again."));
+    } finally {
+      setOtpSubmitting(false);
+    }
   };
 
   const handleSignIn = async (e) => {
@@ -259,7 +303,10 @@ export default function Account() {
                   onChange={(e) => setManualEmail(e.target.value)}
                   disabled={Boolean(knownEmail)}
                 />
-                <button type="submit">{t("Send code")}</button>
+                {otpError && <div className="alert-error">{otpError}</div>}
+                <button type="submit" disabled={otpSubmitting}>
+                  {otpSubmitting ? t("Sending...") : t("Send code")}
+                </button>
               </form>
 
               <label className="account-terms">
@@ -308,8 +355,9 @@ export default function Account() {
                 autoFocus
                 required
               />
-              <button type="submit" disabled={otpCode.length !== 6}>
-                {t("Verify & continue")}
+              {otpError && <div className="alert-error">{otpError}</div>}
+              <button type="submit" disabled={otpCode.length !== 6 || otpSubmitting}>
+                {otpSubmitting ? t("Verifying...") : t("Verify & continue")}
               </button>
               <button
                 type="button"
@@ -317,6 +365,7 @@ export default function Account() {
                 onClick={() => {
                   setOtpStep("request");
                   setOtpCode("");
+                  setOtpError("");
                 }}
               >
                 {t("Use a different email")}

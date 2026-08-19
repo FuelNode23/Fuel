@@ -196,4 +196,17 @@ export async function saveGeneratedProtocol(protocolJson) {
   return response.data
 }
 
+/**
+ * Emails a 6-digit sign-in code to the given address (see
+ * EmailOtpController). No session or draft token involved - stateless,
+ * unlike verifying, which is AuthContext.verifyOtp instead since a correct
+ * code for an existing account logs the visitor in.
+ *
+ * @param {string} email
+ * @returns {Promise<void>}
+ */
+export async function sendOtp(email) {
+  await apiClient.post('/otp/send', { email })
+}
+
 export default apiClient

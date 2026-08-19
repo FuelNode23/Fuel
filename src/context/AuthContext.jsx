@@ -83,6 +83,22 @@ export function AuthProvider({ children }) {
     return data
   }, [])
 
+  // Verifies an email-OTP code (see EmailOtpController). The response's
+  // hasAccount discriminates two real outcomes: true means the code was
+  // right AND an account already exists for that email, so the backend
+  // included a real token/fullName/phoneNumber/role - persist it via the
+  // same persistSession path login/register use. false means the code was
+  // right but there's no account yet - nothing to persist, the caller
+  // (Account.jsx) is expected to route into registration instead.
+  const verifyOtp = useCallback(async (email, otp) => {
+    const { data } = await apiClient.post('/otp/verify', { email, otp })
+    if (data.hasAccount) {
+      const { hasAccount, ...authResponse } = data
+      persistSession(authResponse)
+    }
+    return data
+  }, [])
+
   // Saves the athlete-hub "Contact details" card's phone number. Unlike
   // login/register/completeRegistration, the backend response here has no
   // token (it's updating a field on the existing session, not issuing a
@@ -130,7 +146,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, completeRegistration, updateContactDetails, logout }}
+      value={{ user, loading, login, register, completeRegistration, verifyOtp, updateContactDetails, logout }}
     >
       {children}
     </AuthContext.Provider>
