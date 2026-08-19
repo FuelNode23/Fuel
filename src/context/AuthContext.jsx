@@ -87,10 +87,20 @@ export function AuthProvider({ children }) {
   // sufficient authentication by itself, whether or not an account already
   // existed for that email (the backend creates one on the spot otherwise),
   // so this always gets back a real AuthResponse and always persists it,
-  // same as login/register/completeRegistration.
+  // same as login/register/completeRegistration. Forwards any draft token
+  // (same header completeRegistration uses) purely so a brand-new account
+  // gets the real name already captured at onboarding's identity gate
+  // instead of defaulting to the email address - harmless to send when the
+  // email already has an account, since the backend just won't need it.
   const verifyOtp = useCallback(async (email, otp) => {
-    const { data } = await apiClient.post('/otp/verify', { email, otp })
+    const draftToken = sessionStorage.getItem(DRAFT_TOKEN_KEY)
+    const { data } = await apiClient.post(
+      '/otp/verify',
+      { email, otp },
+      draftToken ? { headers: { 'X-Draft-Token': draftToken } } : undefined
+    )
     persistSession(data)
+    sessionStorage.removeItem(DRAFT_TOKEN_KEY)
     return data
   }, [])
 
