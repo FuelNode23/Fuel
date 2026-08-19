@@ -123,6 +123,14 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     clearAllCookies()
+    // Every sessionStorage key this app writes (draftToken, protocolHandoff,
+    // weeklyBoxHandoff, selectedPlan/BoxVariant, dummyAuthenticated) is
+    // single-session handoff state with no business surviving a deliberate
+    // sign-out - language preference lives in localStorage instead, so it's
+    // untouched here. Left uncleared, a stale draftToken specifically used
+    // to make OnboardingFlow think identity was already captured and skip
+    // straight past IdentityGate on the very next "Try FuelNode" click.
+    sessionStorage.clear()
     setUser(null)
   }, [])
 
