@@ -64,13 +64,12 @@ export function AuthProvider({ children }) {
   }, [])
 
   // Creates the real account for a draft session (see IdentityGate /
-  // CreateAccount / Account) - the first moment a password exists for this
-  // email. Uses the draft token stashed by client.js's startOnboarding,
-  // sent as its own header rather than the standard Authorization flow.
-  // Clears that draft token on success since it's no longer needed -
-  // `user` is now set via the same persistSession path login/register use.
-  // phoneNumber is optional - CreateAccount.jsx doesn't collect one, only
-  // Account.jsx's sign-up form does, and axios/JSON.stringify drop an
+  // Account) - the first moment a password exists for this email. Uses
+  // the draft token stashed by client.js's startOnboarding, sent as its
+  // own header rather than the standard Authorization flow. Clears that
+  // draft token on success since it's no longer needed - `user` is now
+  // set via the same persistSession path login/register use. phoneNumber
+  // is optional - a blank one is fine, and axios/JSON.stringify drop an
   // undefined value from the request body entirely.
   const completeRegistration = useCallback(async (password, phoneNumber) => {
     const draftToken = sessionStorage.getItem(DRAFT_TOKEN_KEY)

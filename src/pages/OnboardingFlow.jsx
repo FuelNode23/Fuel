@@ -277,8 +277,8 @@ export default function OnboardingFlow() {
   //   before this whole deferred-auth flow existed.
   // - Draft (`user` null, a draft token exists): the normal case now.
   //   Generates via generateDraftProtocol() and saves nothing server-side
-  //   - CreateAccount.jsx (reached from the weekly box) persists this
-  //     exact result once a real password exists.
+  //   - Account.jsx's sign-up (reached via Weeklybox -> Subscriptions)
+  //     persists this exact result once a real password exists.
   const submitOnboarding = async () => {
     // Guards against duplicate submissions: double-click, StrictMode
     // double-invoke, or returning to the last step and hitting Finish
@@ -533,8 +533,8 @@ export default function OnboardingFlow() {
   // session (`user` truthy) skips this entirely, whether from a
   // genuinely-returning login inside IdentityGate itself or an existing
   // session from elsewhere in the app - the profile pre-fill effect above
-  // already handles both. Real account creation happens later, right
-  // before Subscription (see CreateAccount.jsx) - not here.
+  // already handles both. Real account creation happens later, after
+  // picking a plan (see Account.jsx's sign-up) - not here.
   const hasDraftToken = Boolean(sessionStorage.getItem(DRAFT_TOKEN_KEY));
   if (!user && !hasDraftToken) {
     return <IdentityGate onSuccess={() => setIdentityVersion((v) => v + 1)} />;

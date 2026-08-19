@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icons.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { DRAFT_TOKEN_KEY } from "../api/client.js";
+import apiClient, { DRAFT_TOKEN_KEY, saveGeneratedProtocol } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import "./Account.css";
 
@@ -20,13 +20,16 @@ function decodeJwtPayload(token) {
 }
 
 /**
- * Sign-in gate reached after picking a subscription plan. The Email tab
- * (magic link) and OAuth buttons below are still the dummy placeholders
- * they always were - no magic-link/OAuth backend exists (see the original
- * comment this replaced). The Sign-In tab is real: it authenticates
- * against the same account CreateAccount.jsx creates earlier in the
- * funnel, for a visitor re-entering this page rather than continuing
- * straight through in one sitting.
+ * Sign-in gate reached after picking a subscription plan - this is now
+ * where a first-time visitor actually creates their account (password +
+ * mobile number), replacing the old separate CreateAccount.jsx step that
+ * used to run right before Subscriptions. The Email tab (magic link) and
+ * OAuth buttons below are still the dummy placeholders they always were -
+ * no magic-link/OAuth backend exists (see the original comment this
+ * replaced). The Sign-In tab is real, in both directions: registration
+ * for a draft session (identity captured via IdentityGate, no password
+ * yet), or a plain login for a visitor who already has an account and is
+ * re-entering this page rather than continuing straight through.
  */
 export default function Account() {
   const navigate = useNavigate();
@@ -36,11 +39,13 @@ export default function Account() {
   const plan = searchParams.get("plan");
   const category = searchParams.get("category");
 
-  const [method, setMethod] = useState("email");
+  const [method, setMethod] = useState("signin");
   const [email, setEmail] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  // Sign-In tab state
+  // Sign-In tab state. Defaults to "register" once auth state resolves and
+  // there's no real session yet (see the effect below) - the normal case
+  // reaching this page, since real registration now happens here.
   const [signInMode, setSignInMode] = useState("login"); // "login" | "register"
   const [manualEmail, setManualEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -56,6 +61,15 @@ export default function Account() {
   // is reached with no prior context at all, e.g. a direct URL visit.
   const knownEmail = user?.email || decodeJwtPayload(sessionStorage.getItem(DRAFT_TOKEN_KEY) || "")?.sub || "";
   const signInEmail = knownEmail || manualEmail;
+
+  // Runs once, right when auth state first resolves (not on every `user`
+  // change - completeRegistration/login below also set `user`, and this
+  // must not flip signInMode back out from under an in-progress submit).
+  useEffect(() => {
+    if (authLoading) return;
+    setSignInMode(user ? "login" : "register");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]);
 
   const handleContinue = () => {
     sessionStorage.setItem("dummyAuthenticated", "true");
@@ -95,7 +109,27 @@ export default function Account() {
 
     setSignInSubmitting(true);
     try {
-      await completeRegistration(password, mobileNumber.trim() || undefined);
+      // A real session already existing here means this is a retry after
+      // registration itself succeeded but a save below failed - the draft
+      // token is gone by then, so skip straight to retrying the saves.
+      if (!user) {
+        await completeRegistration(password, mobileNumber.trim() || undefined);
+      }
+
+      // Onboarding's answers and the already-generated protocol were only
+      // ever held client-side until now (see OnboardingFlow/IdentityGate) -
+      // this is the first moment they're persisted for real, no second
+      // Claude call, so the box already reviewed is exactly what's saved.
+      const stored = sessionStorage.getItem("protocolHandoff");
+      const handoff = stored ? JSON.parse(stored) : null;
+
+      if (handoff?.userData) {
+        await apiClient.put("/athletes/profile", handoff.userData);
+      }
+      if (handoff?.onboardingResult) {
+        await saveGeneratedProtocol(handoff.onboardingResult);
+      }
+
       handleContinue();
     } catch (err) {
       setSignInError(
