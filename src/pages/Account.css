@@ -217,3 +217,29 @@
      trailing spacing would otherwise push it visibly right of center. */
   text-indent: 0.5em;
 }
+
+/* Email already identified from earlier in the funnel (see EmailField in
+   Account.jsx) - called out with an accent border/fill and a check mark
+   rather than reading as a normal, incidentally-disabled field. Wins over
+   both ".form-card input" and ".form-card input:disabled" (same 2-class
+   specificity as the latter) purely by coming after it here. */
+.form-card .account-input-wrap {
+  position: relative;
+}
+
+.form-card input.account-input--prefilled {
+  padding-right: 2.75rem;
+  color: #f8fafc;
+  opacity: 1;
+  border-color: rgba(34, 197, 94, 0.55);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.form-card .account-input-icon {
+  position: absolute;
+  top: 50%;
+  right: 0.9rem;
+  transform: translateY(-50%);
+  color: #22c55e;
+  pointer-events: none;
+}

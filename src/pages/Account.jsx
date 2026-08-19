@@ -22,6 +22,36 @@ function decodeJwtPayload(token) {
   }
 }
 
+// Shared by both tabs' email field (OTP request step, Sign-In login,
+// Sign-In register) - when `disabled`, it's showing an email already
+// identified from earlier in the funnel, not something the visitor typed
+// here, so it's visually called out (highlighted border/fill + a check
+// mark) rather than just looking like a normal grayed-out disabled input.
+function EmailField({ value, onChange, disabled }) {
+  const { t } = useLanguage();
+  return (
+    <div className="account-input-wrap">
+      <input
+        type="email"
+        className={disabled ? "account-input--prefilled" : undefined}
+        value={value}
+        disabled={disabled}
+        placeholder={t("you@example.com")}
+        onChange={onChange}
+        autoComplete="email"
+      />
+      {disabled && (
+        <Icon.CheckCircle
+          width={16}
+          height={16}
+          className="account-input-icon"
+          aria-hidden="true"
+        />
+      )}
+    </div>
+  );
+}
+
 /**
  * Sign-in gate reached after picking a subscription plan - this is now
  * where a first-time visitor actually creates their account (password +
@@ -35,10 +65,14 @@ function decodeJwtPayload(token) {
  * OAuth buttons below it: nothing in this app sends real email yet, so
  * "Send code" always succeeds and any 6-digit entry "verifies". Swap
  * handleSendCode/handleVerifyCode for real calls once a code-sending
- * backend exists. The Sign-In tab is real, in both directions: it always
- * opens on plain login (not registration) regardless of session state,
- * with "New here? Sign up" as an explicit opt-in for a draft session that
- * hasn't set a password yet, or a plain login for a visitor who already
+ * backend exists. Both tabs share one identified email (see EmailField) -
+ * whichever method the visitor picks authenticates the same address, so
+ * it's locked and visually called out wherever it's already known rather
+ * than tracked separately per tab. The Sign-In tab is real, in both
+ * directions: it always opens on plain login (not registration) regardless
+ * of session state, with "New here? Sign up" as an explicit opt-in for a
+ * draft session that hasn't set a password yet, or a plain login for a
+ * visitor who already
  * has an account.
  */
 export default function Account() {
@@ -53,8 +87,10 @@ export default function Account() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Email-OTP tab state - "request" (enter email) -> "verify" (enter code).
+  // The email itself is shared with the Sign-In tab (see signInEmail below)
+  // rather than tracked separately, so either tab authenticates the same
+  // identified address.
   const [otpStep, setOtpStep] = useState("request");
-  const [otpEmail, setOtpEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
 
   // Sign-In tab state - always opens on "login"; "New here? Sign up"
@@ -218,13 +254,10 @@ export default function Account() {
                 {t("We'll send a 6-digit code to your email. Fuelnode does not create or store passwords.")}
               </p>
               <form onSubmit={handleSendCode}>
-                <input
-                  type="email"
-                  placeholder={t("you@example.com")}
-                  value={otpEmail}
-                  onChange={(e) => setOtpEmail(e.target.value)}
-                  autoComplete="email"
-                  required
+                <EmailField
+                  value={signInEmail}
+                  onChange={(e) => setManualEmail(e.target.value)}
+                  disabled={Boolean(knownEmail)}
                 />
                 <button type="submit">{t("Send code")}</button>
               </form>
@@ -261,7 +294,7 @@ export default function Account() {
             <form onSubmit={handleVerifyCode}>
               <p className="account-field-label">{t("Enter your code")}</p>
               <p className="account-field-hint">
-                {t("We sent a 6-digit code to {email}.", { email: otpEmail })}
+                {t("We sent a 6-digit code to {email}.", { email: signInEmail })}
               </p>
               <input
                 type="text"
@@ -294,13 +327,10 @@ export default function Account() {
           <form onSubmit={handleSignIn}>
             <label>
               {t("Email")}
-              <input
-                type="email"
+              <EmailField
                 value={signInEmail}
-                disabled={Boolean(knownEmail)}
-                placeholder={t("you@example.com")}
                 onChange={(e) => setManualEmail(e.target.value)}
-                autoComplete="email"
+                disabled={Boolean(knownEmail)}
               />
             </label>
             <label>
@@ -338,13 +368,10 @@ export default function Account() {
           <form onSubmit={handleRegister}>
             <label>
               {t("Email")}
-              <input
-                type="email"
+              <EmailField
                 value={signInEmail}
-                disabled={Boolean(knownEmail)}
-                placeholder={t("you@example.com")}
                 onChange={(e) => setManualEmail(e.target.value)}
-                autoComplete="email"
+                disabled={Boolean(knownEmail)}
               />
             </label>
             <label>
