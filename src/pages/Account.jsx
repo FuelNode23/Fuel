@@ -6,7 +6,6 @@ import apiClient, { DRAFT_TOKEN_KEY, saveGeneratedProtocol } from "../api/client
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
-import logo from "../assets/image.png";
 import "./Login.css";
 import "./Account.css";
 
@@ -27,15 +26,20 @@ function decodeJwtPayload(token) {
  * Sign-in gate reached after picking a subscription plan - this is now
  * where a first-time visitor actually creates their account (password +
  * mobile number), replacing the old separate CreateAccount.jsx step that
- * used to run right before Subscriptions. Same shell/theme as Login.jsx
- * (split hero pane + glass form-card) rather than Account.jsx's own
- * earlier dark-card look. The Email tab (magic link) and OAuth buttons
- * are still the dummy placeholders they always were - no magic-link/OAuth
- * backend exists (see the original comment this replaced). The Sign-In
- * tab is real, in both directions: it always opens on plain login (not
- * registration) regardless of session state, with "New here? Sign up"
- * as an explicit opt-in for a draft session that hasn't set a password
- * yet, or a plain login for a visitor who already has an account.
+ * used to run right before Subscriptions. Same card theme as Login.jsx
+ * (glass form-card, Space Grotesk/Inter, lime accent) but centered on the
+ * full page rather than Login.jsx's split hero-image layout - this page
+ * doesn't use that layout.
+ *
+ * The Email tab is an email+OTP-code flow - UI only for now, same as the
+ * OAuth buttons below it: nothing in this app sends real email yet, so
+ * "Send code" always succeeds and any 6-digit entry "verifies". Swap
+ * handleSendCode/handleVerifyCode for real calls once a code-sending
+ * backend exists. The Sign-In tab is real, in both directions: it always
+ * opens on plain login (not registration) regardless of session state,
+ * with "New here? Sign up" as an explicit opt-in for a draft session that
+ * hasn't set a password yet, or a plain login for a visitor who already
+ * has an account.
  */
 export default function Account() {
   const navigate = useNavigate();
@@ -46,8 +50,12 @@ export default function Account() {
   const category = searchParams.get("category");
 
   const [method, setMethod] = useState("signin");
-  const [email, setEmail] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // Email-OTP tab state - "request" (enter email) -> "verify" (enter code).
+  const [otpStep, setOtpStep] = useState("request");
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
 
   // Sign-In tab state - always opens on "login"; "New here? Sign up"
   // switches to "register" explicitly, it's never the default.
@@ -72,6 +80,16 @@ export default function Account() {
     if (plan) sessionStorage.setItem("selectedPlan", plan);
     if (category) sessionStorage.setItem("selectedBoxVariant", category);
     navigate("/athlete-dashboard");
+  };
+
+  const handleSendCode = (e) => {
+    e.preventDefault();
+    setOtpStep("verify");
+  };
+
+  const handleVerifyCode = (e) => {
+    e.preventDefault();
+    handleContinue();
   };
 
   const handleSignIn = async (e) => {
@@ -137,98 +155,79 @@ export default function Account() {
   };
 
   if (authLoading) {
-    return <div className="login-page" />;
+    return <div className="account-page" />;
   }
 
   return (
-    <div className="login-page">
+    <div className="account-page">
       <div className="login-lang-toggle">
         <LanguageToggle />
       </div>
 
-      {/* Left pane: same hero photo as Login.jsx/Register.jsx */}
-      <div className="login-image-pane">
-        <div className="login-image-pane__image" />
-        <div className="login-image-pane__overlay" />
-        <div className="login-image-pane__brand">
-          <img src={logo} alt="FuelNode" className="login-image-pane__logo" />
-          <h1 className="login-image-pane__title">
-            {t("The right fuel,")}
-            <br />
-            <span className="login-accent">{t("at the right time")}</span>
-          </h1>
-          <p className="login-image-pane__sub">
-            {t(
-              "Precise nutrition protocols and weekly boxes, built around your training."
-            )}
-          </p>
+      <div className="login-glow login-glow-a" aria-hidden="true" />
+      <div className="login-glow login-glow-b" aria-hidden="true" />
+
+      <div className="form-card">
+        <button type="button" className="back-link" onClick={() => navigate("/subscription")}>
+          <Icon.ArrowLeft width={16} height={16} />
+          {t("Back")}
+        </button>
+
+        <div className="account-card__top">
+          <div className="badge badge--active">
+            <Icon.Shield width={12} height={12} style={{ marginRight: 4 }} />
+            {t("Account")}
+          </div>
         </div>
-      </div>
 
-      {/* Right pane: account gate */}
-      <div className="login-form-pane">
-        <div className="login-glow login-glow-a" aria-hidden="true" />
-        <div className="login-glow login-glow-b" aria-hidden="true" />
+        <h1>{t("Sign in to open your account")}</h1>
+        <p className="form-card__subtitle">
+          {t(
+            "Your Fuelnode account is protected. Sign in here to access your subscription, contact details, and legal documents."
+          )}
+        </p>
 
-        <div className="form-card">
-          <button type="button" className="back-link" onClick={() => navigate("/subscription")}>
-            <Icon.ArrowLeft width={16} height={16} />
-            {t("Back")}
+        <div className="account-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={method === "email"}
+            className={`account-tab${method === "email" ? " account-tab--active" : ""}`}
+            onClick={() => setMethod("email")}
+          >
+            <Icon.Mail width={14} height={14} />
+            {t("Email")}
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={method === "signin"}
+            className={`account-tab${method === "signin" ? " account-tab--active" : ""}`}
+            onClick={() => setMethod("signin")}
+          >
+            <Icon.User width={14} height={14} />
+            {t("Sign-In")}
+          </button>
+        </div>
 
-          <div className="account-card__top">
-            <div className="badge badge--active">
-              <Icon.Shield width={12} height={12} style={{ marginRight: 4 }} />
-              {t("Account")}
-            </div>
-          </div>
-
-          <h1>{t("Sign in to open your account")}</h1>
-          <p className="form-card__subtitle">
-            {t(
-              "Your Fuelnode account is protected. Sign in here to access your subscription, contact details, and legal documents."
-            )}
-          </p>
-
-          <div className="account-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={method === "email"}
-              className={`account-tab${method === "email" ? " account-tab--active" : ""}`}
-              onClick={() => setMethod("email")}
-            >
-              <Icon.Mail width={14} height={14} />
-              {t("Email")}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={method === "signin"}
-              className={`account-tab${method === "signin" ? " account-tab--active" : ""}`}
-              onClick={() => setMethod("signin")}
-            >
-              <Icon.User width={14} height={14} />
-              {t("Sign-In")}
-            </button>
-          </div>
-
-          {method === "email" ? (
+        {method === "email" ? (
+          otpStep === "request" ? (
             <>
-              <p className="account-field-label">{t("Magic link by email")}</p>
+              <p className="account-field-label">{t("Sign in with a code")}</p>
               <p className="account-field-hint">
-                {t("Receive a secure link. Fuelnode does not create or store passwords.")}
+                {t("We'll send a 6-digit code to your email. Fuelnode does not create or store passwords.")}
               </p>
-              <input
-                type="email"
-                placeholder={t("you@example.com")}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-
-              <button type="button" onClick={handleContinue}>
-                {t("Send magic link")}
-              </button>
+              <form onSubmit={handleSendCode}>
+                <input
+                  type="email"
+                  placeholder={t("you@example.com")}
+                  value={otpEmail}
+                  onChange={(e) => setOtpEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
+                <button type="submit">{t("Send code")}</button>
+              </form>
 
               <label className="account-terms">
                 <input
@@ -258,119 +257,151 @@ export default function Account() {
                 {t("Yahoo is only available through a configured custom OAuth/OIDC provider.")}
               </p>
             </>
-          ) : signInMode === "login" ? (
-            <form onSubmit={handleSignIn}>
-              <label>
-                {t("Email")}
-                <input
-                  type="email"
-                  value={signInEmail}
-                  disabled={Boolean(knownEmail)}
-                  placeholder={t("you@example.com")}
-                  onChange={(e) => setManualEmail(e.target.value)}
-                  autoComplete="email"
-                />
-              </label>
-              <label>
-                {t("Password")}
-                <input
-                  type="password"
-                  value={signInPassword}
-                  placeholder={t("Enter your password")}
-                  onChange={(e) => setSignInPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
-              </label>
-
-              {signInError && <div className="alert-error">{signInError}</div>}
-
-              <button type="submit" disabled={signInSubmitting}>
-                {signInSubmitting ? t("Signing in...") : t("Sign in")}
-              </button>
-
-              {!user && (
-                <button
-                  type="button"
-                  className="account-switch-link"
-                  onClick={() => {
-                    setSignInMode("register");
-                    setSignInError("");
-                  }}
-                >
-                  {t("New here? Sign up")}
-                </button>
-              )}
-            </form>
           ) : (
-            <form onSubmit={handleRegister}>
-              <label>
-                {t("Email")}
-                <input
-                  type="email"
-                  value={signInEmail}
-                  disabled={Boolean(knownEmail)}
-                  placeholder={t("you@example.com")}
-                  onChange={(e) => setManualEmail(e.target.value)}
-                  autoComplete="email"
-                />
-              </label>
-              <label>
-                {t("Password")}
-                <input
-                  type="password"
-                  value={password}
-                  placeholder={t("Enter a password")}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-              </label>
-              <label>
-                {t("Confirm password")}
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  placeholder={t("Re-enter your password")}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-              </label>
-              <label>
-                {t("Mobile number")}
-                <input
-                  type="tel"
-                  value={mobileNumber}
-                  placeholder={t("+33 6 12 34 56 78")}
-                  onChange={(e) => setMobileNumber(e.target.value)}
-                  autoComplete="tel"
-                />
-              </label>
-
-              {signInError && <div className="alert-error">{signInError}</div>}
-
-              <button type="submit" disabled={signInSubmitting}>
-                {signInSubmitting ? t("Creating account...") : t("Register")}
+            <form onSubmit={handleVerifyCode}>
+              <p className="account-field-label">{t("Enter your code")}</p>
+              <p className="account-field-hint">
+                {t("We sent a 6-digit code to {email}.", { email: otpEmail })}
+              </p>
+              <input
+                type="text"
+                className="account-otp-input"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                placeholder={t("000000")}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                autoFocus
+                required
+              />
+              <button type="submit" disabled={otpCode.length !== 6}>
+                {t("Verify & continue")}
               </button>
-
               <button
                 type="button"
                 className="account-switch-link"
                 onClick={() => {
-                  setSignInMode("login");
+                  setOtpStep("request");
+                  setOtpCode("");
+                }}
+              >
+                {t("Use a different email")}
+              </button>
+            </form>
+          )
+        ) : signInMode === "login" ? (
+          <form onSubmit={handleSignIn}>
+            <label>
+              {t("Email")}
+              <input
+                type="email"
+                value={signInEmail}
+                disabled={Boolean(knownEmail)}
+                placeholder={t("you@example.com")}
+                onChange={(e) => setManualEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </label>
+            <label>
+              {t("Password")}
+              <input
+                type="password"
+                value={signInPassword}
+                placeholder={t("Enter your password")}
+                onChange={(e) => setSignInPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+
+            {signInError && <div className="alert-error">{signInError}</div>}
+
+            <button type="submit" disabled={signInSubmitting}>
+              {signInSubmitting ? t("Signing in...") : t("Sign in")}
+            </button>
+
+            {!user && (
+              <button
+                type="button"
+                className="account-switch-link"
+                onClick={() => {
+                  setSignInMode("register");
                   setSignInError("");
                 }}
               >
-                {t("Already have an account? Sign in")}
+                {t("New here? Sign up")}
               </button>
-            </form>
-          )}
+            )}
+          </form>
+        ) : (
+          <form onSubmit={handleRegister}>
+            <label>
+              {t("Email")}
+              <input
+                type="email"
+                value={signInEmail}
+                disabled={Boolean(knownEmail)}
+                placeholder={t("you@example.com")}
+                onChange={(e) => setManualEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </label>
+            <label>
+              {t("Password")}
+              <input
+                type="password"
+                value={password}
+                placeholder={t("Enter a password")}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+            <label>
+              {t("Confirm password")}
+              <input
+                type="password"
+                value={confirmPassword}
+                placeholder={t("Re-enter your password")}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+            <label>
+              {t("Mobile number")}
+              <input
+                type="tel"
+                value={mobileNumber}
+                placeholder={t("+33 6 12 34 56 78")}
+                onChange={(e) => setMobileNumber(e.target.value)}
+                autoComplete="tel"
+              />
+            </label>
 
-          <CopyrightFooter />
-        </div>
+            {signInError && <div className="alert-error">{signInError}</div>}
+
+            <button type="submit" disabled={signInSubmitting}>
+              {signInSubmitting ? t("Creating account...") : t("Register")}
+            </button>
+
+            <button
+              type="button"
+              className="account-switch-link"
+              onClick={() => {
+                setSignInMode("login");
+                setSignInError("");
+              }}
+            >
+              {t("Already have an account? Sign in")}
+            </button>
+          </form>
+        )}
+
+        <CopyrightFooter />
       </div>
     </div>
   );
