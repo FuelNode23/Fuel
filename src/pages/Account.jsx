@@ -122,6 +122,27 @@ export default function Account() {
     navigate("/athlete-dashboard");
   };
 
+  // Onboarding's answers and the already-generated protocol were only ever
+  // held client-side until now (see OnboardingFlow/IdentityGate) - this is
+  // the first moment they're persisted for real, no second Claude call, so
+  // the box already reviewed is exactly what's saved. Shared by both ways
+  // this page can complete that first real session: password registration
+  // (handleRegister) and OTP (handleVerifyCode) - OTP creating or logging
+  // into an account by itself (see EmailOtpService) doesn't also know
+  // about a draft session's held answers, so it has to be told here same
+  // as the password path already was.
+  const persistProtocolHandoff = async () => {
+    const stored = sessionStorage.getItem("protocolHandoff");
+    const handoff = stored ? JSON.parse(stored) : null;
+
+    if (handoff?.userData) {
+      await apiClient.put("/athletes/profile", handoff.userData);
+    }
+    if (handoff?.onboardingResult) {
+      await saveGeneratedProtocol(handoff.onboardingResult);
+    }
+  };
+
   const handleSendCode = async (e) => {
     e.preventDefault();
     setOtpError("");
@@ -146,10 +167,19 @@ export default function Account() {
       // A correct code is sufficient by itself - the backend creates an
       // account on the spot if this email doesn't have one yet (see
       // EmailOtpService.verifyOtp), so this always lands on a real session.
-      await verifyOtp(signInEmail, otpCode);
+      // A real session already existing here means this is a retry after
+      // verifyOtp itself succeeded but persistProtocolHandoff below failed -
+      // the code is already marked used server-side by then, so skip
+      // straight to retrying the save instead of resubmitting it.
+      if (!user) {
+        await verifyOtp(signInEmail, otpCode);
+      }
+      await persistProtocolHandoff();
       handleContinue();
     } catch (err) {
-      setOtpError(err.response?.data?.message || t("Incorrect code. Please try again."));
+      setOtpError(
+        err.response?.data?.message || t("Something went wrong. Please try again.")
+      );
     } finally {
       setOtpSubmitting(false);
     }
@@ -193,20 +223,7 @@ export default function Account() {
         await completeRegistration(password, mobileNumber.trim() || undefined);
       }
 
-      // Onboarding's answers and the already-generated protocol were only
-      // ever held client-side until now (see OnboardingFlow/IdentityGate) -
-      // this is the first moment they're persisted for real, no second
-      // Claude call, so the box already reviewed is exactly what's saved.
-      const stored = sessionStorage.getItem("protocolHandoff");
-      const handoff = stored ? JSON.parse(stored) : null;
-
-      if (handoff?.userData) {
-        await apiClient.put("/athletes/profile", handoff.userData);
-      }
-      if (handoff?.onboardingResult) {
-        await saveGeneratedProtocol(handoff.onboardingResult);
-      }
-
+      await persistProtocolHandoff();
       handleContinue();
     } catch (err) {
       setSignInError(
