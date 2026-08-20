@@ -124,7 +124,7 @@ export default function AthleteDashboard() {
     setSaveStatus("saving");
     setSaveError("");
     try {
-      await updateContactDetails(phoneNumber);
+      await updateContactDetails({ phoneNumber });
       setSaveStatus("saved");
     } catch (err) {
       setSaveStatus("error");

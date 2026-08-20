@@ -9,6 +9,7 @@ import WeeklyBox from "../pages/Weeklybox";
 import Profile from "../pages/Profile";
 import Dashboard from "../pages/Dashboard";
 import Subscriptions from "../pages/Subscriptions";
+import CheckoutSummary from "../pages/CheckoutSummary";
 import Account from "../pages/Account";
 import AthleteDashboard from "../pages/AthleteDashboard";
 
@@ -39,6 +40,8 @@ const AppRoutes = () => {
             so any older link/bookmark still resolves. */}
         <Route path="/subscription" element={<Subscriptions />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
+
+        <Route path="/checkout-summary" element={<CheckoutSummary />} />
 
         <Route path="/account" element={<Account />} />
 

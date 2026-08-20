@@ -104,20 +104,34 @@ export function AuthProvider({ children }) {
     return data
   }, [])
 
-  // Saves the athlete-hub "Contact details" card's phone number. Unlike
-  // login/register/completeRegistration, the backend response here has no
-  // token (it's updating a field on the existing session, not issuing a
-  // new one) - merge it into the current user object in place instead of
-  // going through persistSession.
-  const updateContactDetails = useCallback(async (phoneNumber) => {
-    const { data } = await apiClient.put('/auth/contact-details', { phoneNumber })
+  // Saves the athlete-hub "Contact details" card's phone number and/or the
+  // pre-payment order summary page's shipping address. The backend PUTs
+  // the whole set at once (missing/blank clears a field) - not a partial
+  // patch - so `updates` here is merged over the current `user` state
+  // first, meaning a caller that only shows/edits phone (the dashboard
+  // card) still echoes back whatever address is already saved instead of
+  // wiping it, without every call site needing to remember that itself.
+  // Unlike login/register/completeRegistration, the backend response here
+  // has no token (updating a field on the existing session, not issuing a
+  // new one) - merge it into the current user object instead of going
+  // through persistSession.
+  const updateContactDetails = useCallback(async (updates) => {
+    const payload = {
+      phoneNumber: user?.phoneNumber || '',
+      addressLine1: user?.addressLine1 || '',
+      addressLine2: user?.addressLine2 || '',
+      city: user?.city || '',
+      postalCode: user?.postalCode || '',
+      ...updates,
+    }
+    const { data } = await apiClient.put('/auth/contact-details', payload)
     setUser((prev) => {
       const updated = { ...prev, ...data }
       localStorage.setItem('user', JSON.stringify(updated))
       return updated
     })
     return data
-  }, [])
+  }, [user])
 
   const logout = useCallback(() => {
     localStorage.removeItem('token')
