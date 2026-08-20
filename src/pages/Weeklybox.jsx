@@ -123,9 +123,14 @@ export default function WeeklyBoxPage() {
             </div>
           </>
         ) : (
-          <p className="page-subtitle">
-            {t("No box to show yet — generate a protocol first to see your weekly box.")}
-          </p>
+          <div className="weekly-box__continue">
+            <p className="page-subtitle weekly-box__continue-hint">
+              {t("No box to show yet — generate a protocol first to see your weekly box.")}
+            </p>
+            <button type="button" className="btn btn--primary" onClick={() => navigate("/onboarding")}>
+              {t("Start onboarding")}
+            </button>
+          </div>
         )}
 
         <CopyrightFooter />
