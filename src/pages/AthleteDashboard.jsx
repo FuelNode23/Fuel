@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { Icon } from "../components/Icons.jsx";
@@ -8,6 +8,15 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { getSubscription } from "../api/client.js";
 import "../Protocol/ProtocolComponents.css";
 import "./AthleteDashboard.css";
+
+// Mirrors PaymentStatus (backend entity) - only ACTIVE/PAST_DUE/CANCELED
+// need a friendly label here, PENDING/NONE both already read as "Pending"
+// via the fallback below.
+const PAYMENT_STATUS_LABELS = {
+  ACTIVE: "Active",
+  PAST_DUE: "Payment failed",
+  CANCELED: "Canceled",
+};
 
 // Matches the plan keys Subscriptions.jsx writes to sessionStorage —
 // duplicated here (not imported) to keep this dummy page independent of
@@ -76,8 +85,28 @@ function NotificationToggle({ label, t }) {
  */
 export default function AthleteDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useLanguage();
   const { user, updateContactDetails } = useAuth();
+
+  // Stripe Checkout's success_url/cancel_url land back here with this param
+  // (see StripeCheckoutService) - cleared from the URL once read so it
+  // doesn't linger through a later refresh/share of this link. Payment
+  // confirmation itself is webhook-driven, not this redirect, so "success"
+  // here means "Stripe accepted the card", not "our paymentStatus is
+  // ACTIVE yet" - the fetch below picks that up once the webhook lands.
+  const checkoutResult = searchParams.get("checkout");
+  useEffect(() => {
+    if (!checkoutResult) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("checkout");
+        return next;
+      },
+      { replace: true }
+    );
+  }, [checkoutResult, setSearchParams]);
 
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "error"
@@ -112,6 +141,7 @@ export default function AthleteDashboard() {
   const [selectedBoxVariant, setSelectedBoxVariant] = useState(
     sessionStorage.getItem("selectedBoxVariant")
   );
+  const [paymentStatus, setPaymentStatus] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +150,7 @@ export default function AthleteDashboard() {
         if (cancelled) return;
         setSelectedPlan(data.plan);
         setSelectedBoxVariant(data.boxVariant);
+        setPaymentStatus(data.paymentStatus);
       })
       .catch(() => {
         // No saved subscription yet (404) or the request failed - keep
@@ -128,9 +159,12 @@ export default function AthleteDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [checkoutResult]);
 
   const planLabel = selectedPlan ? t(PLAN_LABELS[selectedPlan] || selectedPlan) : t("No active plan");
+  const paymentStatusLabel = paymentStatus
+    ? t(PAYMENT_STATUS_LABELS[paymentStatus] || "Pending")
+    : t("Pending");
 
   return (
     <div className="athlete-dashboard">
@@ -166,6 +200,17 @@ export default function AthleteDashboard() {
             {t("Update my protocol")}
           </button>
         </div>
+
+        {checkoutResult === "success" && (
+          <div className="hub-card__note hub-card__note--highlight" style={{ marginTop: "1rem" }}>
+            {t("Payment received - your subscription is being activated.")}
+          </div>
+        )}
+        {checkoutResult === "cancel" && (
+          <div className="hub-card__note" style={{ marginTop: "1rem" }}>
+            {t("Checkout was canceled - your plan selection is saved, no payment was made.")}
+          </div>
+        )}
 
         <div className="hub-grid">
           {/* Row 1 */}
@@ -258,7 +303,7 @@ export default function AthleteDashboard() {
               </div>
               <div className="hub-card__stat">
                 <span className="hub-card__stat-label">{t("Status")}</span>
-                <span className="hub-card__stat-value">{t("Pending")}</span>
+                <span className="hub-card__stat-value">{paymentStatusLabel}</span>
               </div>
               <div className="hub-card__stat">
                 <span className="hub-card__stat-label">{t("Profile updated")}</span>

@@ -4,7 +4,7 @@ import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { saveSubscription, getSubscriptionPricing } from "../api/client.js";
+import { saveSubscription, getSubscriptionPricing, createCheckoutSession } from "../api/client.js";
 import "./Subscriptions.css";
 
 /**
@@ -123,6 +123,12 @@ export default function Subscriptions() {
   // generated protocol yet (404) or the request fails.
   const [pricing, setPricing] = useState(null);
 
+  // Which plan's button is mid-checkout - disables just that one card's
+  // button rather than the whole page, since saveSubscription/
+  // createCheckoutSession are real network round trips now.
+  const [checkoutLoadingPlan, setCheckoutLoadingPlan] = useState(null);
+  const [checkoutError, setCheckoutError] = useState("");
+
   useEffect(() => {
     let cancelled = false;
     getSubscriptionPricing(category)
@@ -135,12 +141,13 @@ export default function Subscriptions() {
     };
   }, [category]);
 
-  // No checkout/billing endpoint exists yet, but the plan/box-variant
-  // choice itself is real now (POST /api/subscription) - only the payment
-  // step ahead of it (Account.jsx, for a visitor who isn't signed in yet)
-  // is still a dummy flow. sessionStorage is kept too so the next page has
-  // an immediate value to show without waiting on a fetch.
+  // The plan/box-variant choice itself is real (POST /api/subscription),
+  // and so is payment for a paid plan now - real Stripe Checkout (see
+  // StripeCheckoutService), a hosted page this just redirects the browser
+  // to. sessionStorage is kept too so the next page has an immediate value
+  // to show without waiting on a fetch.
   const handleSelectPlan = async (planKey) => {
+    setCheckoutError("");
     sessionStorage.setItem("selectedPlan", planKey);
     if (category) sessionStorage.setItem("selectedBoxVariant", category);
 
@@ -155,12 +162,26 @@ export default function Subscriptions() {
     // right at onboarding's identity gate (see IdentityGate) - Account.jsx
     // exists to establish that first real session for a draft/anonymous
     // visitor, which is already done, so sending them there would just be
-    // asking them to sign in a second time for nothing. Go straight to the
-    // athlete hub instead, same destination Account.jsx's own
-    // handleContinue lands on.
+    // asking them to sign in a second time for nothing.
     if (user) {
-      sessionStorage.setItem("dummyAuthenticated", "true");
-      navigate("/athlete-dashboard");
+      // Free has nothing to pay for - land on the athlete hub directly,
+      // same destination Account.jsx's own handleContinue lands on.
+      if (planKey === "free") {
+        sessionStorage.setItem("dummyAuthenticated", "true");
+        navigate("/athlete-dashboard");
+        return;
+      }
+
+      setCheckoutLoadingPlan(planKey);
+      try {
+        const { url } = await createCheckoutSession();
+        window.location.href = url;
+      } catch (err) {
+        setCheckoutError(
+          err.response?.data?.message || t("Could not start checkout. Please try again.")
+        );
+        setCheckoutLoadingPlan(null);
+      }
       return;
     }
 
@@ -217,6 +238,12 @@ export default function Subscriptions() {
           </div>
         )}
 
+        {checkoutError && (
+          <div className="subscriptions-page__hint-banner subscriptions-page__hint-banner--error">
+            {checkoutError}
+          </div>
+        )}
+
         <div className="subscriptions-page__layout">
           <div className="plan-grid">
             {PLANS.map((plan) => (
@@ -266,9 +293,10 @@ export default function Subscriptions() {
                 <button
                   type="button"
                   className={`btn ${plan.ctaStyle === "primary" ? "btn--primary" : "btn--ghost"}`}
+                  disabled={checkoutLoadingPlan === plan.key}
                   onClick={() => handleSelectPlan(plan.key)}
                 >
-                  {t(plan.cta)}
+                  {checkoutLoadingPlan === plan.key ? t("Redirecting to payment...") : t(plan.cta)}
                 </button>
 
                 {plan.key !== "free" && (

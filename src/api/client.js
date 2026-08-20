@@ -141,6 +141,21 @@ export async function getSubscriptionPricing(boxVariant) {
 }
 
 /**
+ * Starts real Stripe Checkout for the plan already saved via
+ * saveSubscription (see StripeCheckoutService) - a hosted, redirect-based
+ * flow, so the only thing to do with the result is send the browser to it
+ * (window.location.href = url), not render anything from it directly.
+ * Rejects with a 400 (via the response) if the saved plan is "free"
+ * (nothing to pay for) or no plan was saved yet.
+ *
+ * @returns {Promise<object>} { url }
+ */
+export async function createCheckoutSession() {
+  const response = await apiClient.post('/subscription/checkout')
+  return response.data
+}
+
+/**
  * Identity capture with no account created - see AuthService (backend) for
  * the full deferred-auth design. Returns a draft token and stores it in
  * sessionStorage under DRAFT_TOKEN_KEY; this is NOT "being logged in" -

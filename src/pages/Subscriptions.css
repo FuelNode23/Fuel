@@ -46,6 +46,11 @@
   color: var(--protocol-text);
 }
 
+.subscriptions-page__hint-banner--error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
 .subscriptions-page__layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
