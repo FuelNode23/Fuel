@@ -153,7 +153,10 @@ export default function Protocol() {
       <div className="protocol-page">
         <AccountBar />
         <div className="protocol-page__empty">
-          {t("No protocol available. Please complete onboarding first.")}
+          <p>{t("No protocol available. Please complete onboarding first.")}</p>
+          <button type="button" className="btn btn--primary" onClick={() => navigate("/onboarding")}>
+            {t("Start onboarding")}
+          </button>
         </div>
         <CopyrightFooter />
       </div>
