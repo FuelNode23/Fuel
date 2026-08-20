@@ -315,7 +315,11 @@ export default function AthleteDashboard() {
               <button
                 type="button"
                 className="btn btn--primary"
-                onClick={() => navigate("/subscription")}
+                onClick={() => {
+                  const params = new URLSearchParams({ plan: selectedPlan });
+                  if (selectedBoxVariant) params.set("category", selectedBoxVariant);
+                  navigate(`/checkout-summary?${params.toString()}`);
+                }}
               >
                 {t("Continue with subscription")}
               </button>
