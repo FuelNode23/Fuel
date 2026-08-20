@@ -270,6 +270,9 @@ export const questions = [
       },
     ],
   },
+ // cooking_inspiration is also collected on this step, for UI
+ // personalization only - stripped before the AI call, so it's
+ // deliberately not part of `options`/`groups` above.
  {
     id: 9,
     type: "multi-select",
@@ -293,7 +296,6 @@ export const questions = [
         options: ["Focus", "Relaxation", "Sleep", "Energy", "None"],
       },
     ],
-    note: "cooking_inspiration is also collected here for UI personalization only — stripped before the AI call.",
   },
  {
     id: 10,

@@ -228,11 +228,11 @@ export default function AthleteDashboard() {
             <div className="hub-card__stats">
               <div className="hub-card__stat">
                 <span className="hub-card__stat-label">{t("Plan")}</span>
-                <span className="hub-card__stat-value">{t("No active plan")}</span>
+                <span className="hub-card__stat-value">{planLabel}</span>
               </div>
               <div className="hub-card__stat">
                 <span className="hub-card__stat-label">{t("Status")}</span>
-                <span className="hub-card__stat-value">{t("Pending")}</span>
+                <span className="hub-card__stat-value">{paymentStatusLabel}</span>
               </div>
               <div className="hub-card__stat">
                 <span className="hub-card__stat-label">{t("Profile updated")}</span>
