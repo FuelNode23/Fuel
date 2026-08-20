@@ -266,14 +266,25 @@
   color: var(--protocol-text-muted);
 }
 
-.hub-card--cta {
+.athlete-dashboard__header-row {
+  display: flex;
   align-items: flex-start;
-  gap: 0.6rem;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.hub-card--cta .btn {
-  width: 100%;
-  justify-content: center;
+.athlete-dashboard__header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.athlete-dashboard__update-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .athlete-dashboard__legal {
@@ -293,5 +304,14 @@
   .hub-field-grid,
   .hub-card__stats {
     grid-template-columns: 1fr;
+  }
+
+  .athlete-dashboard__header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .athlete-dashboard__update-btn {
+    justify-content: center;
   }
 }

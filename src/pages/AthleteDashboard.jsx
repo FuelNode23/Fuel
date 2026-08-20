@@ -146,14 +146,26 @@ export default function AthleteDashboard() {
           {t("Account")}
         </div>
 
-        <h1 className="page-title" style={{ marginTop: 12 }}>
-          {t("{name}, your athlete hub", { name: user?.fullName || t("Athlete") })}
-        </h1>
-        <p className="page-subtitle">
-          {t(
-            "Your onboarding data now lives here as a working athlete profile. Update it anytime to steer your protocol, your event logic, and your next box."
-          )}
-        </p>
+        <div className="athlete-dashboard__header-row">
+          <div className="athlete-dashboard__header-text">
+            <h1 className="page-title" style={{ marginTop: 12 }}>
+              {t("{name}, your athlete hub", { name: user?.fullName || t("Athlete") })}
+            </h1>
+            <p className="page-subtitle">
+              {t(
+                "Your onboarding data now lives here as a working athlete profile. Update it anytime to steer your protocol, your event logic, and your next box."
+              )}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn btn--primary athlete-dashboard__update-btn"
+            onClick={() => navigate("/onboarding")}
+          >
+            <Icon.RefreshCw width={14} height={14} />
+            {t("Update my protocol")}
+          </button>
+        </div>
 
         <div className="hub-grid">
           {/* Row 1 */}
@@ -388,19 +400,6 @@ export default function AthleteDashboard() {
                 <NotificationToggle key={label} label={label} t={t} />
               ))}
             </div>
-          </div>
-
-          {/* Row 5 — full width */}
-          <div className="card hub-card hub-card--cta">
-            <div className="hub-card__eyebrow">
-              <Icon.RefreshCw width={13} height={13} />
-              {t("Protocol & box")}
-            </div>
-            <h3 className="hub-card__title">{t("Keep your protocol up to date")}</h3>
-            <button type="button" className="btn btn--primary" onClick={() => navigate("/onboarding")}>
-              {t("Update my protocol")}
-            </button>
-            <p className="hub-card__text">{t("Update my data to regenerate my protocol and box.")}</p>
           </div>
 
           {/* Row 6 */}
