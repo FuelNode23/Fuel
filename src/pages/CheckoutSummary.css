@@ -113,6 +113,12 @@
   }
   .checkout-summary__summary {
     position: static;
+    /* Stacked single-column layout puts DOM order on screen - without
+       this the summary sits below the entire form, past the submit
+       button, so a phone user filling the form top-to-bottom would
+       never scroll far enough to see what they're actually paying for
+       before hitting Continue. */
+    order: -1;
   }
 }
 
