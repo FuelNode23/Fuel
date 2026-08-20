@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { saveSubscription, getSubscriptionPricing } from "../api/client.js";
 import "./Subscriptions.css";
@@ -108,6 +109,7 @@ const EVERY_PLAN_INCLUDES = [
 
 export default function Subscriptions() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
 
@@ -135,9 +137,9 @@ export default function Subscriptions() {
 
   // No checkout/billing endpoint exists yet, but the plan/box-variant
   // choice itself is real now (POST /api/subscription) - only the payment
-  // step ahead of it (Account.jsx) is still a dummy flow. sessionStorage
-  // is kept too so the Account -> Athlete dashboard sequence has an
-  // immediate value to show without waiting on a fetch.
+  // step ahead of it (Account.jsx, for a visitor who isn't signed in yet)
+  // is still a dummy flow. sessionStorage is kept too so the next page has
+  // an immediate value to show without waiting on a fetch.
   const handleSelectPlan = async (planKey) => {
     sessionStorage.setItem("selectedPlan", planKey);
     if (category) sessionStorage.setItem("selectedBoxVariant", category);
@@ -147,6 +149,19 @@ export default function Subscriptions() {
     } catch {
       // Save failed (network, expired session, etc.) - sessionStorage still
       // carries the choice through this session, so don't block navigation.
+    }
+
+    // A real session already existing here means the visitor signed in
+    // right at onboarding's identity gate (see IdentityGate) - Account.jsx
+    // exists to establish that first real session for a draft/anonymous
+    // visitor, which is already done, so sending them there would just be
+    // asking them to sign in a second time for nothing. Go straight to the
+    // athlete hub instead, same destination Account.jsx's own
+    // handleContinue lands on.
+    if (user) {
+      sessionStorage.setItem("dummyAuthenticated", "true");
+      navigate("/athlete-dashboard");
+      return;
     }
 
     const params = new URLSearchParams({ plan: planKey });
