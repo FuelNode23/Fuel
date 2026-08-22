@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
@@ -26,6 +26,51 @@ const CATEGORY_LABELS = {
   french: "French brands",
 };
 
+// France's official, free, no-key-required address search (Base Adresse
+// Nationale). citycode is Paris's INSEE commune code - it covers all 20
+// arrondissements and restricts every suggestion to real Paris addresses
+// at the source, matching the business's Paris-only delivery area, rather
+// than showing all-of-France results and rejecting them after the fact.
+const PARIS_CITYCODE = "75056";
+const PARIS_POSTAL_CODE = /^750(0[1-9]|1[0-9]|20)$/;
+
+// Temporary, real, verified locker pickup points in Paris - a fixed list
+// until a real locker-network API is wired in (per product decision).
+// Addresses were pulled from public directory listings, not invented,
+// since these get shown to real customers as somewhere to physically go.
+const PARIS_LOCKERS = [
+  {
+    id: "louvre",
+    name: "Amazon Locker - Citron",
+    address: "99 Rue de Rivoli, Carrousel du Louvre",
+    postalCode: "75001",
+  },
+  {
+    id: "saint-jacques",
+    name: "Amazon Locker - Edwina",
+    address: "270 Rue Saint-Jacques",
+    postalCode: "75005",
+  },
+  {
+    id: "saint-lazare",
+    name: "Amazon Locker - Ernest (Gare Saint-Lazare)",
+    address: "45 Rue de Londres",
+    postalCode: "75008",
+  },
+  {
+    id: "saint-maur",
+    name: "Espace Mondial Relay",
+    address: "54 Rue Saint-Maur",
+    postalCode: "75011",
+  },
+  {
+    id: "poteau",
+    name: "Amazon Locker - Herveig (Franprix)",
+    address: "61 Rue du Poteau",
+    postalCode: "75018",
+  },
+];
+
 /**
  * Reached from Subscriptions.jsx after picking a paid plan - a real order
  * review before Stripe Checkout, not just a redirect straight to payment.
@@ -46,6 +91,8 @@ export default function CheckoutSummary() {
   const planInfo = PLAN_INFO[plan];
 
   const [pricing, setPricing] = useState(null);
+  const [deliveryMethod, setDeliveryMethod] = useState("home"); // "home" | "locker"
+  const [selectedLockerId, setSelectedLockerId] = useState(null);
   const [addressLine1, setAddressLine1] = useState(user?.addressLine1 || "");
   const [addressLine2, setAddressLine2] = useState(user?.addressLine2 || "");
   const [city, setCity] = useState(user?.city || "");
@@ -53,6 +100,11 @@ export default function CheckoutSummary() {
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const addressBoxRef = useRef(null);
 
   // `user` starts null until AuthProvider's own effect populates it from
   // localStorage - useState's initializer above only runs on first render,
@@ -79,11 +131,69 @@ export default function CheckoutSummary() {
     };
   }, [category]);
 
+  // Live address search against the BAN API, restricted to Paris, debounced
+  // so it doesn't fire on every keystroke. Only relevant for the
+  // home-delivery path - locker pickup has no free-text address to search.
+  useEffect(() => {
+    if (deliveryMethod !== "home" || !showSuggestions || addressLine1.trim().length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    setAddressLoading(true);
+    const timer = setTimeout(() => {
+      fetch(
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(addressLine1)}&citycode=${PARIS_CITYCODE}&limit=5`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled) setAddressSuggestions(data.features || []);
+        })
+        .catch(() => {
+          if (!cancelled) setAddressSuggestions([]);
+        })
+        .finally(() => {
+          if (!cancelled) setAddressLoading(false);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addressLine1, deliveryMethod, showSuggestions]);
+
+  // Closes the suggestions dropdown on an outside click - standard
+  // combobox behavior, separate from the search effect above.
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (addressBoxRef.current && !addressBoxRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSuggestion = (feature) => {
+    const props = feature.properties;
+    setAddressLine1(props.name || props.label);
+    setCity(props.city || "Paris");
+    setPostalCode(props.postcode || "");
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+  };
+
+  const selectedLocker = PARIS_LOCKERS.find((locker) => locker.id === selectedLockerId) || null;
+
   const amount = planInfo ? pricing?.[plan] : null;
   const priceLabel = amount != null ? `€${amount.toFixed(2)}` : "…";
 
   const isValid = Boolean(
-    addressLine1.trim() && city.trim() && postalCode.trim() && phoneNumber.trim()
+    phoneNumber.trim() &&
+      (deliveryMethod === "locker"
+        ? selectedLocker
+        : addressLine1.trim() && city.trim() && PARIS_POSTAL_CODE.test(postalCode.trim()))
   );
 
   const handleContinueToPayment = async (e) => {
@@ -93,12 +203,24 @@ export default function CheckoutSummary() {
     setSubmitting(true);
     setError("");
     try {
+      const deliveryDetails =
+        deliveryMethod === "locker"
+          ? {
+              addressLine1: selectedLocker.address,
+              addressLine2: t("Locker pickup - {name}", { name: selectedLocker.name }),
+              city: "Paris",
+              postalCode: selectedLocker.postalCode,
+            }
+          : {
+              addressLine1: addressLine1.trim(),
+              addressLine2: addressLine2.trim(),
+              city: city.trim(),
+              postalCode: postalCode.trim(),
+            };
+
       await updateContactDetails({
         phoneNumber: phoneNumber.trim(),
-        addressLine1: addressLine1.trim(),
-        addressLine2: addressLine2.trim(),
-        city: city.trim(),
-        postalCode: postalCode.trim(),
+        ...deliveryDetails,
       });
       const { url } = await createCheckoutSession();
       window.location.href = url;
@@ -153,57 +275,135 @@ export default function CheckoutSummary() {
 
         <div className="checkout-summary__layout">
           <form className="card checkout-summary__form" onSubmit={handleContinueToPayment}>
-            <h2 className="checkout-summary__section-title">{t("Delivery address")}</h2>
-
-            <label className="checkout-summary__field">
-              {t("Address")}
-              <input
-                type="text"
-                value={addressLine1}
-                placeholder={t("Street and number")}
-                onChange={(e) => setAddressLine1(e.target.value)}
-                autoComplete="address-line1"
-                required
-              />
-            </label>
-
-            <label className="checkout-summary__field">
-              {t("Address line 2")} <span className="checkout-summary__optional">({t("optional")})</span>
-              <input
-                type="text"
-                value={addressLine2}
-                placeholder={t("Apartment, suite, etc.")}
-                onChange={(e) => setAddressLine2(e.target.value)}
-                autoComplete="address-line2"
-              />
-            </label>
-
-            <div className="checkout-summary__row">
-              <label className="checkout-summary__field">
-                {t("City")}
-                <input
-                  type="text"
-                  value={city}
-                  placeholder={t("Paris")}
-                  onChange={(e) => setCity(e.target.value)}
-                  autoComplete="address-level2"
-                  required
-                />
-              </label>
-              <label className="checkout-summary__field">
-                {t("Postal code")}
-                <input
-                  type="text"
-                  value={postalCode}
-                  placeholder={t("75001")}
-                  onChange={(e) => setPostalCode(e.target.value)}
-                  autoComplete="postal-code"
-                  required
-                />
-              </label>
+            <h2 className="checkout-summary__section-title">{t("Delivery method")}</h2>
+            <p className="checkout-summary__hint">
+              {t("FuelNode currently delivers within Paris only.")}
+            </p>
+            <div className="checkout-summary__method-toggle">
+              <button
+                type="button"
+                className={`checkout-summary__method-btn${
+                  deliveryMethod === "home" ? " checkout-summary__method-btn--active" : ""
+                }`}
+                onClick={() => setDeliveryMethod("home")}
+              >
+                {t("Deliver to my address")}
+              </button>
+              <button
+                type="button"
+                className={`checkout-summary__method-btn${
+                  deliveryMethod === "locker" ? " checkout-summary__method-btn--active" : ""
+                }`}
+                onClick={() => setDeliveryMethod("locker")}
+              >
+                {t("Pick up at a locker")}
+              </button>
             </div>
 
-            <p className="checkout-summary__country">{t("France")}</p>
+            {deliveryMethod === "home" ? (
+              <>
+                <div className="checkout-summary__address-wrap" ref={addressBoxRef}>
+                  <label className="checkout-summary__field">
+                    {t("Address")}
+                    <input
+                      type="text"
+                      value={addressLine1}
+                      placeholder={t("Start typing a Paris address...")}
+                      onChange={(e) => {
+                        setAddressLine1(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      autoComplete="off"
+                      required
+                    />
+                  </label>
+                  {showSuggestions && (addressLoading || addressSuggestions.length > 0) && (
+                    <ul className="checkout-summary__suggestions">
+                      {addressLoading && (
+                        <li className="checkout-summary__suggestions-status">{t("Searching...")}</li>
+                      )}
+                      {!addressLoading &&
+                        addressSuggestions.map((feature) => (
+                          <li key={feature.properties.id}>
+                            <button type="button" onClick={() => handleSelectSuggestion(feature)}>
+                              {feature.properties.label}
+                            </button>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+
+                <label className="checkout-summary__field">
+                  {t("Address line 2")} <span className="checkout-summary__optional">({t("optional")})</span>
+                  <input
+                    type="text"
+                    value={addressLine2}
+                    placeholder={t("Apartment, suite, etc.")}
+                    onChange={(e) => setAddressLine2(e.target.value)}
+                    autoComplete="address-line2"
+                  />
+                </label>
+
+                <div className="checkout-summary__row">
+                  <label className="checkout-summary__field">
+                    {t("City")}
+                    <input
+                      type="text"
+                      value={city}
+                      placeholder={t("Paris")}
+                      onChange={(e) => setCity(e.target.value)}
+                      autoComplete="address-level2"
+                      required
+                    />
+                  </label>
+                  <label className="checkout-summary__field">
+                    {t("Postal code")}
+                    <input
+                      type="text"
+                      value={postalCode}
+                      placeholder={t("75001")}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                      autoComplete="postal-code"
+                      required
+                    />
+                  </label>
+                </div>
+                {postalCode.trim() && !PARIS_POSTAL_CODE.test(postalCode.trim()) && (
+                  <p className="checkout-summary__field-error">
+                    {t("FuelNode currently delivers within Paris only (75001-75020).")}
+                  </p>
+                )}
+
+                <p className="checkout-summary__country">{t("France")}</p>
+              </>
+            ) : (
+              <div className="checkout-summary__lockers">
+                {PARIS_LOCKERS.map((locker) => (
+                  <label
+                    key={locker.id}
+                    className={`checkout-summary__locker${
+                      selectedLockerId === locker.id ? " checkout-summary__locker--active" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="locker"
+                      value={locker.id}
+                      checked={selectedLockerId === locker.id}
+                      onChange={() => setSelectedLockerId(locker.id)}
+                    />
+                    <span className="checkout-summary__locker-text">
+                      <strong>{locker.name}</strong>
+                      <span>
+                        {locker.address}, {locker.postalCode} Paris
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
 
             <h2 className="checkout-summary__section-title">{t("Contact number")}</h2>
             <label className="checkout-summary__field">

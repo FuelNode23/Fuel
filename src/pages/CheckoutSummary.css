@@ -70,6 +70,129 @@
   color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
 }
 
+.checkout-summary__hint {
+  margin: -0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
+}
+
+.checkout-summary__field-error {
+  margin: -0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #a3352c;
+}
+
+.checkout-summary__method-toggle {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.checkout-summary__method-btn {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--protocol-text, #1a1a1a);
+  background: var(--protocol-surface-alt, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.checkout-summary__method-btn--active {
+  background: var(--protocol-accent, #1a1a1a);
+  border-color: var(--protocol-accent, #1a1a1a);
+  color: var(--protocol-on-accent, #fff);
+}
+
+.checkout-summary__address-wrap {
+  position: relative;
+}
+
+.checkout-summary__suggestions {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0.35rem;
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--protocol-surface, #fff);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.checkout-summary__suggestions li + li {
+  margin-top: 0.15rem;
+}
+
+.checkout-summary__suggestions-status {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
+}
+
+.checkout-summary__suggestions button {
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--protocol-text, #1a1a1a);
+  background: none;
+  border: none;
+  border-radius: calc(var(--protocol-radius, 12px) - 6px);
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+}
+
+.checkout-summary__suggestions button:hover,
+.checkout-summary__suggestions button:focus-visible {
+  background: var(--protocol-surface-alt, rgba(0, 0, 0, 0.05));
+}
+
+.checkout-summary__lockers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.checkout-summary__locker {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+}
+
+.checkout-summary__locker--active {
+  border-color: var(--protocol-accent, #1a1a1a);
+  background: var(--protocol-surface-alt, rgba(0, 0, 0, 0.03));
+}
+
+.checkout-summary__locker input[type="radio"] {
+  margin-top: 0.2rem;
+}
+
+.checkout-summary__locker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.checkout-summary__locker-text span {
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.6));
+  font-size: 0.8rem;
+}
+
 .checkout-summary__summary {
   display: flex;
   flex-direction: column;
