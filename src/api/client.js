@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://16.16.77.123/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://app.fuelnode.fr/api',
   headers: {
     'Content-Type': 'application/json',
   },
