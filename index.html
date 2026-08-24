@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FuelNode</title>
+    <!--
+      Resource-loading half of the app's CSP - the rest (frame-ancestors,
+      the real clickjacking/downgrade defenses) can't be expressed in a
+      meta tag and lives in nginx instead. Every host below is a real,
+      confirmed dependency: Google Fonts (style-src/font-src), the BAN
+      address API and La Poste locker API (connect-src, see
+      CheckoutSummary.jsx/LocationMapPicker.jsx), and OpenStreetMap tiles
+      (img-src, see LocationMapPicker.jsx's L.tileLayer). style-src needs
+      'unsafe-inline' for React's inline style={{}} props and Leaflet's
+      own inline-styled markers/tiles - script-src does not, since
+      nothing in this app injects or eval's script at runtime.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self' https://api-adresse.data.gouv.fr https://data.laposte.fr; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
