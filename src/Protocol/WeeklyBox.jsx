@@ -110,9 +110,13 @@ function ProductSwapPicker({ item, onSwapped, t }) {
 
   const handlePick = (product) => {
     setSwappingId(product.id);
-    swapBoxItem(slot, item?.product_name || "", product.id)
+    // Not item.product_name - in the International/French views this
+    // card may be showing a client-side substitute (see boxVariants.js),
+    // and the backend needs the name of what's actually saved.
+    const canonicalName = item?._originalProductName || item?.product_name || "";
+    swapBoxItem(slot, canonicalName, product.id)
       .then((updatedItem) => {
-        onSwapped?.(updatedItem);
+        onSwapped?.(updatedItem, canonicalName);
         setOpen(false);
         setAlternatives(null);
       })

@@ -36,12 +36,20 @@ export default function WeeklyBoxPage() {
   // persisted itself server-side by the time this fires - this just
   // updates the canonical items list so every derived view (all three
   // box-variant columns, all built from this same array) reflects the
-  // change immediately, without a full re-fetch.
-  const handleItemSwapped = (updatedItem) => {
+  // change immediately, without a full re-fetch. Matched on
+  // (protocol_slot, product_name) together, not slot alone - a box can
+  // have more than one item sharing a slot (confirmed on real generated
+  // boxes), and matching by slot only would silently overwrite every
+  // item in that slot instead of just the one that was actually edited.
+  // previousProductName is the canonical name ProductSwapPicker resolved
+  // (not necessarily what was displayed - see boxVariants.js).
+  const handleItemSwapped = (updatedItem, previousProductName) => {
     setBox((prev) => {
       if (!prev) return prev;
       const items = prev.items.map((item) =>
-        item?.protocol_slot === updatedItem?.protocol_slot ? updatedItem : item
+        item?.protocol_slot === updatedItem?.protocol_slot && item?.product_name === previousProductName
+          ? updatedItem
+          : item
       );
       return { ...prev, items };
     });

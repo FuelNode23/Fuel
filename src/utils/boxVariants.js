@@ -103,6 +103,14 @@ function substituteByOrigin(item, bestBySlot, isTargetDomestic) {
     brand_origin: alternate.brandOrigin,
     why_this_product: null,
     storage_note: null,
+    // The canonical weekly_box_contents item (what's actually saved
+    // server-side) still has the *original* product_name - this view is
+    // showing a client-side substitute, not what's persisted. Anything
+    // that needs to identify the real underlying item (see WeeklyBox.jsx's
+    // ProductSwapPicker) must use this, not the displayed product_name,
+    // or it'll ask the backend to find a product that was never actually
+    // saved.
+    _originalProductName: item.product_name,
   };
 }
 
