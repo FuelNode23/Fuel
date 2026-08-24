@@ -264,14 +264,23 @@ export async function getCatalogBySlot(slot) {
  * not just a client-side reorder like the International/French box views.
  * Normal authenticated call.
  *
+ * currentProductName disambiguates which item to replace when a box has
+ * more than one item sharing the same slot (confirmed this happens on
+ * real generated boxes) - slot alone isn't always unique.
+ *
  * @param {string} protocolSlot
+ * @param {string} currentProductName
  * @param {number} catalogProductId
  * @returns {Promise<object>} the updated box item, same shape as any other
  *   weekly_box_contents entry (product_name, brand, brand_origin, quantity,
  *   protocol_slot, why_this_product: null, storage_note: null)
  */
-export async function swapBoxItem(protocolSlot, catalogProductId) {
-  const response = await apiClient.put('/protocol/box-item', { protocolSlot, catalogProductId })
+export async function swapBoxItem(protocolSlot, currentProductName, catalogProductId) {
+  const response = await apiClient.put('/protocol/box-item', {
+    protocolSlot,
+    currentProductName,
+    catalogProductId,
+  })
   return response.data
 }
 

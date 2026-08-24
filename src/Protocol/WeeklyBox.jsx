@@ -110,7 +110,7 @@ function ProductSwapPicker({ item, onSwapped, t }) {
 
   const handlePick = (product) => {
     setSwappingId(product.id);
-    swapBoxItem(slot, product.id)
+    swapBoxItem(slot, item?.product_name || "", product.id)
       .then((updatedItem) => {
         onSwapped?.(updatedItem);
         setOpen(false);
