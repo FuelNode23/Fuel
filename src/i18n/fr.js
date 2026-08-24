@@ -734,6 +734,11 @@ const fr = {
     "Vous pouvez récupérer votre box jusqu'à 7 jours après la livraison",
 
   // ---------------------------------------------------------------------
+  // Order confirmation
+  // ---------------------------------------------------------------------
+  "Next delivery": "Prochaine livraison",
+
+  // ---------------------------------------------------------------------
   // Onboarding — Step 11
   // ---------------------------------------------------------------------
   "Has nutrition ever cost you a race or ruined a session?":

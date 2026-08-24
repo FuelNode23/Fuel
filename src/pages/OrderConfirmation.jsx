@@ -4,7 +4,7 @@ import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { getSubscriptionPricing } from "../api/client.js";
+import apiClient, { getSubscriptionPricing } from "../api/client.js";
 import "../Protocol/ProtocolComponents.css";
 import "./Subscriptions.css";
 import "./CheckoutSummary.css";
@@ -30,6 +30,28 @@ const CATEGORY_LABELS = {
 // the two cases apart without needing a real "delivery method" field.
 const LOCKER_PREFIX = "Locker pickup - ";
 
+// Onboarding step 10 (see Questions.js) only offers these three weekdays -
+// Paris-only delivery, no real logistics/carrier integration behind it yet.
+const WEEKDAY_INDEX = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+
+/**
+ * Next calendar date matching the athlete's chosen delivery weekday.
+ * Always strictly in the future - if today happens to be that weekday,
+ * this is an estimate shown right after paying, so promising same-day
+ * delivery would be misleading; roll to next week instead.
+ */
+function nextDeliveryDate(deliveryDay) {
+  const targetIdx = WEEKDAY_INDEX[deliveryDay];
+  if (targetIdx == null) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let diff = (targetIdx - today.getDay() + 7) % 7;
+  if (diff === 0) diff = 7;
+  const result = new Date(today);
+  result.setDate(today.getDate() + diff);
+  return result;
+}
+
 /**
  * Landed on straight from Stripe's hosted page once a card is accepted
  * (see StripeCheckoutService's successUrl, which carries plan/category
@@ -41,7 +63,7 @@ const LOCKER_PREFIX = "Locker pickup - ";
 export default function OrderConfirmation() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchParams] = useSearchParams();
 
   const plan = searchParams.get("plan");
@@ -49,6 +71,7 @@ export default function OrderConfirmation() {
   const planInfo = PLAN_INFO[plan];
 
   const [pricing, setPricing] = useState(null);
+  const [deliveryDay, setDeliveryDay] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,8 +85,30 @@ export default function OrderConfirmation() {
     };
   }, [category]);
 
+  useEffect(() => {
+    let cancelled = false;
+    apiClient
+      .get("/athletes/profile")
+      .then(({ data }) => {
+        if (!cancelled) setDeliveryDay(data?.deliveryDay || null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const amount = plan ? pricing?.[plan] : null;
   const priceLabel = amount != null ? `€${amount.toFixed(2)}` : "…";
+
+  const deliveryDate = deliveryDay ? nextDeliveryDate(deliveryDay) : null;
+  const deliveryDateLabel = deliveryDate
+    ? new Intl.DateTimeFormat(language === "fr" ? "fr-FR" : "en-US", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }).format(deliveryDate)
+    : null;
 
   const addressLine2 = user?.addressLine2 || "";
   const isLockerDelivery = addressLine2.startsWith(LOCKER_PREFIX);
@@ -115,6 +160,12 @@ export default function OrderConfirmation() {
             <h2 className="checkout-summary__section-title">
               {isLockerDelivery ? t("Pickup point") : t("Delivery address")}
             </h2>
+            {deliveryDateLabel && (
+              <div className="checkout-summary__summary-row">
+                <span>{t("Next delivery")}</span>
+                <span className="checkout-summary__summary-price">{deliveryDateLabel}</span>
+              </div>
+            )}
             {isLockerDelivery ? (
               <>
                 <p className="order-confirmation__address-name">{lockerName}</p>
