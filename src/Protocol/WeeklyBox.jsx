@@ -3,7 +3,7 @@ import "./ProtocolComponents.css";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildBoxVariants, scoreToDots } from "../utils/boxVariants";
 import { Icon } from "../components/Icons.jsx";
-import apiClient from "../api/client.js";
+import apiClient, { getCatalogBySlot, swapBoxItem } from "../api/client.js";
 
 const VARIANTS = [
   {
@@ -70,6 +70,105 @@ function ProductScience({ item, scienceCard, t }) {
   );
 }
 
+/**
+ * Lets an athlete replace one box item with a real catalog alternative
+ * sharing the same protocol_slot - alternatives are fetched on demand
+ * (not up front for every card) and cached in local state per open, since
+ * a real swap changes what "current" means and the list should reflect
+ * that on the next open. Persists via swapBoxItem (see client.js) - a
+ * real edit to the athlete's saved protocol, not just a local reorder
+ * like the International/French box views already do.
+ */
+function ProductSwapPicker({ item, onSwapped, t }) {
+  const [open, setOpen] = useState(false);
+  const [alternatives, setAlternatives] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [swappingId, setSwappingId] = useState(null);
+  const [error, setError] = useState(false);
+
+  const slot = item?.protocol_slot;
+  if (!slot) return null;
+
+  const handleToggle = () => {
+    const next = !open;
+    setOpen(next);
+    if (!next || alternatives !== null) return;
+
+    setLoading(true);
+    setError(false);
+    getCatalogBySlot(slot)
+      .then((data) => {
+        const currentName = (item?.product_name || "").trim().toLowerCase();
+        const options = (Array.isArray(data) ? data : []).filter(
+          (p) => (p?.productName || "").trim().toLowerCase() !== currentName
+        );
+        setAlternatives(options);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  };
+
+  const handlePick = (product) => {
+    setSwappingId(product.id);
+    swapBoxItem(slot, product.id)
+      .then((updatedItem) => {
+        onSwapped?.(updatedItem);
+        setOpen(false);
+        setAlternatives(null);
+      })
+      .catch(() => setError(true))
+      .finally(() => setSwappingId(null));
+  };
+
+  return (
+    <div className="box-card__swap">
+      <button
+        type="button"
+        className="science-card__toggle"
+        onClick={handleToggle}
+        aria-expanded={open}
+      >
+        {open ? t("Hide alternatives") : t("Swap for an equivalent")}
+      </button>
+
+      {open && (
+        <div className="box-card__swap-list">
+          {loading && <p className="box-card__swap-hint">{t("Loading alternatives...")}</p>}
+          {error && (
+            <p className="box-card__swap-hint">{t("Couldn't load alternatives. Try again in a moment.")}</p>
+          )}
+          {!loading && !error && alternatives && alternatives.length === 0 && (
+            <p className="box-card__swap-hint">{t("No other product found for this slot yet.")}</p>
+          )}
+          {!loading &&
+            !error &&
+            alternatives &&
+            alternatives.slice(0, 6).map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                className="box-card__swap-option"
+                disabled={swappingId != null}
+                onClick={() => handlePick(product)}
+              >
+                <span className="box-card__swap-option-text">
+                  <span className="box-card__swap-option-name">{product.productName}</span>
+                  <span className="box-card__swap-option-brand">
+                    {product.brand}
+                    {product.brandOrigin ? ` · ${product.brandOrigin}` : ""}
+                  </span>
+                </span>
+                {swappingId === product.id && (
+                  <span className="box-card__swap-option-status">{t("Applying...")}</span>
+                )}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RatingDots({ dots, t }) {
   return (
     <span
@@ -90,7 +189,7 @@ function RatingDots({ dots, t }) {
   );
 }
 
-function ProductCard({ item, showValueBadge, scienceCard, t }) {
+function ProductCard({ item, showValueBadge, scienceCard, onItemSwapped, t }) {
   return (
     <div className="card box-card">
       <div className="box-card__header">
@@ -117,6 +216,7 @@ function ProductCard({ item, showValueBadge, scienceCard, t }) {
       )}
 
       <ProductScience item={item} scienceCard={scienceCard} t={t} />
+      <ProductSwapPicker item={item} onSwapped={onItemSwapped} t={t} />
     </div>
   );
 }
@@ -136,6 +236,7 @@ export default function WeeklyBox({
   sessionsPerWeek,
   selectedVariant,
   onSelectVariant,
+  onItemSwapped,
 }) {
   const { t } = useLanguage();
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -264,6 +365,7 @@ export default function WeeklyBox({
                     item={item}
                     showValueBadge={variant.key === "value"}
                     scienceCard={findScienceCard(scienceCards, item?.product_name)}
+                    onItemSwapped={onItemSwapped}
                     t={t}
                   />
                 ))}

@@ -304,6 +304,15 @@ const fr = {
   "Choose this box": "Choisir cette box",
   "Selected ✓": "Sélectionnée ✓",
 
+  // Product swap picker
+  "Swap for an equivalent": "Remplacer par un équivalent",
+  "Hide alternatives": "Masquer les alternatives",
+  "Loading alternatives...": "Chargement des alternatives...",
+  "Couldn't load alternatives. Try again in a moment.":
+    "Impossible de charger les alternatives. Réessayez dans un instant.",
+  "No other product found for this slot yet.": "Aucun autre produit trouvé pour cette catégorie pour l'instant.",
+  "Applying...": "Application en cours...",
+
   // "Ambitious for your load" banner
   "This box is a little ambitious for your current load":
     "Cette box est un peu ambitieuse pour votre charge actuelle",

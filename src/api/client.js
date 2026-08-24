@@ -244,4 +244,35 @@ export async function sendOtp(email) {
   await apiClient.post('/otp/send', { email })
 }
 
+/**
+ * Every real catalog product sharing a given protocol_slot, best-scored
+ * first - what the weekly box's "swap for an equivalent" picker lists
+ * (see WeeklyBox.jsx's ProductSwapPicker). Unlike the /catalog/international
+ * and /catalog/french lookups, not scoped to one origin.
+ *
+ * @param {string} slot - a box item's protocol_slot (e.g. "DURING_ISOTONIC")
+ * @returns {Promise<object[]>} [{ id, brand, productName, brandOrigin, ... }]
+ */
+export async function getCatalogBySlot(slot) {
+  const response = await apiClient.get(`/catalog/slot/${encodeURIComponent(slot)}`)
+  return response.data
+}
+
+/**
+ * Replaces one weekly-box item with a real catalog alternative sharing the
+ * same protocol_slot, persisted on the athlete's current saved protocol -
+ * not just a client-side reorder like the International/French box views.
+ * Normal authenticated call.
+ *
+ * @param {string} protocolSlot
+ * @param {number} catalogProductId
+ * @returns {Promise<object>} the updated box item, same shape as any other
+ *   weekly_box_contents entry (product_name, brand, brand_origin, quantity,
+ *   protocol_slot, why_this_product: null, storage_note: null)
+ */
+export async function swapBoxItem(protocolSlot, catalogProductId) {
+  const response = await apiClient.put('/protocol/box-item', { protocolSlot, catalogProductId })
+  return response.data
+}
+
 export default apiClient

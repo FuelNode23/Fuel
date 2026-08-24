@@ -32,6 +32,21 @@ export default function WeeklyBoxPage() {
   // just each column's own "Choose this box" button.
   const [selectedVariant, setSelectedVariant] = useState(null);
 
+  // A product swap (see WeeklyBox.jsx's ProductSwapPicker) already
+  // persisted itself server-side by the time this fires - this just
+  // updates the canonical items list so every derived view (all three
+  // box-variant columns, all built from this same array) reflects the
+  // change immediately, without a full re-fetch.
+  const handleItemSwapped = (updatedItem) => {
+    setBox((prev) => {
+      if (!prev) return prev;
+      const items = prev.items.map((item) =>
+        item?.protocol_slot === updatedItem?.protocol_slot ? updatedItem : item
+      );
+      return { ...prev, items };
+    });
+  };
+
   useEffect(() => {
     let handoff = location.state;
 
@@ -132,6 +147,7 @@ export default function WeeklyBoxPage() {
               sessionsPerWeek={box.sessionsPerWeek}
               selectedVariant={selectedVariant}
               onSelectVariant={setSelectedVariant}
+              onItemSwapped={handleItemSwapped}
             />
 
             <div className="weekly-box__continue">
