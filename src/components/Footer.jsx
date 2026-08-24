@@ -1,5 +1,5 @@
 
-import image from "../assets/image.png";
+import logo from "../assets/fuelnode-logo.png";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function Footer() {
@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="fn-footer-inner">
         <div className="fn-footer-brand">
           <img
-            src={image}
+            src={logo}
             alt="FuelNode"
             className="fn-footer-logo"
           />

@@ -1,7 +1,7 @@
 import { Icon } from "./Icons.jsx";
 import { heroBadges, boxItems, heroPanel } from "./Data.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import image from "../assets/image.png";
+import logo from "../assets/fuelnode-logo.png";
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -12,7 +12,7 @@ export default function Hero() {
         <div className="fn-hero-grid">
           <div className="fn-hero-copy">
             <div className="fn-logo-wrap">
-              <img src={image} alt="FuelNode" className="fn-logo" />
+              <img src={logo} alt="FuelNode" className="fn-logo" />
             </div>
             <div className="fn-hero-heading-group">
               <h1 className="fn-hero-title">
