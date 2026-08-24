@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
+import LocationMapPicker from "../components/LocationMapPicker.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { getSubscriptionPricing, createCheckoutSession } from "../api/client.js";
@@ -79,6 +80,7 @@ export default function CheckoutSummary() {
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const addressBoxRef = useRef(null);
 
   // `user` starts null until AuthProvider's own effect populates it from
@@ -157,6 +159,15 @@ export default function CheckoutSummary() {
     setPostalCode(props.postcode || "");
     setShowSuggestions(false);
     setAddressSuggestions([]);
+  };
+
+  // Same shape LocationMapPicker's reverse-geocode already produces, so
+  // this is a straight assignment - no adapting needed between the two
+  // address-selection paths.
+  const handleSelectFromMap = ({ addressLine1: line1, city: mapCity, postalCode: mapPostal }) => {
+    setAddressLine1(line1);
+    setCity(mapCity);
+    setPostalCode(mapPostal);
   };
 
   // Live locker search against La Poste's open data, debounced the same way
@@ -355,6 +366,15 @@ export default function CheckoutSummary() {
                     </ul>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  className="checkout-summary__map-toggle"
+                  onClick={() => setShowMap((prev) => !prev)}
+                >
+                  {showMap ? t("Hide map") : t("Choose on map")}
+                </button>
+                {showMap && <LocationMapPicker onSelect={handleSelectFromMap} />}
 
                 <label className="checkout-summary__field">
                   {t("Address line 2")} <span className="checkout-summary__optional">({t("optional")})</span>

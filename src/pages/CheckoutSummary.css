@@ -70,6 +70,34 @@
   color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
 }
 
+.checkout-summary__map-toggle {
+  align-self: flex-start;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--protocol-accent, #1a1a1a);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: -0.4rem 0 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.location-map-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.location-map-picker__map {
+  height: 260px;
+  width: 100%;
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  overflow: hidden;
+}
+
 .checkout-summary__hint {
   margin: -0.5rem 0 0;
   font-size: 0.8rem;
