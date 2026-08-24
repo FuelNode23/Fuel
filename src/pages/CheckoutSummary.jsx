@@ -34,42 +34,14 @@ const CATEGORY_LABELS = {
 const PARIS_CITYCODE = "75056";
 const PARIS_POSTAL_CODE = /^750(0[1-9]|1[0-9]|20)$/;
 
-// Temporary, real, verified locker pickup points in Paris - a fixed list
-// until a real locker-network API is wired in (per product decision).
-// Addresses were pulled from public directory listings, not invented,
-// since these get shown to real customers as somewhere to physically go.
-const PARIS_LOCKERS = [
-  {
-    id: "louvre",
-    name: "Amazon Locker - Citron",
-    address: "99 Rue de Rivoli, Carrousel du Louvre",
-    postalCode: "75001",
-  },
-  {
-    id: "saint-jacques",
-    name: "Amazon Locker - Edwina",
-    address: "270 Rue Saint-Jacques",
-    postalCode: "75005",
-  },
-  {
-    id: "saint-lazare",
-    name: "Amazon Locker - Ernest (Gare Saint-Lazare)",
-    address: "45 Rue de Londres",
-    postalCode: "75008",
-  },
-  {
-    id: "saint-maur",
-    name: "Espace Mondial Relay",
-    address: "54 Rue Saint-Maur",
-    postalCode: "75011",
-  },
-  {
-    id: "poteau",
-    name: "Amazon Locker - Herveig (Franprix)",
-    address: "61 Rue du Poteau",
-    postalCode: "75018",
-  },
-];
+// La Poste's own open data (data-fair platform) - free, no API key, no
+// account, same open-data spirit as the BAN address API above. Filters to
+// real "Relais poste" pickup points (not full post offices) within Paris's
+// postal-code range; adresse/libelle_du_site are stored upper-case at the
+// source, matched as-is rather than transformed, since this is a real
+// address a courier needs to read correctly.
+const LAPOSTE_LOCKERS_URL = "https://data.laposte.fr/data-fair/api/v1/datasets/laposte-poincont2/lines";
+const LAPOSTE_BASE_FILTER = 'caracteristique_du_site:"Relais poste" AND code_postal:[75000 TO 75021]';
 
 /**
  * Reached from Subscriptions.jsx after picking a paid plan - a real order
@@ -92,7 +64,10 @@ export default function CheckoutSummary() {
 
   const [pricing, setPricing] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState("home"); // "home" | "locker"
-  const [selectedLockerId, setSelectedLockerId] = useState(null);
+  const [selectedLocker, setSelectedLocker] = useState(null);
+  const [lockerQuery, setLockerQuery] = useState("");
+  const [lockerResults, setLockerResults] = useState([]);
+  const [lockerLoading, setLockerLoading] = useState(false);
   const [addressLine1, setAddressLine1] = useState(user?.addressLine1 || "");
   const [addressLine2, setAddressLine2] = useState(user?.addressLine2 || "");
   const [city, setCity] = useState(user?.city || "");
@@ -184,7 +159,35 @@ export default function CheckoutSummary() {
     setAddressSuggestions([]);
   };
 
-  const selectedLocker = PARIS_LOCKERS.find((locker) => locker.id === selectedLockerId) || null;
+  // Live locker search against La Poste's open data, debounced the same way
+  // as the address search above. Runs with an empty query too, so switching
+  // to "locker" shows a real default set immediately rather than an empty
+  // list waiting for input.
+  useEffect(() => {
+    if (deliveryMethod !== "locker") return;
+    let cancelled = false;
+    setLockerLoading(true);
+    const timer = setTimeout(() => {
+      const term = lockerQuery.trim().toUpperCase();
+      const qs = term ? `${LAPOSTE_BASE_FILTER} AND adresse:*${term}*` : LAPOSTE_BASE_FILTER;
+      const params = new URLSearchParams({ qs, size: "12" });
+      fetch(`${LAPOSTE_LOCKERS_URL}?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled) setLockerResults(data.results || []);
+        })
+        .catch(() => {
+          if (!cancelled) setLockerResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setLockerLoading(false);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [deliveryMethod, lockerQuery]);
 
   const amount = planInfo ? pricing?.[plan] : null;
   const priceLabel = amount != null ? `€${amount.toFixed(2)}` : "…";
@@ -206,10 +209,10 @@ export default function CheckoutSummary() {
       const deliveryDetails =
         deliveryMethod === "locker"
           ? {
-              addressLine1: selectedLocker.address,
-              addressLine2: t("Locker pickup - {name}", { name: selectedLocker.name }),
+              addressLine1: selectedLocker.adresse,
+              addressLine2: t("Locker pickup - {name}", { name: selectedLocker.libelle_du_site }),
               city: "Paris",
-              postalCode: selectedLocker.postalCode,
+              postalCode: selectedLocker.code_postal,
             }
           : {
               addressLine1: addressLine1.trim(),
@@ -379,30 +382,55 @@ export default function CheckoutSummary() {
                 <p className="checkout-summary__country">{t("France")}</p>
               </>
             ) : (
-              <div className="checkout-summary__lockers">
-                {PARIS_LOCKERS.map((locker) => (
-                  <label
-                    key={locker.id}
-                    className={`checkout-summary__locker${
-                      selectedLockerId === locker.id ? " checkout-summary__locker--active" : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="locker"
-                      value={locker.id}
-                      checked={selectedLockerId === locker.id}
-                      onChange={() => setSelectedLockerId(locker.id)}
-                    />
-                    <span className="checkout-summary__locker-text">
-                      <strong>{locker.name}</strong>
-                      <span>
-                        {locker.address}, {locker.postalCode} Paris
-                      </span>
-                    </span>
-                  </label>
-                ))}
-              </div>
+              <>
+                <label className="checkout-summary__field">
+                  {t("Search by street or neighborhood")}{" "}
+                  <span className="checkout-summary__optional">({t("optional")})</span>
+                  <input
+                    type="text"
+                    value={lockerQuery}
+                    placeholder={t("e.g. Picpus, Batignolles...")}
+                    onChange={(e) => setLockerQuery(e.target.value)}
+                  />
+                </label>
+
+                <div className="checkout-summary__lockers">
+                  {lockerLoading && (
+                    <p className="checkout-summary__suggestions-status">{t("Searching...")}</p>
+                  )}
+                  {!lockerLoading && lockerResults.length === 0 && (
+                    <p className="checkout-summary__suggestions-status">
+                      {t("No pickup points found - try a different street name.")}
+                    </p>
+                  )}
+                  {!lockerLoading &&
+                    lockerResults.map((locker) => (
+                      <label
+                        key={locker._id}
+                        className={`checkout-summary__locker${
+                          selectedLocker?._id === locker._id ? " checkout-summary__locker--active" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="locker"
+                          value={locker._id}
+                          checked={selectedLocker?._id === locker._id}
+                          onChange={() => setSelectedLocker(locker)}
+                        />
+                        <span className="checkout-summary__locker-text">
+                          <strong>{locker.libelle_du_site}</strong>
+                          <span>
+                            {locker.adresse}, {locker.code_postal} Paris
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                </div>
+                <p className="checkout-summary__hint">
+                  {t("Live pickup-point data from La Poste - available Relais Poste locations across Paris.")}
+                </p>
+              </>
             )}
 
             <h2 className="checkout-summary__section-title">{t("Contact number")}</h2>
