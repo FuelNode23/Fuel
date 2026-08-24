@@ -168,8 +168,26 @@ export default function CheckoutSummary() {
     let cancelled = false;
     setLockerLoading(true);
     const timer = setTimeout(() => {
-      const term = lockerQuery.trim().toUpperCase();
-      const qs = term ? `${LAPOSTE_BASE_FILTER} AND adresse:*${term}*` : LAPOSTE_BASE_FILTER;
+      // A single wildcard spanning the whole typed phrase (e.g. "*PARIS SAINT*")
+      // is invalid Lucene syntax once it contains a space - the API rejects the
+      // whole query ("all shards failed"), which read as "no results" rather
+      // than a visible error. Each word instead gets its own wildcard clause,
+      // required to match somewhere across either text field (site name or
+      // street address), so word order/field placement doesn't matter -
+      // "paris saint" finds a site named "PARIS SAINT CHARLES..." even though
+      // neither word alone lives in the address field for that record.
+      const words = lockerQuery
+        .trim()
+        .toUpperCase()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word.replace(/[^A-Z0-9ÀÂÉÈÊËÎÏÔÙÛÜÇ-]/g, ""))
+        .filter(Boolean);
+      const qs = words.length
+        ? `${LAPOSTE_BASE_FILTER} AND ${words
+            .map((word) => `(adresse:*${word}* OR libelle_du_site:*${word}*)`)
+            .join(" AND ")}`
+        : LAPOSTE_BASE_FILTER;
       const params = new URLSearchParams({ qs, size: "12" });
       fetch(`${LAPOSTE_LOCKERS_URL}?${params.toString()}`)
         .then((res) => res.json())
