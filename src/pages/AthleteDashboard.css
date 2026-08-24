@@ -15,11 +15,23 @@
   --protocol-radius: 12px;
 
   position: relative;
-  background: var(--protocol-bg);
+  background: transparent; /* image lives on ::before, same as Protocol.css */
   color: var(--protocol-text);
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
   padding: 2rem 1.5rem 4rem;
+}
+
+.athlete-dashboard::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url("/src/assets/main-img.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--protocol-bg);
 }
 
 .athlete-dashboard * {
