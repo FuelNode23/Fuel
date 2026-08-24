@@ -127,3 +127,30 @@ export function adaptAssemblyNotes(assemblyNotes) {
   if (Array.isArray(assemblyNotes)) return assemblyNotes.join(" ");
   return assemblyNotes || "";
 }
+
+/**
+ * Maps the backend's AthleteProfile shape (GET /protocol/latest's nested
+ * athleteProfile, camelCase, its own field names) onto the snake_case
+ * "userData" shape onboarding's raw answers normally provide - used when
+ * Protocol.jsx/Weeklybox.jsx fall back to a real backend fetch instead of
+ * the in-session handoff. Not a complete 1:1 mapping: sport_profiles,
+ * diet_pattern, and session_time have no clean backend equivalent, so
+ * those come through empty/undefined - every consumer already reads
+ * userData fields with optional chaining and a fallback, so this degrades
+ * to "less personalized," not broken.
+ */
+export function athleteProfileToUserData(athleteProfile) {
+  if (!athleteProfile) return null;
+  return {
+    name: athleteProfile.firstName,
+    weight: athleteProfile.weightKg,
+    height: athleteProfile.heightCm,
+    sessions_per_week: athleteProfile.sessionsPerWeek,
+    sports: athleteProfile.sports || [],
+    sport_profiles: {},
+    goals: athleteProfile.objectives || [],
+    session_time: athleteProfile.trainingTime,
+    restrictions: athleteProfile.restrictions || [],
+    diet_pattern: athleteProfile.regime,
+  };
+}

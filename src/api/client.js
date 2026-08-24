@@ -122,6 +122,26 @@ export async function getSubscription() {
 }
 
 /**
+ * The athlete's most recently generated protocol, persisted at
+ * registration time (see AuthContext.completeRegistration /
+ * saveGeneratedProtocol) - used as a fallback source for Protocol.jsx and
+ * Weeklybox.jsx when there's no in-session handoff (sessionStorage/
+ * navigate state), e.g. a fresh login on a new device/tab, or after
+ * sessionStorage was cleared. `responseJson` is a JSON *string* (raw
+ * TEXT column on the backend), not already parsed - see Protocoladapters.js's
+ * header comment for the exact shape once parsed. Rejects with a 404 if
+ * nothing has ever been generated - callers should treat that as "empty",
+ * same as no handoff.
+ *
+ * @returns {Promise<object>} the full NutritionProtocol row, including
+ *   nested `athleteProfile` (backend shape, not onboarding's userData shape)
+ */
+export async function getLatestProtocol() {
+  const response = await apiClient.get('/protocol/latest')
+  return response.data
+}
+
+/**
  * Per-tier prices computed server-side from the athlete's actual generated
  * box and the real product catalog (see UserSubscriptionService), not the
  * static numbers in Subscriptions.jsx's PLANS array. Rejects (via the

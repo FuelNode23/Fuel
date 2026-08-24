@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { getLatestProtocol } from "../api/client.js";
+import { athleteProfileToUserData } from "../api/Protocoladapters";
 
 import LoadingState from "../Protocol/LoadingState";
 import ErrorState from "../Protocol/ErrorState";
@@ -69,7 +71,7 @@ export default function Protocol() {
     navigate("/weeklybox", { state: weeklyBoxHandoff });
   };
 
-  const loadHandoff = () => {
+  const loadHandoff = async () => {
     setStatus("loading");
     setErrorMessage("");
 
@@ -88,9 +90,21 @@ export default function Protocol() {
       }
     }
 
+    // Neither exists (a fresh login, a new tab/device, or sessionStorage
+    // was cleared on logout) - the handoff was always session-only, never
+    // persisted, so a real account can land here with nothing to show even
+    // though it has a saved protocol. Fall back to the same real data
+    // GET /protocol/latest already serves elsewhere (e.g. pricing).
     if (!handoff) {
-      setProtocol(null);
-      setStatus("empty");
+      try {
+        const data = await getLatestProtocol();
+        setProtocol(JSON.parse(data.responseJson));
+        setUserData(athleteProfileToUserData(data.athleteProfile));
+        setStatus("success");
+      } catch {
+        setProtocol(null);
+        setStatus("empty");
+      }
       return;
     }
 

@@ -4,22 +4,29 @@ import AccountBar from "../components/AccountBar.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import WeeklyBox from "../Protocol/WeeklyBox.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { getLatestProtocol } from "../api/client.js";
+import { adaptWeeklyBoxItems, adaptAssemblyNotes, adaptScienceCards } from "../api/Protocoladapters";
 import "./Weeklybox.css";
 
 
 /**
- * Reached from Protocol's "View your weekly box" button, which builds
- * { items, totalProducts, frenchBrandPercentage, assemblyNotes } (already
- * run through Protocoladapters.js) and hands it off via navigate() state
- * (fresh) or sessionStorage "weeklyBoxHandoff" (survives a hard refresh,
- * since location.state does not) - same pattern Protocol.jsx uses for its
- * own handoff from OnboardingFlow.
+ * Reached either from Protocol's "View your weekly box" button, which
+ * builds { items, totalProducts, frenchBrandPercentage, assemblyNotes }
+ * (already run through Protocoladapters.js) and hands it off via
+ * navigate() state (fresh) or sessionStorage "weeklyBoxHandoff" (survives
+ * a hard refresh, since location.state does not) - or directly, via the
+ * top-nav "Box hebdomadaire" link, which never goes through Protocol.jsx
+ * at all. That handoff is session-only and was never persisted, so a real
+ * account with a real saved protocol can land here with nothing to show
+ * (a fresh login, a new tab/device, sessionStorage cleared on logout) -
+ * falls back to GET /protocol/latest in that case, same as Protocol.jsx.
  */
 export default function WeeklyBoxPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [box, setBox] = useState(null);
+  const [loading, setLoading] = useState(true);
   // Which of the 3 box variants the athlete picked — lifted up from
   // WeeklyBox so the bottom "Continue" button can depend on it too, not
   // just each column's own "Choose this box" button.
@@ -39,7 +46,26 @@ export default function WeeklyBoxPage() {
       }
     }
 
-    setBox(handoff);
+    if (handoff) {
+      setBox(handoff);
+      setLoading(false);
+      return;
+    }
+
+    getLatestProtocol()
+      .then((data) => {
+        const protocol = JSON.parse(data.responseJson);
+        setBox({
+          items: adaptWeeklyBoxItems(protocol.weekly_box_contents),
+          totalProducts: protocol.box_total_products,
+          frenchBrandPercentage: protocol.box_french_brand_percentage,
+          assemblyNotes: adaptAssemblyNotes(protocol.assembly_notes),
+          scienceCards: adaptScienceCards(protocol.science_cards),
+          sessionsPerWeek: data.athleteProfile?.sessionsPerWeek ?? null,
+        });
+      })
+      .catch(() => setBox(null))
+      .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -93,7 +119,9 @@ export default function WeeklyBoxPage() {
           {t("Three options built around your profile, your protocol, and your preferences. Choose the one that fits you best this week.")}
         </p>
 
-        {box ? (
+        {loading ? (
+          <p className="page-subtitle">{t("Loading your box...")}</p>
+        ) : box ? (
           <>
             <WeeklyBox
               items={box.items}
