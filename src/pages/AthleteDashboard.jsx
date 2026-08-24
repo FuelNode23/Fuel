@@ -201,11 +201,11 @@ export default function AthleteDashboard() {
           </button>
         </div>
 
-        {checkoutResult === "success" && (
-          <div className="hub-card__note hub-card__note--highlight" style={{ marginTop: "1rem" }}>
-            {t("Payment received - your subscription is being activated.")}
-          </div>
-        )}
+        {/* "success" no longer lands here directly - Stripe's successUrl now
+            goes to /order-confirmed first (see StripeCheckoutService), which
+            owns that moment with a real order summary instead of this small
+            banner. checkoutResult/its effects stay in place regardless,
+            since "cancel" still redirects straight back to this page. */}
         {checkoutResult === "cancel" && (
           <div className="hub-card__note" style={{ marginTop: "1rem" }}>
             {t("Checkout was canceled - your plan selection is saved, no payment was made.")}

@@ -10,6 +10,7 @@ import Profile from "../pages/Profile";
 import Dashboard from "../pages/Dashboard";
 import Subscriptions from "../pages/Subscriptions";
 import CheckoutSummary from "../pages/CheckoutSummary";
+import OrderConfirmation from "../pages/OrderConfirmation";
 import Account from "../pages/Account";
 import AthleteDashboard from "../pages/AthleteDashboard";
 
@@ -42,6 +43,7 @@ const AppRoutes = () => {
         <Route path="/subscriptions" element={<Subscriptions />} />
 
         <Route path="/checkout-summary" element={<CheckoutSummary />} />
+        <Route path="/order-confirmed" element={<OrderConfirmation />} />
 
         <Route path="/account" element={<Account />} />
 
