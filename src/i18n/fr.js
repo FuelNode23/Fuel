@@ -304,14 +304,21 @@ const fr = {
   "Choose this box": "Choisir cette box",
   "Selected ✓": "Sélectionnée ✓",
 
-  // Product swap picker
-  "Swap for an equivalent": "Remplacer par un équivalent",
+  // Product edit / replacement picker
+  Edit: "Modifier",
+  "Save changes": "Enregistrer les modifications",
+  "Saving...": "Enregistrement...",
+  "Couldn't save your changes. Please try again.":
+    "Impossible d'enregistrer vos modifications. Veuillez réessayer.",
+  "Choose a different product": "Choisir un autre produit",
   "Hide alternatives": "Masquer les alternatives",
   "Loading alternatives...": "Chargement des alternatives...",
   "Couldn't load alternatives. Try again in a moment.":
     "Impossible de charger les alternatives. Réessayez dans un instant.",
   "No other product found for this slot yet.": "Aucun autre produit trouvé pour cette catégorie pour l'instant.",
-  "Applying...": "Application en cours...",
+  Current: "Actuel",
+  Selected: "Sélectionné",
+  Pending: "En attente",
 
   // "Ambitious for your load" banner
   "This box is a little ambitious for your current load":

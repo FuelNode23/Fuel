@@ -413,6 +413,19 @@
   border-top: 1px solid var(--protocol-border, #e5e2da);
 }
 
+.box-column__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.box-column__save-error {
+  margin: 0;
+  padding-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #f87171;
+}
+
 @media (max-width: 900px) {
   .box-variant-columns {
     grid-template-columns: 1fr;
@@ -430,6 +443,13 @@
   flex-direction: column;
   gap: 0.4rem;
   padding: 0.9rem;
+}
+
+/* An unsaved, staged replacement - see WeeklyBox.jsx's pendingChanges.
+   Cleared automatically once Save changes or Cancel resolves it. */
+.box-card--pending {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
 }
 
 .box-card__header {
@@ -462,6 +482,11 @@
   background: rgba(239, 68, 68, 0.12);
   color: #f87171;
   text-decoration: line-through;
+}
+
+.pill--pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
 }
 
 .pill--slot {
@@ -560,6 +585,11 @@
 .box-card__swap-option:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+.box-card__swap-option--selected {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
 }
 
 .box-card__swap-option-text {

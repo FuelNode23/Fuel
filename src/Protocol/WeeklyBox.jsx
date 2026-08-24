@@ -39,6 +39,16 @@ function findScienceCard(scienceCards, productName) {
   );
 }
 
+// Identifies a canonical box item for staging/matching purposes - slot
+// alone isn't unique (a real generated box can have two items sharing a
+// slot), and in the International/French views the item on screen may be
+// a client-side substitute rather than what's actually saved (see
+// boxVariants.js's substituteByOrigin), so this always resolves back to
+// the real underlying product_name via _originalProductName when present.
+function canonicalName(item) {
+  return item?._originalProductName || item?.product_name || "";
+}
+
 /** Expandable "why this product" panel — reuses the protocol's science_cards
  *  layers when the AI generated one for this product, falling back to the
  *  box item's own why_this_product line when it didn't. */
@@ -71,19 +81,19 @@ function ProductScience({ item, scienceCard, t }) {
 }
 
 /**
- * Lets an athlete replace one box item with a real catalog alternative
- * sharing the same protocol_slot - alternatives are fetched on demand
- * (not up front for every card) and cached in local state per open, since
- * a real swap changes what "current" means and the list should reflect
- * that on the next open. Persists via swapBoxItem (see client.js) - a
- * real edit to the athlete's saved protocol, not just a local reorder
- * like the International/French box views already do.
+ * Lets an athlete browse real catalog alternatives for one box item and
+ * stage a pick - nothing is sent to the backend from here. The original
+ * product is always listed first and shown as the current choice until
+ * the athlete picks something else; picking is purely local state
+ * (onStage), so browsing costs nothing and a column-level Cancel can
+ * always discard it for free. The actual swap only happens when the
+ * athlete clicks "Save changes" at the column level (see WeeklyBox's
+ * handleSaveChanges).
  */
-function ProductSwapPicker({ item, onSwapped, t }) {
+function ProductEditPicker({ item, pendingChoice, onStage, t }) {
   const [open, setOpen] = useState(false);
   const [alternatives, setAlternatives] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [swappingId, setSwappingId] = useState(null);
   const [error, setError] = useState(false);
 
   const slot = item?.protocol_slot;
@@ -108,31 +118,12 @@ function ProductSwapPicker({ item, onSwapped, t }) {
       .finally(() => setLoading(false));
   };
 
-  const handlePick = (product) => {
-    setSwappingId(product.id);
-    // Not item.product_name - in the International/French views this
-    // card may be showing a client-side substitute (see boxVariants.js),
-    // and the backend needs the name of what's actually saved.
-    const canonicalName = item?._originalProductName || item?.product_name || "";
-    swapBoxItem(slot, canonicalName, product.id)
-      .then((updatedItem) => {
-        onSwapped?.(updatedItem, canonicalName);
-        setOpen(false);
-        setAlternatives(null);
-      })
-      .catch(() => setError(true))
-      .finally(() => setSwappingId(null));
-  };
+  const isOriginalSelected = !pendingChoice;
 
   return (
     <div className="box-card__swap">
-      <button
-        type="button"
-        className="science-card__toggle"
-        onClick={handleToggle}
-        aria-expanded={open}
-      >
-        {open ? t("Hide alternatives") : t("Swap for an equivalent")}
+      <button type="button" className="science-card__toggle" onClick={handleToggle} aria-expanded={open}>
+        {open ? t("Hide alternatives") : t("Choose a different product")}
       </button>
 
       {open && (
@@ -141,32 +132,51 @@ function ProductSwapPicker({ item, onSwapped, t }) {
           {error && (
             <p className="box-card__swap-hint">{t("Couldn't load alternatives. Try again in a moment.")}</p>
           )}
+
+          {!loading && !error && (
+            <button
+              type="button"
+              className={`box-card__swap-option${isOriginalSelected ? " box-card__swap-option--selected" : ""}`}
+              onClick={() => onStage(null)}
+            >
+              <span className="box-card__swap-option-text">
+                <span className="box-card__swap-option-name">{item.product_name}</span>
+                <span className="box-card__swap-option-brand">
+                  {item.brand}
+                  {item.brand_origin ? ` · ${item.brand_origin}` : ""}
+                </span>
+              </span>
+              {isOriginalSelected && <span className="box-card__swap-option-status">{t("Current")}</span>}
+            </button>
+          )}
+
           {!loading && !error && alternatives && alternatives.length === 0 && (
             <p className="box-card__swap-hint">{t("No other product found for this slot yet.")}</p>
           )}
+
           {!loading &&
             !error &&
             alternatives &&
-            alternatives.slice(0, 6).map((product) => (
-              <button
-                key={product.id}
-                type="button"
-                className="box-card__swap-option"
-                disabled={swappingId != null}
-                onClick={() => handlePick(product)}
-              >
-                <span className="box-card__swap-option-text">
-                  <span className="box-card__swap-option-name">{product.productName}</span>
-                  <span className="box-card__swap-option-brand">
-                    {product.brand}
-                    {product.brandOrigin ? ` · ${product.brandOrigin}` : ""}
+            alternatives.slice(0, 6).map((product) => {
+              const isSelected = pendingChoice?.id === product.id;
+              return (
+                <button
+                  key={product.id}
+                  type="button"
+                  className={`box-card__swap-option${isSelected ? " box-card__swap-option--selected" : ""}`}
+                  onClick={() => onStage(product)}
+                >
+                  <span className="box-card__swap-option-text">
+                    <span className="box-card__swap-option-name">{product.productName}</span>
+                    <span className="box-card__swap-option-brand">
+                      {product.brand}
+                      {product.brandOrigin ? ` · ${product.brandOrigin}` : ""}
+                    </span>
                   </span>
-                </span>
-                {swappingId === product.id && (
-                  <span className="box-card__swap-option-status">{t("Applying...")}</span>
-                )}
-              </button>
-            ))}
+                  {isSelected && <span className="box-card__swap-option-status">{t("Selected")}</span>}
+                </button>
+              );
+            })}
         </div>
       )}
     </div>
@@ -193,24 +203,40 @@ function RatingDots({ dots, t }) {
   );
 }
 
-function ProductCard({ item, showValueBadge, scienceCard, onItemSwapped, t }) {
+function ProductCard({ item, showValueBadge, scienceCard, isEditing, pendingChoice, onStage, t }) {
+  // What's actually shown on the card - the staged pick if the athlete
+  // made one, otherwise the original, untouched item. item itself is
+  // never mutated, so "keep original" in the picker always has the real
+  // original to fall back to.
+  const displayItem = pendingChoice
+    ? {
+        ...item,
+        product_name: pendingChoice.productName,
+        brand: pendingChoice.brand,
+        brand_origin: pendingChoice.brandOrigin,
+        why_this_product: null,
+        storage_note: null,
+      }
+    : item;
+
   return (
-    <div className="card box-card">
+    <div className={`card box-card${pendingChoice ? " box-card--pending" : ""}`}>
       <div className="box-card__header">
-        <h4 className="box-card__name">{item?.product_name || t("Unnamed product")}</h4>
+        <h4 className="box-card__name">{displayItem?.product_name || t("Unnamed product")}</h4>
         <RatingDots dots={scoreToDots(item.valueScore)} t={t} />
       </div>
       <p className="box-card__brand">
-        {item?.brand || t("Unknown brand")}
-        {item?.brand_origin ? ` · ${item.brand_origin}` : ""}
+        {displayItem?.brand || t("Unknown brand")}
+        {displayItem?.brand_origin ? ` · ${displayItem.brand_origin}` : ""}
       </p>
 
       <div className="box-card__chips">
         {item?.quantity != null && <span className="pill">{item.quantity}</span>}
         {item?.protocol_slot && <span className="pill pill--slot">{item.protocol_slot}</span>}
+        {pendingChoice && <span className="pill pill--pending">{t("Pending")}</span>}
       </div>
 
-      <p className="box-card__storage">{item?.storage_note || t("No special storage instructions.")}</p>
+      <p className="box-card__storage">{displayItem?.storage_note || t("No special storage instructions.")}</p>
 
       {showValueBadge && (
         <span className="badge badge--muted" title={t("Reference estimate, not a live price")}>
@@ -220,7 +246,7 @@ function ProductCard({ item, showValueBadge, scienceCard, onItemSwapped, t }) {
       )}
 
       <ProductScience item={item} scienceCard={scienceCard} t={t} />
-      <ProductSwapPicker item={item} onSwapped={onItemSwapped} t={t} />
+      {isEditing && <ProductEditPicker item={item} pendingChoice={pendingChoice} onStage={onStage} t={t} />}
     </div>
   );
 }
@@ -230,6 +256,16 @@ function ProductCard({ item, showValueBadge, scienceCard, onItemSwapped, t }) {
  * multiple candidates to choose between, so the three variants below
  * reorder/tag that same list rather than producing three different
  * product sets — see src/utils/boxVariants.js for the exact logic.
+ *
+ * Product replacement is entirely user-initiated and staged, never
+ * automatic: choosing a box leaves its products untouched, and only
+ * clicking "Edit" on the selected box opens the replacement picker per
+ * item. Picks made there (onStage) only update local pendingChanges -
+ * nothing is sent to the backend until "Save changes"; "Cancel" discards
+ * pendingChanges and exits edit mode with nothing changed. Editing is
+ * only offered on the already-selected column and resets if the athlete
+ * switches to a different one, since editing a box you're not choosing
+ * doesn't make sense.
  */
 export default function WeeklyBox({
   items,
@@ -246,6 +282,20 @@ export default function WeeklyBox({
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [internationalCatalog, setInternationalCatalog] = useState([]);
   const [frenchCatalog, setFrenchCatalog] = useState([]);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState([]); // [{ slot, currentProductName, product }]
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
+  // Switching which box is selected always exits any in-progress edit,
+  // discarding whatever wasn't saved - editing a box that's no longer
+  // the chosen one wouldn't make sense.
+  useEffect(() => {
+    setIsEditing(false);
+    setPendingChanges([]);
+    setSaveError(false);
+  }, [selectedVariant]);
 
   // Powers the International/French views' real product substitutions
   // (see buildBoxVariants/substituteByOrigin in utils/boxVariants.js). A
@@ -293,6 +343,62 @@ export default function WeeklyBox({
     sessionsPerWeek != null &&
     Number(sessionsPerWeek) < LIGHT_LOAD_SESSIONS_PER_WEEK &&
     boxSize >= BUSY_WEEK_BOX_SIZE;
+
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setPendingChanges([]);
+    setSaveError(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setPendingChanges([]);
+    setSaveError(false);
+  };
+
+  const findPendingChoice = (item) => {
+    const slot = item?.protocol_slot;
+    const name = canonicalName(item);
+    return pendingChanges.find((pc) => pc.slot === slot && pc.currentProductName === name)?.product || null;
+  };
+
+  // product === null means "back to the original" - just drop any staged
+  // entry for this item rather than keeping a no-op pending change around.
+  const handleStage = (item, product) => {
+    const slot = item?.protocol_slot;
+    const name = canonicalName(item);
+    setPendingChanges((prev) => {
+      const filtered = prev.filter((pc) => !(pc.slot === slot && pc.currentProductName === name));
+      return product ? [...filtered, { slot, currentProductName: name, product }] : filtered;
+    });
+  };
+
+  const handleSaveChanges = async () => {
+    if (pendingChanges.length === 0) {
+      setIsEditing(false);
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(false);
+    try {
+      // Sequential, not Promise.all - each swap targets the athlete's
+      // one saved protocol row, and there's no value in racing writes to
+      // the same record for what's normally a handful of items at most.
+      for (const change of pendingChanges) {
+        const updatedItem = await swapBoxItem(change.slot, change.currentProductName, change.product.id);
+        onItemSwapped?.(updatedItem, change.currentProductName);
+      }
+      setPendingChanges([]);
+      setIsEditing(false);
+    } catch {
+      // Leave pendingChanges and edit mode as-is so nothing already
+      // chosen is lost - the athlete can retry Save changes or Cancel.
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <section className="protocol-section">
@@ -346,6 +452,7 @@ export default function WeeklyBox({
         {VARIANTS.map((variant) => {
           const variantItems = variants[variant.key] || [];
           const isSelected = selectedVariant === variant.key;
+          const isEditingThisColumn = isSelected && isEditing;
 
           return (
             <div key={variant.key} className={`box-column${isSelected ? " box-column--selected" : ""}`}>
@@ -369,21 +476,59 @@ export default function WeeklyBox({
                     item={item}
                     showValueBadge={variant.key === "value"}
                     scienceCard={findScienceCard(scienceCards, item?.product_name)}
-                    onItemSwapped={onItemSwapped}
+                    isEditing={isEditingThisColumn}
+                    pendingChoice={isEditingThisColumn ? findPendingChoice(item) : null}
+                    onStage={(product) => handleStage(item, product)}
                     t={t}
                   />
                 ))}
               </div>
 
+              {isEditingThisColumn && saveError && (
+                <p className="box-column__save-error">
+                  {t("Couldn't save your changes. Please try again.")}
+                </p>
+              )}
+
               <div className="box-column__footer">
                 <span className="protocol-empty">{t("{count} products", { count: variantItems.length })}</span>
-                <button
-                  type="button"
-                  className={`btn ${isSelected ? "btn--primary" : "btn--ghost"}`}
-                  onClick={() => onSelectVariant?.(variant.key)}
-                >
-                  {isSelected ? t("Selected ✓") : t("Choose this box")}
-                </button>
+                <div className="box-column__footer-actions">
+                  {isEditingThisColumn ? (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn--ghost"
+                        onClick={handleCancelEdit}
+                        disabled={saving}
+                      >
+                        {t("Cancel")}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--primary"
+                        onClick={handleSaveChanges}
+                        disabled={saving}
+                      >
+                        {saving ? t("Saving...") : t("Save changes")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {isSelected && (
+                        <button type="button" className="btn btn--ghost" onClick={handleStartEdit}>
+                          {t("Edit")}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className={`btn ${isSelected ? "btn--primary" : "btn--ghost"}`}
+                        onClick={() => onSelectVariant?.(variant.key)}
+                      >
+                        {isSelected ? t("Selected ✓") : t("Choose this box")}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           );
