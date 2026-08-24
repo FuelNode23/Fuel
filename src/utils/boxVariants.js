@@ -84,8 +84,18 @@ export function scoreToDots(valueScore) {
  * by Claude for the original product and may not hold for the
  * substitute; the UI's own fallbacks take over cleanly instead of
  * carrying over a claim that's no longer verified.
+ *
+ * An item the athlete explicitly picked via WeeklyBox.jsx's edit flow
+ * (manually_replaced, set by NutritionProtocolService.swapBoxItem) is
+ * never auto-substituted here, regardless of its origin - the whole
+ * point of that flow is a deliberate, saved choice, and silently
+ * overriding it because it doesn't match a tab's preferred origin would
+ * make the edit look like it didn't work depending on which tab the
+ * athlete happens to be viewing.
  */
 function substituteByOrigin(item, bestBySlot, isTargetDomestic) {
+  if (item?.manually_replaced) return item;
+
   const currentIsDomestic = classifyOrigin(item?.brand_origin);
   const isConfirmedOpposite = isTargetDomestic
     ? currentIsDomestic === false
