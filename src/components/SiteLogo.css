@@ -1,0 +1,51 @@
+.site-logo {
+  position: fixed;
+  top: 1rem;
+  left: 1.25rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem 0.4rem 0.5rem;
+  border-radius: 1rem;
+  background: rgba(10, 14, 26, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(244, 247, 251, 0.14);
+  cursor: pointer;
+}
+
+.site-logo__image {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.site-logo__wordmark {
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f4f7fb;
+  white-space: nowrap;
+}
+
+.site-logo__wordmark-accent {
+  color: #22c55e;
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .site-logo {
+    top: 0.6rem;
+    left: 0.75rem;
+    padding: 0.35rem 0.65rem 0.35rem 0.4rem;
+  }
+
+  .site-logo__image {
+    width: 24px;
+    height: 24px;
+  }
+
+  .site-logo__wordmark {
+    font-size: 0.9rem;
+  }
+}

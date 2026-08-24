@@ -6,7 +6,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import GeneratingOverlay from "../components/GeneratingOverlay.jsx";
-import logo from "../assets/image.png";
+import logo from "../assets/fuelnode-logo.png";
 import "./Login.css";
 
 export default function Login() {

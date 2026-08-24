@@ -11,7 +11,7 @@
   overflow-x: hidden;
   background: #d44f4f;
   color: #f4f7f1;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -46,7 +46,7 @@
 .fn-btn,
 .fn-box-count,
 .fn-panel-tag {
-  font-family: "Space Grotesk", "Inter", -apple-system, sans-serif;
+  font-family: "DM Sans", -apple-system, sans-serif;
 }
 
 /* Background glow */
@@ -119,8 +119,34 @@
   }
 }
 
-.fn-nav-spacer {
-  display: none;
+.fn-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.fn-nav-logo__image {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+
+.fn-nav-logo__wordmark {
+  font-family: "DM Sans", -apple-system, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+
+.fn-nav-logo__wordmark-accent {
+  color: #22c55e;
+  font-style: italic;
 }
 
 .fn-nav-signin {

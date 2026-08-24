@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import LanguageToggle from "./LanguageToggle.jsx";
+import logo from "../assets/fuelnode-logo.png";
 
 export default function Nav() {
   const { t } = useLanguage();
@@ -9,7 +10,12 @@ export default function Nav() {
   return (
     <nav className="fn-nav">
       <div className="fn-nav-inner">
-        <div className="fn-nav-spacer" />
+        <button type="button" className="fn-nav-logo" onClick={() => navigate("/landing")} aria-label="FuelNode">
+          <img src={logo} alt="" className="fn-nav-logo__image" />
+          <span className="fn-nav-logo__wordmark">
+            Fuel<span className="fn-nav-logo__wordmark-accent">Node</span>
+          </span>
+        </button>
         <div className="fn-nav-links">
           <a href="#how" className="fn-nav-link">{t("How it works")}</a>
           <a href="#delivery" className="fn-nav-link">{t("Delivery")}</a>
