@@ -99,7 +99,10 @@ export default function UserManagement() {
         </thead>
         <tbody>
           {users.map((u) => {
-            const isSelf = u.id === currentUser?.id;
+            // AuthResponse (and therefore AuthContext's user object) has no
+            // id field, only email - matching on id here would always
+            // compare against undefined and never hide anything.
+            const isSelf = u.email === currentUser?.email;
             const busy = pendingId === u.id;
             return (
               <tr key={u.id}>
