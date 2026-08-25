@@ -492,6 +492,10 @@ const fr = {
     "Votre formule sélectionnée est enregistrée. Passez au paiement quand vous êtes prêt.",
   "Complete your subscription to unlock your weekly box.":
     "Complétez votre abonnement pour débloquer votre box hebdomadaire.",
+  "You're subscribed - your weekly box is active.":
+    "Vous êtes abonné(e) - votre box hebdomadaire est active.",
+  "Subscribed ✓ - manage your box from here anytime.":
+    "Abonné(e) ✓ - gérez votre box ici à tout moment.",
   "Continue with subscription": "Continuer avec l'abonnement",
   "Please complete both email and phone before continuing.":
     "Veuillez renseigner l'e-mail et le téléphone avant de continuer.",

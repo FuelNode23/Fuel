@@ -165,6 +165,10 @@ export default function AthleteDashboard() {
   const paymentStatusLabel = paymentStatus
     ? t(PAYMENT_STATUS_LABELS[paymentStatus] || "Pending")
     : t("Pending");
+  // Only a real, confirmed-paid subscription (see PaymentStatus.java) -
+  // NONE covers both "free plan" and "paid plan, checkout abandoned",
+  // both of which still have real payment left to complete.
+  const isActiveSubscriber = paymentStatus === "ACTIVE";
 
   return (
     <div className="athlete-dashboard">
@@ -294,7 +298,9 @@ export default function AthleteDashboard() {
             </div>
             <h3 className="hub-card__title">{planLabel}</h3>
             <p className="hub-card__text">
-              {t("Your selected plan is saved. Continue to payment when you're ready.")}
+              {isActiveSubscriber
+                ? t("You're subscribed - your weekly box is active.")
+                : t("Your selected plan is saved. Continue to payment when you're ready.")}
             </p>
             <div className="hub-card__stats">
               <div className="hub-card__stat">
@@ -310,26 +316,36 @@ export default function AthleteDashboard() {
                 <span className="hub-card__stat-value">{t("Updated today")}</span>
               </div>
             </div>
-            <p className="hub-card__note">{t("Complete your subscription to unlock your weekly box.")}</p>
-            <div className="hub-card__actions">
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => {
-                  const params = new URLSearchParams({ plan: selectedPlan });
-                  if (selectedBoxVariant) params.set("category", selectedBoxVariant);
-                  navigate(`/checkout-summary?${params.toString()}`);
-                }}
-              >
-                {t("Continue with subscription")}
-              </button>
-              <span className="hub-card__warning">
-                {t("Please complete both email and phone before continuing.")}
-              </span>
-            </div>
-            <button type="button" className="btn btn--ghost" onClick={() => navigate("/subscription")}>
-              {t("Choose a plan")}
-            </button>
+            {/* Already paid - never re-invite back into checkout/plan
+                selection (see Login.jsx's completeLogin, which already
+                routes an active subscriber here instead of onboarding/
+                payment; this card must not undo that once they arrive). */}
+            {isActiveSubscriber ? (
+              <p className="hub-card__note">{t("Subscribed ✓ - manage your box from here anytime.")}</p>
+            ) : (
+              <>
+                <p className="hub-card__note">{t("Complete your subscription to unlock your weekly box.")}</p>
+                <div className="hub-card__actions">
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => {
+                      const params = new URLSearchParams({ plan: selectedPlan });
+                      if (selectedBoxVariant) params.set("category", selectedBoxVariant);
+                      navigate(`/checkout-summary?${params.toString()}`);
+                    }}
+                  >
+                    {t("Continue with subscription")}
+                  </button>
+                  <span className="hub-card__warning">
+                    {t("Please complete both email and phone before continuing.")}
+                  </span>
+                </div>
+                <button type="button" className="btn btn--ghost" onClick={() => navigate("/subscription")}>
+                  {t("Choose a plan")}
+                </button>
+              </>
+            )}
           </div>
 
           <div className="card hub-card hub-card--half">

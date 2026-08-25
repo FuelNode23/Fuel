@@ -46,13 +46,13 @@ export default function Login() {
   // returning athlete who already has a UserSubscription row (any plan,
   // any payment status - once they've engaged with Subscriptions.jsx at
   // all, sending them back through onboarding/landing is wrong) goes
-  // straight to /protocol instead: it already falls back to
-  // getLatestProtocol() itself when reached with no navigate state (see
-  // Protocol.jsx), so this shows their real saved protocol/box with no
-  // new fetch logic needed here. Only a genuinely never-subscribed
-  // athlete falls through to the pending-onboarding-resume-or-/landing
-  // path below - that's the one case /landing's "Try FuelNode" CTAs
-  // (plain links straight into onboarding) are actually correct for.
+  // straight to /athlete-dashboard instead, which reads that same real
+  // subscription state itself (see its own getSubscription() call) and
+  // now hides its payment CTAs once paymentStatus is ACTIVE. Only a
+  // genuinely never-subscribed athlete falls through to the
+  // pending-onboarding-resume-or-/landing path below - that's the one
+  // case /landing's "Try FuelNode" CTAs (plain links straight into
+  // onboarding) are actually correct for.
   const completeLogin = async (authData) => {
     if (authData.role === "ADMIN") {
       navigate("/admin");
@@ -60,7 +60,7 @@ export default function Login() {
     }
     try {
       await getSubscription();
-      navigate("/protocol");
+      navigate("/athlete-dashboard");
       return;
     } catch {
       // 404 - no subscription yet, fall through below.
