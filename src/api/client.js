@@ -284,4 +284,96 @@ export async function swapBoxItem(protocolSlot, currentProductName, catalogProdu
   return response.data
 }
 
+/**
+ * Every registered user, admin-only (see SecurityConfig's /api/admin/**
+ * matcher - a 403 here means the caller isn't Role.ADMIN). Used by the
+ * admin panel's User Management tab.
+ *
+ * @returns {Promise<object[]>} [{ id, email, fullName, phoneNumber, role,
+ *   enabled, createdAt, lastLoginAt }]
+ */
+export async function getAdminUsers() {
+  const response = await apiClient.get('/admin/users')
+  return response.data
+}
+
+/**
+ * Enables/disables a user's account (they simply can't log in while
+ * disabled - nothing about them is removed). Rejects with a 409 if
+ * targeting your own account - AdminUserService blocks that server-side.
+ *
+ * @param {number} userId
+ * @param {boolean} enabled
+ * @returns {Promise<object>} the updated user, same shape as getAdminUsers' rows
+ */
+export async function updateUserStatus(userId, enabled) {
+  const response = await apiClient.patch(`/admin/users/${userId}/status`, { enabled })
+  return response.data
+}
+
+/**
+ * Promotes/demotes a user between ATHLETE and ADMIN. Rejects with a 409 if
+ * targeting your own account, or if this would demote the last remaining
+ * admin - both guarded server-side in AdminUserService.
+ *
+ * @param {number} userId
+ * @param {'ATHLETE'|'ADMIN'} role
+ * @returns {Promise<object>} the updated user, same shape as getAdminUsers' rows
+ */
+export async function updateUserRole(userId, role) {
+  const response = await apiClient.patch(`/admin/users/${userId}/role`, { role })
+  return response.data
+}
+
+/**
+ * Every catalog product with its full field set (stock, price, and the
+ * research/scoring metadata CatalogProductResponse trims for athletes),
+ * admin-only. Used by the admin panel's Product Management tab.
+ *
+ * @returns {Promise<object[]>}
+ */
+export async function getAdminProducts() {
+  const response = await apiClient.get('/admin/products')
+  return response.data
+}
+
+/**
+ * Creates a new catalog product. `payload` takes the same field set
+ * getAdminProducts returns (minus id) - see AdminCatalogProductRequest for
+ * which fields are required (brand, productName) vs. optional.
+ *
+ * @param {object} payload
+ * @returns {Promise<object>} the created product
+ */
+export async function createAdminProduct(payload) {
+  const response = await apiClient.post('/admin/products', payload)
+  return response.data
+}
+
+/**
+ * Overwrites a catalog product's fields wholesale (PUT semantics, not a
+ * partial patch) - same payload shape as createAdminProduct.
+ *
+ * @param {number} id
+ * @param {object} payload
+ * @returns {Promise<object>} the updated product
+ */
+export async function updateAdminProduct(id, payload) {
+  const response = await apiClient.put(`/admin/products/${id}`, payload)
+  return response.data
+}
+
+/**
+ * Permanently deletes a catalog product - no undo. Safe re: data
+ * integrity (weekly_box_contents is JSON text on each protocol, not an FK
+ * to catalog_product), but callers should still confirm with the admin
+ * first since there's no recovery once this succeeds.
+ *
+ * @param {number} id
+ * @returns {Promise<void>}
+ */
+export async function deleteAdminProduct(id) {
+  await apiClient.delete(`/admin/products/${id}`)
+}
+
 export default apiClient

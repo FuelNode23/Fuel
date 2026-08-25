@@ -1,0 +1,386 @@
+/* ==========================================================================
+   Admin panel — same dark theme + design tokens as Weeklybox.css/Protocol.css,
+   redefined locally since there's no shared ancestor to inherit them from
+   (same reasoning as that file). Denser and more table-oriented than the
+   athlete-facing pages: this is an internal staff tool, not a marketing surface.
+   ========================================================================== */
+
+.admin-panel {
+  --admin-bg: #0a0e1a;
+  --admin-surface: #141a29;
+  --admin-surface-alt: rgba(244, 247, 251, 0.04);
+  --admin-border: rgba(244, 247, 251, 0.14);
+  --admin-text: #f4f7fb;
+  --admin-text-muted: rgba(244, 247, 251, 0.6);
+  --admin-accent: #22c55e;
+  --admin-accent-hover: #1ea850;
+  --admin-danger: #f87171;
+  --admin-radius: 12px;
+
+  position: relative;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.admin-panel * {
+  box-sizing: border-box;
+}
+
+.admin-panel__container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-panel__header {
+  margin-bottom: 1.75rem;
+}
+
+.admin-panel__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--admin-accent);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-panel__title {
+  font-size: clamp(1.6rem, 2.5vw, 2.1rem);
+  font-weight: 700;
+  margin: 0.4rem 0 0.3rem;
+  text-wrap: balance;
+}
+
+.admin-panel__subtitle {
+  color: var(--admin-text-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Tabs */
+
+.admin-panel__tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  margin: 1.75rem 0 1.5rem;
+}
+
+.admin-panel__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--admin-text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0.75rem 0.25rem;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-panel__tab + .admin-panel__tab {
+  margin-left: 1.25rem;
+}
+
+.admin-panel__tab:hover {
+  color: var(--admin-text);
+}
+
+.admin-panel__tab--active {
+  color: var(--admin-text);
+  border-bottom-color: var(--admin-accent);
+}
+
+.admin-panel__state {
+  color: var(--admin-text-muted);
+  font-size: 14px;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.admin-panel__error {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: var(--admin-radius);
+  color: var(--admin-danger);
+  font-size: 14px;
+  padding: 0.7rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.admin-panel__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+/* Table */
+
+.admin-table-wrap {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 1.25rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.admin-table th {
+  text-align: left;
+  color: var(--admin-text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--admin-border);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--admin-surface-alt);
+  vertical-align: middle;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover td {
+  background: var(--admin-surface-alt);
+}
+
+.admin-table__you {
+  color: var(--admin-text-muted);
+  font-size: 12px;
+}
+
+.admin-table__cell--low-stock {
+  color: var(--admin-danger);
+  font-weight: 700;
+}
+
+.admin-table__actions {
+  display: flex;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.admin-table__action {
+  background: var(--admin-surface-alt);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: var(--admin-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-table__action:hover:not(:disabled) {
+  background: rgba(244, 247, 251, 0.1);
+}
+
+.admin-table__action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-table__action--danger {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: var(--admin-danger);
+}
+
+/* Pills */
+
+.admin-pill {
+  display: inline-block;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+}
+
+.admin-pill--admin {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--admin-accent);
+}
+
+.admin-pill--athlete {
+  background: rgba(244, 247, 251, 0.1);
+  color: var(--admin-text-muted);
+}
+
+.admin-pill--enabled {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--admin-accent);
+}
+
+.admin-pill--disabled {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--admin-danger);
+}
+
+/* Buttons */
+
+.admin-btn {
+  background: var(--admin-surface-alt);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: var(--admin-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  transition: background 0.15s ease;
+}
+
+.admin-btn:hover:not(:disabled) {
+  background: rgba(244, 247, 251, 0.1);
+}
+
+.admin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-btn--primary {
+  background: var(--admin-accent);
+  border-color: var(--admin-accent);
+  color: #06210f;
+}
+
+.admin-btn--primary:hover:not(:disabled) {
+  background: var(--admin-accent-hover);
+  border-color: var(--admin-accent-hover);
+}
+
+/* Modal (add/edit product form) */
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 9, 16, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 3rem 1.5rem;
+  z-index: 50;
+}
+
+.admin-modal {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  max-width: 720px;
+  width: 100%;
+  padding: 1.75rem;
+}
+
+.admin-modal__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 1.1rem;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 13px;
+}
+
+.admin-field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-field span {
+  color: var(--admin-text-muted);
+  font-weight: 600;
+}
+
+.admin-field input,
+.admin-field textarea {
+  background: var(--admin-surface-alt);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: var(--admin-text);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 0.55rem 0.7rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.admin-field input:focus,
+.admin-field textarea:focus {
+  border-color: var(--admin-accent);
+}
+
+.admin-field textarea {
+  resize: vertical;
+}
+
+.admin-advanced-toggle {
+  background: none;
+  border: none;
+  color: var(--admin-accent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0.4rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.admin-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+/* Small screens: stack the table into cards-ish rows and single-column form */
+
+@media (max-width: 720px) {
+  .admin-table-wrap {
+    overflow-x: auto;
+  }
+
+  .admin-table {
+    min-width: 720px;
+  }
+
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

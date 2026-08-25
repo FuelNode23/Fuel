@@ -90,6 +90,16 @@ export default function AccountBar() {
               {t("Weekly box")}
             </button>
           )}
+          {user?.role === "ADMIN" && location.pathname !== "/admin" && (
+            <button
+              type="button"
+              className="account-bar__nav-link"
+              onClick={() => navigate("/admin")}
+            >
+              <Icon.Shield width={14} height={14} />
+              {t("Admin")}
+            </button>
+          )}
           <LanguageToggle />
           <button type="button" className="account-bar__logout" onClick={handleLogoutClick}>
             {t("Log out")}

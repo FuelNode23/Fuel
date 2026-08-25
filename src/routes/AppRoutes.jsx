@@ -13,6 +13,7 @@ import CheckoutSummary from "../pages/CheckoutSummary";
 import OrderConfirmation from "../pages/OrderConfirmation";
 import Account from "../pages/Account";
 import AthleteDashboard from "../pages/AthleteDashboard";
+import AdminPanel from "../pages/Admin/AdminPanel";
 
 const AppRoutes = () => {
   return (
@@ -48,6 +49,11 @@ const AppRoutes = () => {
         <Route path="/account" element={<Account />} />
 
         <Route path="/athlete-dashboard" element={<AthleteDashboard />} />
+
+        {/* Client-side guard is UX only - AdminPanel redirects a non-admin
+            away. The real boundary is SecurityConfig's hasRole("ADMIN")
+            on every /api/admin/** call the two tabs make. */}
+        <Route path="/admin" element={<AdminPanel />} />
 
       <Route path="*" element={<Navigate to="/landing" replace />} />
     </Routes>
