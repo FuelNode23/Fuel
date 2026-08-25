@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { completePendingOnboarding, sendOtp, checkAccountExists } from "../api/client.js";
+import { completePendingOnboarding, sendOtp, checkAccountExists, getSubscription } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { Icon } from "../components/Icons.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
@@ -42,14 +42,28 @@ export default function Login() {
   const [otpSubmitting, setOtpSubmitting] = useState(false);
 
   // Shared by both methods once persistSession has run (see AuthContext) -
-  // admins skip the whole athlete post-login path (pending-onboarding
-  // resume, landing page) straight to the panel they logged in to manage;
-  // everyone else resumes a pending onboarding submission if one exists,
-  // or lands on /landing.
+  // admins skip straight to the panel they logged in to manage. A
+  // returning athlete who already has a UserSubscription row (any plan,
+  // any payment status - once they've engaged with Subscriptions.jsx at
+  // all, sending them back through onboarding/landing is wrong) goes
+  // straight to /protocol instead: it already falls back to
+  // getLatestProtocol() itself when reached with no navigate state (see
+  // Protocol.jsx), so this shows their real saved protocol/box with no
+  // new fetch logic needed here. Only a genuinely never-subscribed
+  // athlete falls through to the pending-onboarding-resume-or-/landing
+  // path below - that's the one case /landing's "Try FuelNode" CTAs
+  // (plain links straight into onboarding) are actually correct for.
   const completeLogin = async (authData) => {
     if (authData.role === "ADMIN") {
       navigate("/admin");
       return;
+    }
+    try {
+      await getSubscription();
+      navigate("/protocol");
+      return;
+    } catch {
+      // 404 - no subscription yet, fall through below.
     }
     if (sessionStorage.getItem("pendingOnboarding")) {
       setResumingOnboarding(true);
