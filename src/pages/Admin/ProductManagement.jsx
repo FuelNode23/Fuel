@@ -6,6 +6,17 @@ import {
   updateAdminProduct,
   deleteAdminProduct,
 } from "../../api/client.js";
+import { useSearchAndPaginate } from "./useSearchAndPaginate.js";
+import Pagination from "./Pagination.jsx";
+
+function matchesProductQuery(product, q) {
+  return (
+    (product.brand || "").toLowerCase().includes(q) ||
+    (product.productName || "").toLowerCase().includes(q) ||
+    (product.category || "").toLowerCase().includes(q) ||
+    (product.protocolSlot || "").toLowerCase().includes(q)
+  );
+}
 
 // Operational fields (shown in the table + the form's primary section) vs.
 // the innovation/elite research metadata (collapsed under "Advanced") - the
@@ -84,6 +95,9 @@ export default function ProductManagement() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const { query, setQuery, page, setPage, totalPages, pageItems, totalResults } =
+    useSearchAndPaginate(products, matchesProductQuery);
 
   useEffect(() => {
     let cancelled = false;
@@ -179,6 +193,13 @@ export default function ProductManagement() {
       {error && <p className="admin-panel__error">{error}</p>}
 
       <div className="admin-panel__toolbar">
+        <input
+          type="text"
+          className="admin-search"
+          placeholder={t("Search by brand, product, category, or slot…")}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
         <button type="button" className="admin-btn admin-btn--primary" onClick={openCreate}>
           {t("Add product")}
         </button>
@@ -197,7 +218,7 @@ export default function ProductManagement() {
           </tr>
         </thead>
         <tbody>
-          {products.map((p) => {
+          {pageItems.map((p) => {
             const lowStock = p.stockQuantity != null && p.stockQuantity < LOW_STOCK_THRESHOLD;
             return (
               <tr key={p.id}>
@@ -246,7 +267,12 @@ export default function ProductManagement() {
           })}
         </tbody>
       </table>
-      {products.length === 0 && <p className="admin-panel__state">{t("No products yet.")}</p>}
+      {totalResults === 0 && (
+        <p className="admin-panel__state">
+          {products.length === 0 ? t("No products yet.") : t("No products match your search.")}
+        </p>
+      )}
+      <Pagination page={page} totalPages={totalPages} totalResults={totalResults} onPageChange={setPage} />
 
       {editingId !== null && (
         <div className="admin-modal-overlay" role="dialog" aria-modal="true">

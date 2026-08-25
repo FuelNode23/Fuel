@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useLanguage } from "../../i18n/LanguageContext.jsx";
 import { getAdminUsers, updateUserStatus, updateUserRole } from "../../api/client.js";
+import { useSearchAndPaginate } from "./useSearchAndPaginate.js";
+import Pagination from "./Pagination.jsx";
+
+function matchesUserQuery(user, q) {
+  return (
+    (user.fullName || "").toLowerCase().includes(q) ||
+    (user.email || "").toLowerCase().includes(q)
+  );
+}
 
 function formatDate(isoString, language) {
   if (!isoString) return "—";
@@ -26,6 +35,9 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pendingId, setPendingId] = useState(null);
+
+  const { query, setQuery, page, setPage, totalPages, pageItems, totalResults } =
+    useSearchAndPaginate(users, matchesUserQuery);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,6 +97,16 @@ export default function UserManagement() {
     <div className="admin-table-wrap">
       {error && <p className="admin-panel__error">{error}</p>}
 
+      <div className="admin-panel__toolbar">
+        <input
+          type="text"
+          className="admin-search"
+          placeholder={t("Search by name or email…")}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
       <table className="admin-table">
         <thead>
           <tr>
@@ -98,7 +120,7 @@ export default function UserManagement() {
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => {
+          {pageItems.map((u) => {
             // AuthResponse (and therefore AuthContext's user object) has no
             // id field, only email - matching on id here would always
             // compare against undefined and never hide anything.
@@ -150,7 +172,12 @@ export default function UserManagement() {
           })}
         </tbody>
       </table>
-      {users.length === 0 && <p className="admin-panel__state">{t("No users yet.")}</p>}
+      {totalResults === 0 && (
+        <p className="admin-panel__state">
+          {users.length === 0 ? t("No users yet.") : t("No users match your search.")}
+        </p>
+      )}
+      <Pagination page={page} totalPages={totalPages} totalResults={totalResults} onPageChange={setPage} />
     </div>
   );
 }

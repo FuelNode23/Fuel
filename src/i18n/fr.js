@@ -975,6 +975,8 @@ const fr = {
   Promote: "Promouvoir",
   Demote: "Rétrograder",
   "No users yet.": "Aucun utilisateur pour le moment.",
+  "No users match your search.": "Aucun utilisateur ne correspond à votre recherche.",
+  "Search by name or email…": "Rechercher par nom ou e-mail…",
 
   "Loading products…": "Chargement des produits…",
   "Couldn't load products. Please try again.": "Impossible de charger les produits. Veuillez réessayer.",
@@ -999,6 +1001,14 @@ const fr = {
   Save: "Enregistrer",
   "Saving…": "Enregistrement…",
   "No products yet.": "Aucun produit pour le moment.",
+  "No products match your search.": "Aucun produit ne correspond à votre recherche.",
+  "Search by brand, product, category, or slot…": "Rechercher par marque, produit, catégorie ou créneau…",
+
+  // Pagination (Admin/Pagination.jsx) - shared by both tabs
+  "{count} result(s)": "{count} résultat(s)",
+  Previous: "Précédent",
+  Next: "Suivant",
+  "Page {page} of {total}": "Page {page} sur {total}",
   "Show advanced fields": "Afficher les champs avancés",
   "Hide advanced fields": "Masquer les champs avancés",
   "Catalog tier": "Niveau de catalogue",
