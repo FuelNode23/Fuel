@@ -1,0 +1,280 @@
+/* ==========================================================================
+   Checkout summary — reuses Subscriptions.css's page shell + Weeklybox.css's
+   eyebrow/title/back-link + ProtocolComponents.css's .card/.btn (see this
+   page's own imports). Only the form/summary layout is new here.
+   ========================================================================== */
+
+.checkout-summary__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 1.25rem;
+  align-items: start;
+  margin-top: 1.5rem;
+}
+
+.checkout-summary__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.checkout-summary__section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.checkout-summary__section-title:not(:first-child) {
+  margin-top: 0.5rem;
+}
+
+.checkout-summary__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.65));
+}
+
+.checkout-summary__optional {
+  font-weight: 400;
+  text-transform: none;
+}
+
+.checkout-summary__field input {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--protocol-text, #1a1a1a);
+  background: var(--protocol-surface-alt, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  padding: 0.7rem 0.9rem;
+}
+
+.checkout-summary__field input::placeholder {
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.4));
+}
+
+.checkout-summary__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.checkout-summary__country {
+  margin: -0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
+}
+
+.checkout-summary__map-toggle {
+  align-self: flex-start;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--protocol-accent, #1a1a1a);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: -0.4rem 0 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.location-map-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.location-map-picker__map {
+  height: 260px;
+  width: 100%;
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  overflow: hidden;
+}
+
+.checkout-summary__hint {
+  margin: -0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
+}
+
+.checkout-summary__field-error {
+  margin: -0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #a3352c;
+}
+
+.checkout-summary__method-toggle {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.checkout-summary__method-btn {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--protocol-text, #1a1a1a);
+  background: var(--protocol-surface-alt, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.checkout-summary__method-btn--active {
+  background: var(--protocol-accent, #1a1a1a);
+  border-color: var(--protocol-accent, #1a1a1a);
+  color: var(--protocol-on-accent, #fff);
+}
+
+.checkout-summary__address-wrap {
+  position: relative;
+}
+
+.checkout-summary__suggestions {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0.35rem;
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--protocol-surface, #fff);
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.checkout-summary__suggestions li + li {
+  margin-top: 0.15rem;
+}
+
+.checkout-summary__suggestions-status {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
+}
+
+.checkout-summary__suggestions button {
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--protocol-text, #1a1a1a);
+  background: none;
+  border: none;
+  border-radius: calc(var(--protocol-radius, 12px) - 6px);
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+}
+
+.checkout-summary__suggestions button:hover,
+.checkout-summary__suggestions button:focus-visible {
+  background: var(--protocol-surface-alt, rgba(0, 0, 0, 0.05));
+}
+
+.checkout-summary__lockers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.checkout-summary__locker {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  border: 1px solid var(--protocol-border, #e5e2da);
+  border-radius: calc(var(--protocol-radius, 12px) - 4px);
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+}
+
+.checkout-summary__locker--active {
+  border-color: var(--protocol-accent, #1a1a1a);
+  background: var(--protocol-surface-alt, rgba(0, 0, 0, 0.03));
+}
+
+.checkout-summary__locker input[type="radio"] {
+  margin-top: 0.2rem;
+}
+
+.checkout-summary__locker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.checkout-summary__locker-text span {
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.6));
+  font-size: 0.8rem;
+}
+
+.checkout-summary__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.checkout-summary__summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--protocol-text, #1a1a1a);
+}
+
+.checkout-summary__summary-row--muted {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.6));
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--protocol-border, #e5e2da);
+}
+
+.checkout-summary__summary-price {
+  font-size: 1.1rem;
+}
+
+.checkout-summary__summary-note {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--protocol-text-muted, rgba(26, 26, 26, 0.55));
+}
+
+@media (max-width: 900px) {
+  .checkout-summary__layout {
+    grid-template-columns: 1fr;
+  }
+  .checkout-summary__summary {
+    position: static;
+    /* Stacked single-column layout puts DOM order on screen - without
+       this the summary sits below the entire form, past the submit
+       button, so a phone user filling the form top-to-bottom would
+       never scroll far enough to see what they're actually paying for
+       before hitting Continue. */
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .checkout-summary__row {
+    grid-template-columns: 1fr;
+  }
+}

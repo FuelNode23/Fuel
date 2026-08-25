@@ -3,7 +3,10 @@ import fr from "./fr.js";
 
 const STORAGE_KEY = "fn_language";
 const SUPPORTED = ["en", "fr"];
-const DEFAULT_LANGUAGE = "en";
+// Every customer is Paris/France-based - French is the right default for a
+// first-time visitor. The toggle still switches to English for anyone who
+// prefers it; this only changes what a new visitor sees before choosing.
+const DEFAULT_LANGUAGE = "fr";
 
 const LanguageContext = createContext(null);
 

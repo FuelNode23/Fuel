@@ -12,6 +12,10 @@
 
 .lang-toggle__option {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
   border: none;
   background: transparent;
   color: rgba(244, 247, 251, 0.6);
@@ -19,7 +23,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1;
-  padding: 0.45rem 0.75rem;
+  padding: 0.45rem 0.8rem;
   border-radius: 9999px;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;

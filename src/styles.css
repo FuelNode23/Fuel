@@ -11,7 +11,7 @@ body {
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: #722828;
     min-height: 100vh;
     overflow-x: hidden;

@@ -1,11 +1,28 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import apiClient from '../api/client.js'
+import apiClient, { DRAFT_TOKEN_KEY } from '../api/client.js'
 
 const AuthContext = createContext(null)
 
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000 // 30 minutes
 const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart']
+
+// Cookies aren't how this app stores its session (that's localStorage, see
+// persistSession below), but logout is still the right place to sweep any
+// that do exist - e.g. ones a browser extension, ad blocker, or a future
+// API change might drop on this origin - so a "log out" always leaves the
+// browser holding nothing tied to the account. Expires each cookie for
+// both "/" and the current path since a cookie set without an explicit
+// path defaults to the path it was set from, not "/".
+function clearAllCookies() {
+  if (typeof document === 'undefined' || !document.cookie) return
+  document.cookie.split(';').forEach((entry) => {
+    const name = entry.split('=')[0].trim()
+    if (!name) return
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${window.location.pathname}`
+  })
+}
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate()
@@ -46,9 +63,88 @@ export function AuthProvider({ children }) {
     return data
   }, [])
 
+  // Creates the real account for a draft session (see IdentityGate /
+  // Account) - the first moment a password exists for this email. Uses
+  // the draft token stashed by client.js's startOnboarding, sent as its
+  // own header rather than the standard Authorization flow. Clears that
+  // draft token on success since it's no longer needed - `user` is now
+  // set via the same persistSession path login/register use. phoneNumber
+  // is optional - a blank one is fine, and axios/JSON.stringify drop an
+  // undefined value from the request body entirely.
+  const completeRegistration = useCallback(async (password, phoneNumber) => {
+    const draftToken = sessionStorage.getItem(DRAFT_TOKEN_KEY)
+    const { data } = await apiClient.post(
+      '/auth/complete-registration',
+      { password, phoneNumber },
+      { headers: { 'X-Draft-Token': draftToken } }
+    )
+    persistSession(data)
+    sessionStorage.removeItem(DRAFT_TOKEN_KEY)
+    return data
+  }, [])
+
+  // Verifies an email-OTP code (see EmailOtpController) - a correct code is
+  // sufficient authentication by itself, whether or not an account already
+  // existed for that email (the backend creates one on the spot otherwise),
+  // so this always gets back a real AuthResponse and always persists it,
+  // same as login/register/completeRegistration. Forwards any draft token
+  // (same header completeRegistration uses) purely so a brand-new account
+  // gets the real name already captured at onboarding's identity gate
+  // instead of defaulting to the email address - harmless to send when the
+  // email already has an account, since the backend just won't need it.
+  const verifyOtp = useCallback(async (email, otp) => {
+    const draftToken = sessionStorage.getItem(DRAFT_TOKEN_KEY)
+    const { data } = await apiClient.post(
+      '/otp/verify',
+      { email, otp },
+      draftToken ? { headers: { 'X-Draft-Token': draftToken } } : undefined
+    )
+    persistSession(data)
+    sessionStorage.removeItem(DRAFT_TOKEN_KEY)
+    return data
+  }, [])
+
+  // Saves the athlete-hub "Contact details" card's phone number and/or the
+  // pre-payment order summary page's shipping address. The backend PUTs
+  // the whole set at once (missing/blank clears a field) - not a partial
+  // patch - so `updates` here is merged over the current `user` state
+  // first, meaning a caller that only shows/edits phone (the dashboard
+  // card) still echoes back whatever address is already saved instead of
+  // wiping it, without every call site needing to remember that itself.
+  // Unlike login/register/completeRegistration, the backend response here
+  // has no token (updating a field on the existing session, not issuing a
+  // new one) - merge it into the current user object instead of going
+  // through persistSession.
+  const updateContactDetails = useCallback(async (updates) => {
+    const payload = {
+      phoneNumber: user?.phoneNumber || '',
+      addressLine1: user?.addressLine1 || '',
+      addressLine2: user?.addressLine2 || '',
+      city: user?.city || '',
+      postalCode: user?.postalCode || '',
+      ...updates,
+    }
+    const { data } = await apiClient.put('/auth/contact-details', payload)
+    setUser((prev) => {
+      const updated = { ...prev, ...data }
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
+    return data
+  }, [user])
+
   const logout = useCallback(() => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    clearAllCookies()
+    // Every sessionStorage key this app writes (draftToken, protocolHandoff,
+    // weeklyBoxHandoff, selectedPlan/BoxVariant, dummyAuthenticated) is
+    // single-session handoff state with no business surviving a deliberate
+    // sign-out - language preference lives in localStorage instead, so it's
+    // untouched here. Left uncleared, a stale draftToken specifically used
+    // to make OnboardingFlow think identity was already captured and skip
+    // straight past IdentityGate on the very next "Try FuelNode" click.
+    sessionStorage.clear()
     setUser(null)
   }, [])
 
@@ -76,7 +172,9 @@ export function AuthProvider({ children }) {
   }, [user, logout, navigate])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, completeRegistration, verifyOtp, updateContactDetails, logout }}
+    >
       {children}
     </AuthContext.Provider>
   )

@@ -1,13 +1,21 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient, { submitOnboarding as postOnboarding } from "../api/client.js";
+import apiClient, {
+  DRAFT_TOKEN_KEY,
+  generateDraftProtocol,
+  getLatestProtocol,
+  submitOnboarding as postOnboarding,
+} from "../api/client.js";
 import { questions } from "../api/Questions.js";
+import { validateOnboardingField } from "../api/onboardingValidation.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import AccountBar from "../components/AccountBar.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import GeneratingOverlay from "../components/GeneratingOverlay.jsx";
+import IdentityGate from "../components/IdentityGate.jsx";
+import StyledSelect from "../components/StyledSelect.jsx";
 import "../pages/Onboarding.css";
 
 /**
@@ -82,7 +90,7 @@ function mapProfileToUserData(profile) {
  */
 export default function OnboardingFlow() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, login, register } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -90,15 +98,12 @@ export default function OnboardingFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  // Auth gate (Step 1 of the flow): create an account or sign in before
-  // any question is shown. Once `user` is set, this component re-renders
-  // straight into the question wizard below - nothing else has to change.
-  const [authMode, setAuthMode] = useState("register");
-  const [authFullName, setAuthFullName] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [authSubmitting, setAuthSubmitting] = useState(false);
+  // Setter-only state: bumped by IdentityGate's onSuccess purely to force
+  // a re-render once a draft token lands in sessionStorage. hasDraftToken
+  // itself is read fresh from storage on every render below rather than
+  // mirrored into state, since sessionStorage writes don't trigger React
+  // updates on their own.
+  const [, setIdentityVersion] = useState(0);
 
   // Set when login pre-fills userData from an existing profile, so Finish
   // can detect "nothing changed since last time" and confirm before
@@ -107,11 +112,10 @@ export default function OnboardingFlow() {
   const [showNoChangeConfirm, setShowNoChangeConfirm] = useState(false);
 
   // Pre-fill from an existing saved profile whenever there's an active
-  // session - not just right after logging in through the auth gate above.
-  // A session can just as easily already be active on mount (e.g. logged
-  // in via the standalone /login page, then clicked "Try FuelNode" from
-  // /landing), which skips the auth gate entirely and would otherwise
-  // leave the form blank despite the profile existing.
+  // session on mount (e.g. logged in via the standalone /login page, then
+  // clicked "Try FuelNode" from /landing, or via IdentityGate's inline
+  // "an account already exists" login) - otherwise a returning user would
+  // see a blank form despite their profile existing.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -148,34 +152,18 @@ export default function OnboardingFlow() {
 
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
 
-  const handleAuthSubmit = async () => {
-    setAuthError("");
-    if (authMode === "register" && authPassword.length < 8) {
-      setAuthError(t("Password must be at least 8 characters long."));
-      return;
-    }
-    setAuthSubmitting(true);
-    try {
-      if (authMode === "register") {
-        await register(authEmail, authPassword, authFullName);
-      } else {
-        await login(authEmail, authPassword);
-      }
-      // `user` is now set by AuthContext, so this component re-renders
-      // straight into the question wizard, and the useEffect above picks
-      // up the profile fetch/pre-fill - no navigation needed here.
-    } catch (err) {
-      setAuthError(
-        err.response?.data?.message ||
-          t(
-            authMode === "register"
-              ? "Registration failed. Please try again."
-              : "Login failed. Please check your credentials."
-          )
-      );
-    } finally {
-      setAuthSubmitting(false);
-    }
+  // Sport-dependent numeric bounds (typical_distance / avg_elevation /
+  // elevation_gain) resolve against whichever sport is actually in play
+  // for the current step: the target event's sport on the event step,
+  // the athlete's selected sports everywhere else (defaulting to Running,
+  // since the training-profile card itself is Running-only for now).
+  const validationContext = {
+    sport:
+      rawQuestion.id === 6
+        ? userData.event_sport
+        : (userData.sports || []).includes("Cycling") && !(userData.sports || []).includes("Running")
+          ? "Cycling"
+          : "Running",
   };
 
   // Coerces raw <input> values before they land in state. Any field
@@ -246,7 +234,7 @@ export default function OnboardingFlow() {
   };
 
   const isFieldValid = (field) =>
-    (userData[field.name] ?? "").toString().trim().length > 0;
+    validateOnboardingField(field.name, userData[field.name], validationContext).valid;
 
   const isStepValid = () => {
     if (currentQuestion.type === "text") {
@@ -280,13 +268,19 @@ export default function OnboardingFlow() {
     return true;
   };
 
-  // Sends the full collected userData object to the backend. Called
-  // when the user clicks "Finish" on the last step. This is the single
-  // API call in the whole flow: postOnboarding() (submitOnboarding from
-  // client.js) posts userData to POST /api/generate-with-profile, and
-  // the backend's response IS the generated protocol JSON — no separate
-  // "generate" or "fetch" call happens anywhere else. The endpoint URL
-  // is defined ONLY in client.js, so it never drifts out of sync here.
+  // Sends the full collected userData object to the backend. Called when
+  // the user clicks "Finish" on the last step. Branches on whether this is
+  // a real session or a draft one (see IdentityGate):
+  //
+  // - Real (`user` truthy): a genuinely-returning visitor who logged in
+  //   inline via IdentityGate's "an account already exists" branch. They
+  //   already have a real account, so save + generate immediately via the
+  //   original postOnboarding()/generate-with-profile - unchanged from
+  //   before this whole deferred-auth flow existed.
+  // - Draft (`user` null, a draft token exists): the normal case now.
+  //   Generates via generateDraftProtocol() and saves nothing server-side
+  //   - Account.jsx's sign-up (reached via Weeklybox -> Subscriptions)
+  //     persists this exact result once a real password exists.
   const submitOnboarding = async () => {
     // Guards against duplicate submissions: double-click, StrictMode
     // double-invoke, or returning to the last step and hitting Finish
@@ -294,11 +288,29 @@ export default function OnboardingFlow() {
     if (hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
 
-    console.log("Onboarding userData:", userData);
     setSubmitting(true);
     setSubmitError(null);
+
+    if (user) {
+      try {
+        const protocolResult = await postOnboarding(userData);
+        sessionStorage.setItem(
+          "protocolHandoff",
+          JSON.stringify({ onboardingResult: protocolResult, userData })
+        );
+        navigate("/protocol", { state: { onboardingResult: protocolResult, userData } });
+      } catch (err) {
+        console.error("Onboarding submit failed, continuing with local data:", err);
+        sessionStorage.setItem("protocolHandoff", JSON.stringify({ userData, saveFailed: true }));
+        navigate("/protocol", { state: { userData, saveFailed: true } });
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     try {
-      const protocolResult = await postOnboarding(userData);
+      const protocolResult = await generateDraftProtocol(userData);
 
       // Mirror the handoff payload to sessionStorage so a refresh on
       // /protocol doesn't lose it — location.state doesn't survive
@@ -311,25 +323,19 @@ export default function OnboardingFlow() {
       navigate("/protocol", { state: { onboardingResult: protocolResult, userData } });
     } catch (err) {
       if (err.response?.status === 401) {
-        // apiClient's response interceptor already cleared localStorage
-        // (token/user) on 401 — we just need to redirect here. Onboarding
-        // now requires signing in at Step 1, so reaching Finish without a
-        // valid session means the token expired or was cleared mid-flow -
-        // the person already has an account, so send them to log back in
-        // rather than register again. Stash their answers so login can
-        // resume the submission instead of losing everything.
-        // Reset the lock so a resumed submission isn't blocked by it.
+        // Draft token missing/invalid/expired - clear it so a retry falls
+        // back to IdentityGate instead of repeating with the same bad
+        // token. Reset the submit lock too, same reasoning.
         hasSubmittedRef.current = false;
-        sessionStorage.setItem("pendingOnboarding", JSON.stringify(userData));
-        navigate("/login", { replace: false });
-        return;
+        sessionStorage.removeItem(DRAFT_TOKEN_KEY);
       }
-      // The backend couldn't save the profile (500, network error, etc.).
-      // Protocol renders entirely from userData already, so don't strand
-      // the person on the last onboarding step — let them see their
-      // protocol now and flag that the save didn't go through, so it can
-      // be retried later instead of losing their answers.
-      console.error("Onboarding submit failed, continuing with local data:", err);
+      // Generation genuinely failed (502, network, etc.). Nothing was ever
+      // saved server-side in the draft flow, so there's no "resume" state
+      // to preserve beyond userData itself - Protocol's existing
+      // saveFailed path already handles this: show the error, retry from
+      // onboarding (which re-enters IdentityGate with a fresh draft token
+      // if the old one was cleared above).
+      console.error("Draft protocol generation failed:", err);
 
       sessionStorage.setItem(
         "protocolHandoff",
@@ -357,9 +363,44 @@ export default function OnboardingFlow() {
     setStepIndex((prev) => prev + 1);
   };
 
-  const handleConfirmedSubmit = () => {
+  // "Continue anyway" on the no-changes confirm dialog - deliberately
+  // does NOT call submitOnboarding()/generate-with-profile (a real Claude
+  // call plus a profile re-save). Answers are byte-for-byte identical to
+  // what generated the athlete's existing saved protocol, so there is
+  // nothing to regenerate: reuse GET /api/protocol/latest, which already
+  // does exactly this lookup (existing NutritionProtocolRepository query,
+  // no AI, no new row) for Protocol.jsx/Weeklybox.jsx's own fallback
+  // path. Reshaped to the same flat onboardingResult shape
+  // submitOnboarding() returns (responseJson is the raw JSON *string* on
+  // the entity - see Protocoladapters.js), so everything downstream
+  // (protocolHandoff, /protocol's render) is unaware which path ran.
+  const handleConfirmedSubmit = async () => {
     setShowNoChangeConfirm(false);
-    submitOnboarding();
+
+    if (hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const data = await getLatestProtocol();
+      const onboardingResult = JSON.parse(data.responseJson);
+      sessionStorage.setItem(
+        "protocolHandoff",
+        JSON.stringify({ onboardingResult, userData })
+      );
+      navigate("/protocol", { state: { onboardingResult, userData } });
+      setSubmitting(false);
+    } catch (err) {
+      // No existing protocol to reuse (shouldn't happen if we got as far
+      // as detecting "no changes" against a previously-saved profile, but
+      // not impossible) - fall back to a real generation rather than
+      // stranding the athlete on a blocked step.
+      console.error("Could not reuse the existing protocol, generating fresh instead:", err);
+      hasSubmittedRef.current = false;
+      setSubmitting(false);
+      submitOnboarding();
+    }
   };
 
   const handleContinue = () => {
@@ -378,12 +419,38 @@ export default function OnboardingFlow() {
 
   const selectedSports = userData.sports || [];
 
+  // Turns a validateOnboardingField() error descriptor into a localized
+  // sentence, composed from small t()-wrapped fragments plus the raw
+  // bound numbers - the same pattern this flow already uses for strings
+  // with numbers in them (see "Step {n} of {m}" in the progress row).
+  const describeFieldError = (error) => {
+    if (!error) return null;
+    if (error.kind === "pace") {
+      return `${t("Enter a pace under")} 20:00 min/km, ${t("e.g.")} 4:30.`;
+    }
+    const { min, max, minInclusive, integer } = error.bounds;
+    const lower = minInclusive ? t("at least") : t("more than");
+    const whole = integer ? ` ${t("(whole number)")}` : "";
+    return `${t("Enter a value")} ${lower} ${min} ${t("and less than")} ${max}${whole}.`;
+  };
+
   const renderField = (field, siblingFields = []) => {
     const dependsOnValue = field.dependsOn ? userData[field.dependsOn] : null;
     const resolvedOptions = field.optionsBySport
       ? field.optionsBySport[dependsOnValue] || []
       : field.options || [];
     const isDependentAndUnready = field.dependsOn && !dependsOnValue;
+
+    // Only free-typed values (not pill/dropdown selects) can be
+    // out-of-bounds, so only surface a bounds error once something has
+    // actually been entered - an empty required field already disables
+    // Continue without needing an error message of its own.
+    const rawValue = userData[field.name];
+    const hasValue = !(rawValue === undefined || rawValue === null || rawValue.toString().trim() === "");
+    const validation = hasValue
+      ? validateOnboardingField(field.name, rawValue, validationContext)
+      : { valid: true };
+    const fieldError = hasValue && !validation.valid ? describeFieldError(validation.error) : null;
 
     return (
       <div className="ob-field" key={field.name}>
@@ -437,15 +504,17 @@ export default function OnboardingFlow() {
             </label>
             <input
               id={field.name}
-              className="ob-input"
+              className={"ob-input" + (fieldError ? " ob-input-invalid" : "")}
               type={field.inputType || "text"}
               value={userData[field.name] ?? ""}
               placeholder={t(field.placeholder || "")}
+              aria-invalid={fieldError ? "true" : undefined}
               onChange={(e) => updateField(field.name, coerceValue(field, e.target.value))}
             />
           </>
         )}
         {field.note && <p className="ob-field-note">{t(field.note)}</p>}
+        {fieldError && <p className="ob-field-error">{fieldError}</p>}
       </div>
     );
   };
@@ -489,118 +558,23 @@ export default function OnboardingFlow() {
   };
 
   // Still checking localStorage for an existing session - render nothing
-  // rather than flashing the auth gate for a visitor who's already logged in.
+  // rather than flashing the (unauthenticated) wizard for a visitor who's
+  // already logged in, since the profile pre-fill effect above depends on
+  // `user` being settled first.
   if (authLoading) {
     return <div className="ob-page" />;
   }
 
-  // Step 1 of the flow: no question is shown until there's an account.
-  if (!user) {
-    return (
-      <div className="ob-page">
-        <div className="ob-bg-glow">
-          <div className="ob-bg-glow-top" />
-        </div>
-
-        <div className="ob-topbar">
-          <span />
-          <LanguageToggle />
-        </div>
-
-        <div className="ob-content">
-          <div className="ob-brand">FuelNode</div>
-          <h1 className="ob-title">
-            {t(authMode === "register" ? "Create your account" : "Log in")}
-          </h1>
-          <p className="ob-helper-text">
-            {t(
-              "Create an account to save your answers and get your personalized nutrition protocol."
-            )}
-          </p>
-
-          <div className="ob-fields">
-            {authMode === "register" && (
-              <div className="ob-field">
-                <label className="ob-label" htmlFor="auth-fullname">
-                  {t("Full name")}
-                </label>
-                <input
-                  id="auth-fullname"
-                  className="ob-input"
-                  type="text"
-                  value={authFullName}
-                  placeholder={t("Enter your full name")}
-                  onChange={(e) => setAuthFullName(e.target.value)}
-                />
-              </div>
-            )}
-
-            <div className="ob-field">
-              <label className="ob-label" htmlFor="auth-email">
-                {t("Email")}
-              </label>
-              <input
-                id="auth-email"
-                className="ob-input"
-                type="email"
-                value={authEmail}
-                placeholder={t("Enter your email")}
-                onChange={(e) => setAuthEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="ob-field">
-              <label className="ob-label" htmlFor="auth-password">
-                {t("Password")}
-              </label>
-              <input
-                id="auth-password"
-                className="ob-input"
-                type="password"
-                value={authPassword}
-                placeholder={t("Enter your password")}
-                onChange={(e) => setAuthPassword(e.target.value)}
-              />
-            </div>
-
-            {authError && <p className="ob-error">{authError}</p>}
-
-            <button
-              type="button"
-              className="ob-auth-switch"
-              onClick={() => {
-                setAuthMode((prev) => (prev === "register" ? "login" : "register"));
-                setAuthError("");
-              }}
-            >
-              {authMode === "register"
-                ? t("Already have an account? Log in")
-                : t("Need an account? Sign up")}
-            </button>
-          </div>
-        </div>
-
-        <div className="ob-footer">
-          <button
-            type="button"
-            className="ob-continue"
-            onClick={handleAuthSubmit}
-            disabled={
-              authSubmitting ||
-              !authEmail ||
-              !authPassword ||
-              (authMode === "register" && !authFullName)
-            }
-          >
-            {authSubmitting
-              ? t(authMode === "register" ? "Creating account..." : "Logging in...")
-              : t(authMode === "register" ? "Sign Up" : "Log in")}
-          </button>
-        </div>
-
-        <CopyrightFooter />
-      </div>
-    );
+  // Identity (email + name, no password) is captured before question 1 -
+  // establishes a draft session, not a real one (see IdentityGate). A real
+  // session (`user` truthy) skips this entirely, whether from a
+  // genuinely-returning login inside IdentityGate itself or an existing
+  // session from elsewhere in the app - the profile pre-fill effect above
+  // already handles both. Real account creation happens later, after
+  // picking a plan (see Account.jsx's sign-up) - not here.
+  const hasDraftToken = Boolean(sessionStorage.getItem(DRAFT_TOKEN_KEY));
+  if (!user && !hasDraftToken) {
+    return <IdentityGate onSuccess={() => setIdentityVersion((v) => v + 1)} />;
   }
 
   return (
@@ -647,8 +621,10 @@ export default function OnboardingFlow() {
         >
           <span aria-hidden="true">←</span> {t("Back")}
         </button>
-        {/* Language toggle for this screen lives in AccountBar above,
-            so the whole app shares a single control instead of two. */}
+        {/* Signed-in visitors already get a language toggle from AccountBar
+            above, so only render a second one here for anonymous visitors
+            (AccountBar renders nothing when logged out). */}
+        {!user && <LanguageToggle />}
       </div>
 
       <div className="ob-progress-wrap">
@@ -730,26 +706,38 @@ export default function OnboardingFlow() {
                 </div>
               )}
 
-              <div
-                className={
-                  "ob-options" + (currentQuestion.fullWidthOptions ? " ob-options-stacked" : "")
-                }
-              >
-                {currentQuestion.options.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={
-                      "ob-option" +
-                      (currentQuestion.fullWidthOptions ? " ob-option-full" : "") +
-                      (userData[currentQuestion.name] === option ? " ob-option-active" : "")
-                    }
-                    onClick={() => updateField(currentQuestion.name, option)}
-                  >
-                    {t(option)}
-                  </button>
-                ))}
-              </div>
+              {currentQuestion.renderAs === "dropdown" ? (
+                <StyledSelect
+                  id={currentQuestion.name}
+                  value={userData[currentQuestion.name] ?? ""}
+                  onChange={(option) => updateField(currentQuestion.name, option)}
+                  options={currentQuestion.options}
+                  placeholder={currentQuestion.placeholder}
+                  icon="📅"
+                  t={t}
+                />
+              ) : (
+                <div
+                  className={
+                    "ob-options" + (currentQuestion.fullWidthOptions ? " ob-options-stacked" : "")
+                  }
+                >
+                  {currentQuestion.options.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={
+                        "ob-option" +
+                        (currentQuestion.fullWidthOptions ? " ob-option-full" : "") +
+                        (userData[currentQuestion.name] === option ? " ob-option-active" : "")
+                      }
+                      onClick={() => updateField(currentQuestion.name, option)}
+                    >
+                      {t(option)}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {(currentQuestion.groups || []).map((group) => renderGroup(group))}
 
