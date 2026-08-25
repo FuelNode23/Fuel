@@ -376,4 +376,21 @@ export async function deleteAdminProduct(id) {
   await apiClient.delete(`/admin/products/${id}`)
 }
 
+/**
+ * Whether a real account already exists for this email - distinct from
+ * the DNS-plausibility check the backend also exposes (check-email);
+ * this checks the actual users table. Used by Login.jsx's OTP tab so
+ * "Send code" can reject an unknown email up front, instead of sending a
+ * real code that would only end up creating a new account on verify (see
+ * EmailOtpService - unchanged, Account.jsx's Email tab still
+ * deliberately allows that for sign-up).
+ *
+ * @param {string} email
+ * @returns {Promise<boolean>}
+ */
+export async function checkAccountExists(email) {
+  const response = await apiClient.get('/auth/check-account', { params: { email } })
+  return response.data.exists
+}
+
 export default apiClient

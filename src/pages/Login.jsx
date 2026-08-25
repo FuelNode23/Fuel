@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { completePendingOnboarding, sendOtp } from "../api/client.js";
+import { completePendingOnboarding, sendOtp, checkAccountExists } from "../api/client.js";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { Icon } from "../components/Icons.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
@@ -82,6 +82,15 @@ export default function Login() {
     setOtpError("");
     setOtpSubmitting(true);
     try {
+      // This is the login page, not sign-up - reject an unknown email
+      // here rather than sending a real code that would only end up
+      // creating a new account on verify (see EmailOtpService; unchanged,
+      // Account.jsx's Email tab still deliberately allows that).
+      const exists = await checkAccountExists(email);
+      if (!exists) {
+        setOtpError(t("No FuelNode account found for this email."));
+        return;
+      }
       await sendOtp(email);
       setOtpStep("verify");
     } catch (err) {

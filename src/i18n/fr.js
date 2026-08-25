@@ -154,6 +154,7 @@ const fr = {
   "Use a different email": "Utiliser un autre e-mail",
   "Could not send the code right now. Please try again.":
     "Impossible d'envoyer le code pour le moment. Veuillez réessayer.",
+  "No FuelNode account found for this email.": "Aucun compte FuelNode trouvé pour cet e-mail.",
   "Something went wrong. Please try again.": "Un problème est survenu. Veuillez réessayer.",
 
   // ---------------------------------------------------------------------
