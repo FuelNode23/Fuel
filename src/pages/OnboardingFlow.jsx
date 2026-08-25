@@ -14,6 +14,7 @@ import LanguageToggle from "../components/LanguageToggle.jsx";
 import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import GeneratingOverlay from "../components/GeneratingOverlay.jsx";
 import IdentityGate from "../components/IdentityGate.jsx";
+import StyledSelect from "../components/StyledSelect.jsx";
 import "../pages/Onboarding.css";
 
 /**
@@ -670,21 +671,15 @@ export default function OnboardingFlow() {
               )}
 
               {currentQuestion.renderAs === "dropdown" ? (
-                <select
-                  className="ob-select"
-                  aria-label={t(currentQuestion.title)}
+                <StyledSelect
+                  id={currentQuestion.name}
                   value={userData[currentQuestion.name] ?? ""}
-                  onChange={(e) => updateField(currentQuestion.name, e.target.value)}
-                >
-                  <option value="" disabled>
-                    {t(currentQuestion.placeholder || "— Choose —")}
-                  </option>
-                  {currentQuestion.options.map((option) => (
-                    <option key={option} value={option}>
-                      {t(option)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(option) => updateField(currentQuestion.name, option)}
+                  options={currentQuestion.options}
+                  placeholder={currentQuestion.placeholder}
+                  icon="📅"
+                  t={t}
+                />
               ) : (
                 <div
                   className={

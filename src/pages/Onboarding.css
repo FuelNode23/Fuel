@@ -537,6 +537,174 @@
   height: 4rem;
 }
 
+/* --- Premium glass dropdown (delivery day) - custom-built combobox,
+   not a native <select>, so the open menu can actually be styled. See
+   components/StyledSelect.jsx. --- */
+
+.ob-styled-select {
+  position: relative;
+  width: 100%;
+}
+
+.ob-styled-select__trigger {
+  width: 100%;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-inline: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  background: rgba(20, 26, 41, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #f4f7fb;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ob-styled-select__trigger:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(20, 26, 41, 0.78);
+}
+
+.ob-styled-select__trigger:focus-visible,
+.ob-styled-select__trigger--open {
+  outline: none;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18), 0 0 28px rgba(34, 197, 94, 0.14);
+}
+
+.ob-styled-select__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.ob-styled-select__value {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ob-styled-select__value--placeholder {
+  font-weight: 500;
+  color: rgba(244, 247, 251, 0.4);
+}
+
+.ob-styled-select__chevron {
+  flex-shrink: 0;
+  color: rgba(244, 247, 251, 0.5);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.ob-styled-select__chevron--open {
+  color: #22c55e;
+  transform: rotate(180deg);
+}
+
+.ob-styled-select__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.6rem);
+  left: 0;
+  right: 0;
+  max-height: 20rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.4rem;
+  list-style: none;
+  border-radius: 1rem;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  background: rgba(16, 21, 34, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(34, 197, 94, 0.06);
+  animation: ob-select-menu-in 0.16s ease;
+}
+
+@keyframes ob-select-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ob-styled-select__option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(244, 247, 251, 0.75);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ob-styled-select__option--active {
+  background: rgba(34, 197, 94, 0.12);
+  color: #f4f7fb;
+}
+
+.ob-styled-select__option--selected {
+  background: rgba(34, 197, 94, 0.16);
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.ob-styled-select__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.9rem;
+  flex-shrink: 0;
+  color: #22c55e;
+}
+
+.ob-styled-select__option-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .ob-styled-select__trigger {
+    height: 3.25rem;
+    padding-inline: 1rem;
+    gap: 0.6rem;
+  }
+
+  .ob-styled-select__value {
+    font-size: 0.95rem;
+  }
+
+  .ob-styled-select__menu {
+    padding: 0.3rem;
+  }
+
+  .ob-styled-select__option {
+    padding: 0.65rem 0.7rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-styled-select__menu {
+    animation: none;
+  }
+}
+
 /* --- Added for Q11 (bordered note box) --- */
 
 .ob-note-box {
