@@ -4,12 +4,32 @@ import { useLanguage } from "../../i18n/LanguageContext.jsx";
 import { getAdminUsers, updateUserStatus, updateUserRole } from "../../api/client.js";
 import { useSearchAndPaginate } from "./useSearchAndPaginate.js";
 import Pagination from "./Pagination.jsx";
+import SortableHeader from "./SortableHeader.jsx";
 
 function matchesUserQuery(user, q) {
   return (
     (user.fullName || "").toLowerCase().includes(q) ||
     (user.email || "").toLowerCase().includes(q)
   );
+}
+
+function getUserSortValue(user, key) {
+  switch (key) {
+    case "name":
+      return user.fullName || "";
+    case "email":
+      return user.email || "";
+    case "role":
+      return user.role || "";
+    case "status":
+      return user.enabled ? 1 : 0;
+    case "joined":
+      return user.createdAt;
+    case "lastLogin":
+      return user.lastLoginAt;
+    default:
+      return "";
+  }
 }
 
 function formatDate(isoString, language) {
@@ -36,8 +56,8 @@ export default function UserManagement() {
   const [error, setError] = useState(null);
   const [pendingId, setPendingId] = useState(null);
 
-  const { query, setQuery, page, setPage, totalPages, pageItems, totalResults } =
-    useSearchAndPaginate(users, matchesUserQuery);
+  const { query, setQuery, page, setPage, totalPages, pageItems, totalResults, sortKey, sortDir, toggleSort } =
+    useSearchAndPaginate(users, matchesUserQuery, getUserSortValue);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,12 +130,24 @@ export default function UserManagement() {
       <table className="admin-table">
         <thead>
           <tr>
-            <th>{t("Name")}</th>
-            <th>{t("Email")}</th>
-            <th>{t("Role")}</th>
-            <th>{t("Status")}</th>
-            <th>{t("Joined")}</th>
-            <th>{t("Last login")}</th>
+            <SortableHeader column="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Name")}
+            </SortableHeader>
+            <SortableHeader column="email" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Email")}
+            </SortableHeader>
+            <SortableHeader column="role" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Role")}
+            </SortableHeader>
+            <SortableHeader column="status" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Status")}
+            </SortableHeader>
+            <SortableHeader column="joined" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Joined")}
+            </SortableHeader>
+            <SortableHeader column="lastLogin" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Last login")}
+            </SortableHeader>
             <th aria-label={t("Actions")} />
           </tr>
         </thead>

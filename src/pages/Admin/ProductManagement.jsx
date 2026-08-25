@@ -8,6 +8,7 @@ import {
 } from "../../api/client.js";
 import { useSearchAndPaginate } from "./useSearchAndPaginate.js";
 import Pagination from "./Pagination.jsx";
+import SortableHeader from "./SortableHeader.jsx";
 
 function matchesProductQuery(product, q) {
   return (
@@ -16,6 +17,25 @@ function matchesProductQuery(product, q) {
     (product.category || "").toLowerCase().includes(q) ||
     (product.protocolSlot || "").toLowerCase().includes(q)
   );
+}
+
+function getProductSortValue(product, key) {
+  switch (key) {
+    case "brand":
+      return product.brand || "";
+    case "product":
+      return product.productName || "";
+    case "category":
+      return product.category || "";
+    case "protocolSlot":
+      return product.protocolSlot || "";
+    case "stock":
+      return product.stockQuantity;
+    case "price":
+      return product.retailPriceEur;
+    default:
+      return "";
+  }
 }
 
 // Operational fields (shown in the table + the form's primary section) vs.
@@ -96,8 +116,8 @@ export default function ProductManagement() {
   const [formError, setFormError] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-  const { query, setQuery, page, setPage, totalPages, pageItems, totalResults } =
-    useSearchAndPaginate(products, matchesProductQuery);
+  const { query, setQuery, page, setPage, totalPages, pageItems, totalResults, sortKey, sortDir, toggleSort } =
+    useSearchAndPaginate(products, matchesProductQuery, getProductSortValue);
 
   useEffect(() => {
     let cancelled = false;
@@ -208,12 +228,24 @@ export default function ProductManagement() {
       <table className="admin-table">
         <thead>
           <tr>
-            <th>{t("Brand")}</th>
-            <th>{t("Product")}</th>
-            <th>{t("Category")}</th>
-            <th>{t("Protocol slot")}</th>
-            <th>{t("Stock")}</th>
-            <th>{t("Price (EUR)")}</th>
+            <SortableHeader column="brand" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Brand")}
+            </SortableHeader>
+            <SortableHeader column="product" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Product")}
+            </SortableHeader>
+            <SortableHeader column="category" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Category")}
+            </SortableHeader>
+            <SortableHeader column="protocolSlot" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Protocol slot")}
+            </SortableHeader>
+            <SortableHeader column="stock" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Stock")}
+            </SortableHeader>
+            <SortableHeader column="price" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>
+              {t("Price (EUR)")}
+            </SortableHeader>
             <th aria-label={t("Actions")} />
           </tr>
         </thead>

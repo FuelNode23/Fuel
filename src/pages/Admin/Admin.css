@@ -206,6 +206,31 @@
   white-space: nowrap;
 }
 
+.admin-table__sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.admin-table__sortable-th:hover {
+  color: var(--admin-text);
+}
+
+.admin-table__sortable-th--active {
+  color: var(--admin-accent);
+}
+
+.admin-table__sort-icon {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.admin-table__sortable-th--active .admin-table__sort-icon {
+  opacity: 1;
+}
+
 .admin-table td {
   padding: 0.7rem 0.75rem;
   border-bottom: 1px solid var(--admin-surface-alt);
