@@ -80,7 +80,7 @@ export default function AccountBar() {
               </span>
             )}
           </div>
-          {!onWeeklyBoxPage && (
+          {!onWeeklyBoxPage && user?.role !== "ADMIN" && (
             <button
               type="button"
               className="account-bar__nav-link"
