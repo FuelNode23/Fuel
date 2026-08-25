@@ -138,6 +138,24 @@ const fr = {
   "Precise nutrition protocols and weekly boxes, built around your training.": "Des protocoles nutritionnels précis et des boîtes hebdomadaires, conçus autour de votre entraînement.",
   "Login failed. Please check your credentials.": "Échec de la connexion. Veuillez vérifier vos identifiants.",
 
+  // Password/OTP login tabs (Login.jsx) - same strings Account.jsx's Email
+  // tab already used with no French entry, so this also fixes that gap.
+  "One-time code": "Code à usage unique",
+  "We'll send a 6-digit code to your email. No password needed.":
+    "Nous enverrons un code à 6 chiffres à votre e-mail. Aucun mot de passe requis.",
+  "We'll send a 6-digit code to your email. Fuelnode does not create or store passwords.":
+    "Nous enverrons un code à 6 chiffres à votre e-mail. Fuelnode ne crée ni ne stocke de mots de passe.",
+  "Send code": "Envoyer le code",
+  "Sending...": "Envoi en cours...",
+  "Enter your code": "Entrez votre code",
+  "We sent a 6-digit code to {email}.": "Nous avons envoyé un code à 6 chiffres à {email}.",
+  "Verify & continue": "Vérifier et continuer",
+  "Verifying...": "Vérification en cours...",
+  "Use a different email": "Utiliser un autre e-mail",
+  "Could not send the code right now. Please try again.":
+    "Impossible d'envoyer le code pour le moment. Veuillez réessayer.",
+  "Something went wrong. Please try again.": "Un problème est survenu. Veuillez réessayer.",
+
   // ---------------------------------------------------------------------
   // Dashboard
   // ---------------------------------------------------------------------
