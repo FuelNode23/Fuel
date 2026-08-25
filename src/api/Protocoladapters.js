@@ -146,7 +146,12 @@ export function athleteProfileToUserData(athleteProfile) {
     weight: athleteProfile.weightKg,
     height: athleteProfile.heightCm,
     sessions_per_week: athleteProfile.sessionsPerWeek,
-    sports: athleteProfile.sports || [],
+    // athleteProfile.sports is an array of raw SportProfileEntity-shaped
+    // objects ({id, sport, discipline, experienceLevel}) - every consumer
+    // of userData.sports (OnboardingFlow.jsx's .includes() checks, etc.)
+    // expects plain sport-name strings, same as Profile.jsx already
+    // extracts via the same .map((s) => s.sport).
+    sports: (athleteProfile.sports || []).map((s) => s.sport),
     sport_profiles: {},
     goals: athleteProfile.objectives || [],
     session_time: athleteProfile.trainingTime,
