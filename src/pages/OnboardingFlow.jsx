@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient, {
   DRAFT_TOKEN_KEY,
   generateDraftProtocol,
+  getLatestProtocol,
   submitOnboarding as postOnboarding,
 } from "../api/client.js";
 import { questions } from "../api/Questions.js";
@@ -362,9 +363,44 @@ export default function OnboardingFlow() {
     setStepIndex((prev) => prev + 1);
   };
 
-  const handleConfirmedSubmit = () => {
+  // "Continue anyway" on the no-changes confirm dialog - deliberately
+  // does NOT call submitOnboarding()/generate-with-profile (a real Claude
+  // call plus a profile re-save). Answers are byte-for-byte identical to
+  // what generated the athlete's existing saved protocol, so there is
+  // nothing to regenerate: reuse GET /api/protocol/latest, which already
+  // does exactly this lookup (existing NutritionProtocolRepository query,
+  // no AI, no new row) for Protocol.jsx/Weeklybox.jsx's own fallback
+  // path. Reshaped to the same flat onboardingResult shape
+  // submitOnboarding() returns (responseJson is the raw JSON *string* on
+  // the entity - see Protocoladapters.js), so everything downstream
+  // (protocolHandoff, /protocol's render) is unaware which path ran.
+  const handleConfirmedSubmit = async () => {
     setShowNoChangeConfirm(false);
-    submitOnboarding();
+
+    if (hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const data = await getLatestProtocol();
+      const onboardingResult = JSON.parse(data.responseJson);
+      sessionStorage.setItem(
+        "protocolHandoff",
+        JSON.stringify({ onboardingResult, userData })
+      );
+      navigate("/protocol", { state: { onboardingResult, userData } });
+      setSubmitting(false);
+    } catch (err) {
+      // No existing protocol to reuse (shouldn't happen if we got as far
+      // as detecting "no changes" against a previously-saved profile, but
+      // not impossible) - fall back to a real generation rather than
+      // stranding the athlete on a blocked step.
+      console.error("Could not reuse the existing protocol, generating fresh instead:", err);
+      hasSubmittedRef.current = false;
+      setSubmitting(false);
+      submitOnboarding();
+    }
   };
 
   const handleContinue = () => {
