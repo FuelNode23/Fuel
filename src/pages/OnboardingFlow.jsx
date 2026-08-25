@@ -669,26 +669,44 @@ export default function OnboardingFlow() {
                 </div>
               )}
 
-              <div
-                className={
-                  "ob-options" + (currentQuestion.fullWidthOptions ? " ob-options-stacked" : "")
-                }
-              >
-                {currentQuestion.options.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={
-                      "ob-option" +
-                      (currentQuestion.fullWidthOptions ? " ob-option-full" : "") +
-                      (userData[currentQuestion.name] === option ? " ob-option-active" : "")
-                    }
-                    onClick={() => updateField(currentQuestion.name, option)}
-                  >
-                    {t(option)}
-                  </button>
-                ))}
-              </div>
+              {currentQuestion.renderAs === "dropdown" ? (
+                <select
+                  className="ob-select"
+                  aria-label={t(currentQuestion.title)}
+                  value={userData[currentQuestion.name] ?? ""}
+                  onChange={(e) => updateField(currentQuestion.name, e.target.value)}
+                >
+                  <option value="" disabled>
+                    {t(currentQuestion.placeholder || "— Choose —")}
+                  </option>
+                  {currentQuestion.options.map((option) => (
+                    <option key={option} value={option}>
+                      {t(option)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div
+                  className={
+                    "ob-options" + (currentQuestion.fullWidthOptions ? " ob-options-stacked" : "")
+                  }
+                >
+                  {currentQuestion.options.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={
+                        "ob-option" +
+                        (currentQuestion.fullWidthOptions ? " ob-option-full" : "") +
+                        (userData[currentQuestion.name] === option ? " ob-option-active" : "")
+                      }
+                      onClick={() => updateField(currentQuestion.name, option)}
+                    >
+                      {t(option)}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {(currentQuestion.groups || []).map((group) => renderGroup(group))}
 

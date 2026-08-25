@@ -741,6 +741,7 @@ const fr = {
   // ---------------------------------------------------------------------
   "Delivery day": "Jour de livraison",
   "Choose your preferred delivery day": "Choisissez votre jour de livraison préféré",
+  "Select your delivery day": "Sélectionnez votre jour de livraison",
   "Paris only, for now": "Paris uniquement, pour l'instant",
   "We deliver within Paris only for now — expanding our zone soon.":
     "Nous livrons uniquement à Paris pour l'instant — notre zone s'agrandit bientôt.",

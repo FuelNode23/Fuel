@@ -308,8 +308,13 @@ export const questions = [
       text: "We deliver within Paris only for now — expanding our zone soon.",
     },
     name: "delivery_day",
-    options: ["Monday", "Wednesday", "Friday"],
-    fullWidthOptions: true,
+    // Every day of the week is a valid option - this list is the single
+    // source of truth for what's selectable here (see OnboardingFlow.jsx's
+    // renderAs: "dropdown" branch, which just maps over it). Add/remove a
+    // day by editing this array only.
+    options: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    renderAs: "dropdown",
+    placeholder: "Select your delivery day",
     notes: [
       "You can cancel or change your protocol until Tuesday at noon.",
       "You can collect your box upto 7 days after delivery",
