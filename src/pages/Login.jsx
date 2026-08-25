@@ -31,7 +31,14 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      await login(email, password);
+      const authData = await login(email, password);
+      // Admins skip the whole athlete post-login path (pending-onboarding
+      // resume, landing page) - there's nothing for that account to resume
+      // or browse, only the panel it logged in to manage.
+      if (authData.role === "ADMIN") {
+        navigate("/admin");
+        return;
+      }
       if (sessionStorage.getItem("pendingOnboarding")) {
         setResumingOnboarding(true);
       }
