@@ -14,6 +14,7 @@ import OrderConfirmation from "../pages/OrderConfirmation";
 import Account from "../pages/Account";
 import AthleteDashboard from "../pages/AthleteDashboard";
 import AdminPanel from "../pages/Admin/AdminPanel";
+import AppReturn from "../pages/AppReturn";
 
 const AppRoutes = () => {
   return (
@@ -55,9 +56,12 @@ const AppRoutes = () => {
             on every /api/admin/** call the two tabs make. */}
         <Route path="/admin" element={<AdminPanel />} />
 
+      {/* Stripe -> mobile app hand-off (web only in practice) - see AppReturn.jsx */}
+      <Route path="/app-return/*" element={<AppReturn />} />
+
       <Route path="*" element={<Navigate to="/landing" replace />} />
     </Routes>
   );
 };
 
-export default AppRoutes;
+export default AppRoutes;

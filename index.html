@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>FuelNode</title>
     <!--
       Resource-loading half of the app's CSP - the rest (frame-ancestors,
@@ -11,14 +11,16 @@
       confirmed dependency: Google Fonts (style-src/font-src), the BAN
       address API and La Poste locker API (connect-src, see
       CheckoutSummary.jsx/LocationMapPicker.jsx), and OpenStreetMap tiles
-      (img-src, see LocationMapPicker.jsx's L.tileLayer). style-src needs
+      (img-src, see LocationMapPicker.jsx's L.tileLayer). app.fuelnode.fr is
+      listed explicitly in connect-src because inside the mobile app (Capacitor)
+      'self' is https://localhost / capacitor://localhost, not the API host. style-src needs
       'unsafe-inline' for React's inline style={{}} props and Leaflet's
       own inline-styled markers/tiles - script-src does not, since
       nothing in this app injects or eval's script at runtime.
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self' https://api-adresse.data.gouv.fr https://data.laposte.fr; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self' https://app.fuelnode.fr https://api-adresse.data.gouv.fr https://data.laposte.fr; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -6,6 +6,7 @@ import LocationMapPicker from "../components/LocationMapPicker.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { getSubscriptionPricing, createCheckoutSession } from "../api/client.js";
+import { isNativeApp, openExternal } from "../native/platform.js";
 import "../Protocol/ProtocolComponents.css";
 import "./Weeklybox.css";
 import "./Subscriptions.css";
@@ -255,7 +256,12 @@ export default function CheckoutSummary() {
         ...deliveryDetails,
       });
       const { url } = await createCheckoutSession();
-      window.location.href = url;
+      // Website: same-tab redirect to Stripe, as before. Mobile app: Stripe
+      // opens in the system in-app browser and comes back via the
+      // fuelnode:// deep link (see native/NativeBridge.jsx), so re-enable
+      // the button in case the athlete closes that browser without paying.
+      await openExternal(url);
+      if (isNativeApp()) setSubmitting(false);
     } catch (err) {
       setError(
         err.response?.data?.message || t("Could not start checkout. Please try again.")

@@ -67,3 +67,16 @@ body::after {
 
     filter: blur(120px);
 }
+
+/* =========================
+   MOBILE APP (Capacitor)
+   NativeBridge.jsx adds .native-app to <html> only inside the iOS/Android
+   app - nothing below affects the website.
+========================= */
+
+.native-app body {
+    /* background-attachment: fixed is janky/unsupported in mobile WebViews */
+    background-attachment: scroll;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+}

@@ -1034,6 +1034,13 @@ const fr = {
   "Elite recommendation": "Recommandation élite",
   "Margin status": "Statut de marge",
   "Innovation rationale": "Justification de l'innovation",
+
+  // ---------------------------------------------------------------------
+  // Mobile app (Stripe -> app hand-off, see AppReturn.jsx)
+  // ---------------------------------------------------------------------
+  "Returning to the FuelNode app...": "Retour vers l'application FuelNode...",
+  "If nothing happens, tap the button below.": "Si rien ne se passe, appuyez sur le bouton ci-dessous.",
+  "Open FuelNode app": "Ouvrir l'application FuelNode",
 };
 
 export default fr;

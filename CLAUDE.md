@@ -77,3 +77,9 @@ straight through. `src/api/Protocoladapters.js` only covers genuine gaps between
 what a component expects (e.g. `active_specialist_protocols` arrives as plain strings but
 `SpecialistProtocols` wants objects) and guards against fields being missing/null, which the prompt allows.
 Prefer extending an adapter over reshaping data ad hoc inside a component.
+
+## Mobile app
+
+The same codebase is packaged as an Android/iOS app with Capacitor (`android/`, `ios/`, `capacitor.config.json`).
+After any `src/` change run `npm run build && npx cap sync`. Native-only behaviour lives in `src/native/`
+(guard with `isNativeApp()`); keep the website behaviour unchanged. See `MOBILE.md`.

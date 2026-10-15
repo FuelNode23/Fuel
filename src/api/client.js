@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { isNativeApp } from '../native/platform.js'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'https://app.fuelnode.fr/api',
@@ -171,7 +172,14 @@ export async function getSubscriptionPricing(boxVariant) {
  * @returns {Promise<object>} { url }
  */
 export async function createCheckoutSession() {
-  const response = await apiClient.post('/subscription/checkout')
+  // From the mobile app, Stripe must send the athlete back through the
+  // /app-return bounce page (-> fuelnode:// deep link) instead of loading
+  // the website inside the in-app browser - see AppReturn.jsx.
+  const response = await apiClient.post(
+    '/subscription/checkout',
+    null,
+    isNativeApp() ? { params: { client: 'app' } } : undefined
+  )
   return response.data
 }
 
@@ -393,4 +401,4 @@ export async function checkAccountExists(email) {
   return response.data.exists
 }
 
-export default apiClient
+export default apiClient
