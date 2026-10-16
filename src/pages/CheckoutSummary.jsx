@@ -5,7 +5,7 @@ import CopyrightFooter from "../components/CopyrightFooter.jsx";
 import LocationMapPicker from "../components/LocationMapPicker.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { getSubscriptionPricing, createCheckoutSession } from "../api/client.js";
+import { getSubscriptionPricing, createCheckoutSession, searchParcelPoints } from "../api/client.js";
 import { isNativeApp, openExternal } from "../native/platform.js";
 import "../Protocol/ProtocolComponents.css";
 import "./Weeklybox.css";
@@ -36,14 +36,30 @@ const CATEGORY_LABELS = {
 const PARIS_CITYCODE = "75056";
 const PARIS_POSTAL_CODE = /^750(0[1-9]|1[0-9]|20)$/;
 
-// La Poste's own open data (data-fair platform) - free, no API key, no
-// account, same open-data spirit as the BAN address API above. Filters to
-// real "Relais poste" pickup points (not full post offices) within Paris's
-// postal-code range; adresse/libelle_du_site are stored upper-case at the
-// source, matched as-is rather than transformed, since this is a real
-// address a courier needs to read correctly.
-const LAPOSTE_LOCKERS_URL = "https://data.laposte.fr/data-fair/api/v1/datasets/laposte-poincont2/lines";
-const LAPOSTE_BASE_FILTER = 'caracteristique_du_site:"Relais poste" AND code_postal:[75000 TO 75021]';
+// Pickup points come from Boxtal (relay shops + lockers across several
+// carriers), searched through our own backend - GET /api/delivery/parcel-points
+// (see BoxtalService). Boxtal's keys stay server-side; the browser/app never
+// talks to Boxtal directly. Boxtal searches *around an address*, so the
+// athlete's typed text is geocoded with BAN first to get a street + postal
+// code to search near.
+const PARCEL_NETWORK_LABELS = {
+  MONR: "Mondial Relay",
+  POFR: "Colissimo",
+  CHRP: "Chronopost",
+  SOGP: "Relais Colis",
+  UPSE: "UPS",
+  COPR: "Colis Privé",
+};
+
+function networkLabel(network) {
+  if (!network) return "";
+  return PARCEL_NETWORK_LABELS[network.split("_")[0]] || network;
+}
+
+function formatDistance(meters) {
+  if (meters == null) return "";
+  return meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`;
+}
 
 /**
  * Reached from Subscriptions.jsx after picking a paid plan - a real order
@@ -70,6 +86,7 @@ export default function CheckoutSummary() {
   const [lockerQuery, setLockerQuery] = useState("");
   const [lockerResults, setLockerResults] = useState([]);
   const [lockerLoading, setLockerLoading] = useState(false);
+  const [lockerError, setLockerError] = useState("");
   const [addressLine1, setAddressLine1] = useState(user?.addressLine1 || "");
   const [addressLine2, setAddressLine2] = useState(user?.addressLine2 || "");
   const [city, setCity] = useState(user?.city || "");
@@ -171,52 +188,64 @@ export default function CheckoutSummary() {
     setPostalCode(mapPostal);
   };
 
-  // Live locker search against La Poste's open data, debounced the same way
-  // as the address search above. Runs with an empty query too, so switching
-  // to "locker" shows a real default set immediately rather than an empty
-  // list waiting for input.
+  // Live pickup-point search (Boxtal via our backend), debounced like the
+  // address search above. Boxtal needs a postal code to search around, so:
+  //  - empty query: search near the athlete's saved Paris address, or
+  //    central Paris (75001) if there isn't one yet;
+  //  - a bare 5-digit postal code: search that postal code directly;
+  //  - anything else: geocode it with BAN (restricted to Paris, same as home
+  //    delivery) and search around the best match.
   useEffect(() => {
     if (deliveryMethod !== "locker") return;
     let cancelled = false;
     setLockerLoading(true);
-    const timer = setTimeout(() => {
-      // A single wildcard spanning the whole typed phrase (e.g. "*PARIS SAINT*")
-      // is invalid Lucene syntax once it contains a space - the API rejects the
-      // whole query ("all shards failed"), which read as "no results" rather
-      // than a visible error. Each word instead gets its own wildcard clause,
-      // required to match somewhere across either text field (site name or
-      // street address), so word order/field placement doesn't matter -
-      // "paris saint" finds a site named "PARIS SAINT CHARLES..." even though
-      // neither word alone lives in the address field for that record.
-      const words = lockerQuery
-        .trim()
-        .toUpperCase()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((word) => word.replace(/[^A-Z0-9ÀÂÉÈÊËÎÏÔÙÛÜÇ-]/g, ""))
-        .filter(Boolean);
-      const qs = words.length
-        ? `${LAPOSTE_BASE_FILTER} AND ${words
-            .map((word) => `(adresse:*${word}* OR libelle_du_site:*${word}*)`)
-            .join(" AND ")}`
-        : LAPOSTE_BASE_FILTER;
-      const params = new URLSearchParams({ qs, size: "12" });
-      fetch(`${LAPOSTE_LOCKERS_URL}?${params.toString()}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (!cancelled) setLockerResults(data.results || []);
-        })
-        .catch(() => {
-          if (!cancelled) setLockerResults([]);
-        })
-        .finally(() => {
-          if (!cancelled) setLockerLoading(false);
-        });
-    }, 300);
+    setLockerError("");
+    const timer = setTimeout(async () => {
+      try {
+        const query = lockerQuery.trim();
+        let near;
+        if (!query) {
+          const savedPostal = (user?.postalCode || "").trim();
+          near = PARIS_POSTAL_CODE.test(savedPostal)
+            ? { street: user?.addressLine1 || "", postalCode: savedPostal, city: "Paris" }
+            : { postalCode: "75001", city: "Paris" };
+        } else if (/^\d{5}$/.test(query)) {
+          near = { postalCode: query, city: "Paris" };
+        } else {
+          const res = await fetch(
+            `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&citycode=${PARIS_CITYCODE}&limit=1`
+          );
+          const data = await res.json();
+          const props = data.features?.[0]?.properties;
+          if (!props?.postcode) {
+            if (!cancelled) setLockerResults([]);
+            return;
+          }
+          near = {
+            number: props.housenumber || "",
+            street: props.street || props.name || "",
+            postalCode: props.postcode,
+            city: props.city || "Paris",
+          };
+        }
+        const points = await searchParcelPoints(near);
+        if (!cancelled) setLockerResults(points || []);
+      } catch (err) {
+        if (!cancelled) {
+          setLockerResults([]);
+          setLockerError(
+            err.response?.data?.message || t("Could not load pickup points right now. Please try again.")
+          );
+        }
+      } finally {
+        if (!cancelled) setLockerLoading(false);
+      }
+    }, 400);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryMethod, lockerQuery]);
 
   const amount = planInfo ? pricing?.[plan] : null;
@@ -239,10 +268,14 @@ export default function CheckoutSummary() {
       const deliveryDetails =
         deliveryMethod === "locker"
           ? {
-              addressLine1: selectedLocker.adresse,
-              addressLine2: t("Locker pickup - {name}", { name: selectedLocker.libelle_du_site }),
-              city: "Paris",
-              postalCode: selectedLocker.code_postal,
+              addressLine1: selectedLocker.street,
+              // Carrier + Boxtal point code kept alongside the name so the
+              // order can be routed to this exact point when it ships.
+              addressLine2: t("Locker pickup - {name}", {
+                name: `${selectedLocker.name} (${networkLabel(selectedLocker.network)} #${selectedLocker.code})`,
+              }),
+              city: selectedLocker.city || "Paris",
+              postalCode: selectedLocker.postalCode,
             }
           : {
               addressLine1: addressLine1.trim(),
@@ -428,12 +461,12 @@ export default function CheckoutSummary() {
             ) : (
               <>
                 <label className="checkout-summary__field">
-                  {t("Search by street or neighborhood")}{" "}
+                  {t("Search near an address or postal code")}{" "}
                   <span className="checkout-summary__optional">({t("optional")})</span>
                   <input
                     type="text"
                     value={lockerQuery}
-                    placeholder={t("e.g. Picpus, Batignolles...")}
+                    placeholder={t("e.g. 12 rue de Picpus, 75011...")}
                     onChange={(e) => setLockerQuery(e.target.value)}
                   />
                 </label>
@@ -442,37 +475,45 @@ export default function CheckoutSummary() {
                   {lockerLoading && (
                     <p className="checkout-summary__suggestions-status">{t("Searching...")}</p>
                   )}
-                  {!lockerLoading && lockerResults.length === 0 && (
+                  {!lockerLoading && lockerError && (
+                    <p className="checkout-summary__field-error">{lockerError}</p>
+                  )}
+                  {!lockerLoading && !lockerError && lockerResults.length === 0 && (
                     <p className="checkout-summary__suggestions-status">
-                      {t("No pickup points found - try a different street name.")}
+                      {t("No pickup points found - try a different address or postal code.")}
                     </p>
                   )}
                   {!lockerLoading &&
                     lockerResults.map((locker) => (
                       <label
-                        key={locker._id}
+                        key={locker.code}
                         className={`checkout-summary__locker${
-                          selectedLocker?._id === locker._id ? " checkout-summary__locker--active" : ""
+                          selectedLocker?.code === locker.code ? " checkout-summary__locker--active" : ""
                         }`}
                       >
                         <input
                           type="radio"
                           name="locker"
-                          value={locker._id}
-                          checked={selectedLocker?._id === locker._id}
+                          value={locker.code}
+                          checked={selectedLocker?.code === locker.code}
                           onChange={() => setSelectedLocker(locker)}
                         />
                         <span className="checkout-summary__locker-text">
-                          <strong>{locker.libelle_du_site}</strong>
+                          <strong>{locker.name}</strong>
                           <span>
-                            {locker.adresse}, {locker.code_postal} Paris
+                            {locker.street}, {locker.postalCode} {locker.city}
+                          </span>
+                          <span>
+                            {[networkLabel(locker.network), formatDistance(locker.distanceMeters)]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </span>
                         </span>
                       </label>
                     ))}
                 </div>
                 <p className="checkout-summary__hint">
-                  {t("Live pickup-point data from La Poste - available Relais Poste locations across Paris.")}
+                  {t("Pickup points and lockers from Boxtal, closest first.")}
                 </p>
               </>
             )}

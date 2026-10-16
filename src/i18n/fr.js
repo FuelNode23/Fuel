@@ -1041,6 +1041,18 @@ const fr = {
   "Returning to the FuelNode app...": "Retour vers l'application FuelNode...",
   "If nothing happens, tap the button below.": "Si rien ne se passe, appuyez sur le bouton ci-dessous.",
   "Open FuelNode app": "Ouvrir l'application FuelNode",
+
+  // ---------------------------------------------------------------------
+  // Pickup points (Boxtal, see CheckoutSummary.jsx)
+  // ---------------------------------------------------------------------
+  "Search near an address or postal code": "Rechercher près d'une adresse ou d'un code postal",
+  "e.g. 12 rue de Picpus, 75011...": "ex. 12 rue de Picpus, 75011...",
+  "No pickup points found - try a different address or postal code.":
+    "Aucun point relais trouvé - essayez une autre adresse ou un autre code postal.",
+  "Could not load pickup points right now. Please try again.":
+    "Impossible de charger les points relais pour le moment. Veuillez réessayer.",
+  "Pickup points and lockers from Boxtal, closest first.":
+    "Points relais et consignes Boxtal, du plus proche au plus éloigné.",
 };
 
 export default fr;

@@ -9,8 +9,8 @@
       the real clickjacking/downgrade defenses) can't be expressed in a
       meta tag and lives in nginx instead. Every host below is a real,
       confirmed dependency: Google Fonts (style-src/font-src), the BAN
-      address API and La Poste locker API (connect-src, see
-      CheckoutSummary.jsx/LocationMapPicker.jsx), and OpenStreetMap tiles
+      address API (connect-src, see CheckoutSummary.jsx/
+      LocationMapPicker.jsx; pickup points go through our own API), and OpenStreetMap tiles
       (img-src, see LocationMapPicker.jsx's L.tileLayer). app.fuelnode.fr is
       listed explicitly in connect-src because inside the mobile app (Capacitor)
       'self' is https://localhost / capacitor://localhost, not the API host. style-src needs
@@ -20,7 +20,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self' https://app.fuelnode.fr https://api-adresse.data.gouv.fr https://data.laposte.fr; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self' https://app.fuelnode.fr https://api-adresse.data.gouv.fr; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

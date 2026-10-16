@@ -162,6 +162,25 @@ export async function getSubscriptionPricing(boxVariant) {
 }
 
 /**
+ * Boxtal pickup points (relay shops + lockers) nearest to an address,
+ * closest first - proxied by our backend (DeliveryController ->
+ * BoxtalService) so Boxtal's API keys never reach the browser/app.
+ * postalCode is required (5 digits); number/street/city narrow the search.
+ *
+ * @param {{number?: string, street?: string, postalCode: string, city?: string}} near
+ * @returns {Promise<Array<{code, name, network, street, postalCode, city,
+ *   latitude, longitude, distanceMeters, openingDays}>>}
+ */
+export async function searchParcelPoints({ number, street, postalCode, city }) {
+  const params = { postalCode }
+  if (number) params.number = number
+  if (street) params.street = street
+  if (city) params.city = city
+  const response = await apiClient.get('/delivery/parcel-points', { params })
+  return response.data
+}
+
+/**
  * Starts real Stripe Checkout for the plan already saved via
  * saveSubscription (see StripeCheckoutService) - a hosted, redirect-based
  * flow, so the only thing to do with the result is send the browser to it
