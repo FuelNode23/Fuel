@@ -70,6 +70,12 @@
   .hub-card--half {
     grid-column: span 6;
   }
+
+  /* Single-column layout (phones, incl. the mobile app): show the
+     subscription status/CTA first instead of 4th, below the fold. */
+  .hub-card--subscription {
+    order: -1;
+  }
 }
 
 .hub-card__eyebrow {

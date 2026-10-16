@@ -290,8 +290,9 @@ export default function AthleteDashboard() {
             </ul>
           </div>
 
-          {/* Row 2 */}
-          <div className="card hub-card hub-card--half">
+          {/* Row 2 - hub-card--subscription jumps to the top on phone-width
+              screens (the mobile app + mobile web), see AthleteDashboard.css */}
+          <div className="card hub-card hub-card--half hub-card--subscription">
             <div className="hub-card__eyebrow">
               <Icon.ShoppingBag width={13} height={13} />
               {t("Current subscription")}
