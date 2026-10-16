@@ -317,15 +317,17 @@ export default function AthleteDashboard() {
                 <span className="hub-card__stat-value">{t("Updated today")}</span>
               </div>
             </div>
-            {/* Already paid - never re-invite back into checkout/plan
-                selection (see Login.jsx's completeLogin, which already
-                routes an active subscriber here instead of onboarding/
-                payment; this card must not undo that once they arrive). */}
+            {/* The subscribe actions are shown for every status, paid or not.
+                A paid athlete can't be charged twice: the backend refuses a
+                new Checkout Session for an ACTIVE/PAST_DUE subscription
+                (StripeCheckoutService.createCheckoutSession), and
+                CheckoutSummary shows that message instead. */}
             {isActiveSubscriber ? (
               <p className="hub-card__note">{t("Subscribed ✓ - manage your box from here anytime.")}</p>
             ) : (
-              <>
-                <p className="hub-card__note">{t("Complete your subscription to unlock your weekly box.")}</p>
+              <p className="hub-card__note">{t("Complete your subscription to unlock your weekly box.")}</p>
+            )}
+            <>
                 <div className="hub-card__actions">
                   <button
                     type="button"
@@ -345,8 +347,7 @@ export default function AthleteDashboard() {
                 <button type="button" className="btn btn--ghost" onClick={() => navigate("/subscription")}>
                   {t("Choose a plan")}
                 </button>
-              </>
-            )}
+            </>
           </div>
 
           <div className="card hub-card hub-card--half">
